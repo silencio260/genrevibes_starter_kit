@@ -14,13 +14,13 @@ class SettingsView extends StatelessWidget {
   final Color? sectionHeaderColor;
 
   const SettingsView({
-    Key? key,
+    super.key,
     required this.sections,
     this.templateType = SettingsTemplateType.list,
     this.pageTitle = 'Settings',
     this.backgroundColor,
     this.sectionHeaderColor,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +28,7 @@ class SettingsView extends StatelessWidget {
       backgroundColor:
           backgroundColor ?? Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text(pageTitle!),
+        title: Text(pageTitle ?? 'Settings'),
         backgroundColor: backgroundColor,
         elevation: 0,
       ),
@@ -97,13 +97,13 @@ class SettingsView extends StatelessWidget {
                   style: TextStyle(
                     color:
                         sectionHeaderColor ??
-                        Colors.white, // Default to white for headers
+                        Theme.of(context).colorScheme.onSurface,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
             for (final tile in section.tiles) _buildTile(context, tile),
-            const Divider(color: Colors.white24), // Subtle white divider
+            Divider(color: Theme.of(context).dividerColor),
           ],
         ],
       );
@@ -117,21 +117,25 @@ class SettingsView extends StatelessWidget {
           (tile.icon != null ? Icon(tile.icon, color: tile.iconColor) : null),
       title: Text(
         tile.title,
-        style: const TextStyle(
-          color: Colors.white,
-        ), // Force white text for titles
+        style: TextStyle(
+          color: Theme.of(context).colorScheme.onSurface,
+        ),
       ),
       subtitle:
           tile.subtitle != null
               ? Text(
                 tile.subtitle!,
-                style: const TextStyle(
-                  color: Colors.grey,
-                ), // Grey text for subtitles
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               )
               : null,
       trailing:
-          tile.trailing ?? const Icon(Icons.chevron_right, color: Colors.grey),
+          tile.trailing ??
+          Icon(
+            Icons.chevron_right,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
       onTap: tile.onTap,
     );
   }

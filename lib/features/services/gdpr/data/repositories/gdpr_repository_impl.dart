@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:dartz/dartz.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:starter_kit/core/error/failure.dart';
-import 'package:starter_kit/core/utils/starter_log.dart';
+import 'package:genrevibes_starter_kit/core/error/failure.dart';
+import 'package:genrevibes_starter_kit/core/utils/starter_log.dart';
 import '../../domain/repositories/gdpr_repository.dart';
 
 class GdprRepositoryImpl implements GdprRepository {

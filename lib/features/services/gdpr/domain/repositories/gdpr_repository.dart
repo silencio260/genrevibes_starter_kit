@@ -1,5 +1,5 @@
 import 'package:dartz/dartz.dart';
-import 'package:starter_kit/core/error/failure.dart';
+import 'package:genrevibes_starter_kit/core/error/failure.dart';
 
 abstract class GdprRepository {
   /// Request consent update and show form if required

@@ -47,7 +47,7 @@ class FeedbackNestRepositoryImpl implements FeedbackRepository {
     } on DioException catch (e) {
       if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
-        return Left(
+        return const Left(
           NetworkFailure(message: 'Connection timeout. Please try again.'),
         );
       } else if (e.response != null) {

@@ -11,36 +11,36 @@ A strictly architected, modular plugin system for Flutter apps.
 
 ## Installation
 
-Starter Kit is a **standalone Flutter package** with its own `pubspec.yaml`. You can use it as a path dependency or copy the `packages/starter_kit` folder into any project.
+Starter Kit is a **standalone Flutter package** with its own `pubspec.yaml`. Its pub name is `genrevibes_starter_kit` (matching its directory). You can use it as a path dependency or copy the `packages/genrevibes_starter_kit` folder into any project.
 
 ### Option 1: Path dependency (in same repo)
 
-If `starter_kit` lives in `packages/starter_kit` of your project:
+If the package lives in `packages/genrevibes_starter_kit` of your project:
 
 ```yaml
 # pubspec.yaml
 dependencies:
-  starter_kit:
-    path: packages/starter_kit
+  genrevibes_starter_kit:
+    path: packages/genrevibes_starter_kit
 ```
 
 ### Option 2: Copy into another project
 
-1. Copy the entire `starter_kit` folder (the one that contains `pubspec.yaml`, `lib/`, etc.) into your project, e.g. `packages/starter_kit` or `plugins/starter_kit`.
+1. Copy the entire `genrevibes_starter_kit` folder (the one that contains `pubspec.yaml`, `lib/`, etc.) into your project, e.g. `packages/genrevibes_starter_kit` or `plugins/genrevibes_starter_kit`.
 2. In your app’s `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  starter_kit:
-    path: packages/starter_kit   # or path: plugins/starter_kit
+  genrevibes_starter_kit:
+    path: packages/genrevibes_starter_kit   # or path: plugins/genrevibes_starter_kit
 ```
 
 3. Run `flutter pub get`.
-4. Use in Dart: `import 'package:starter_kit/starter_kit.dart';`
+4. Use in Dart: `import 'package:genrevibes_starter_kit/starter_kit.dart';`
 
-All dependencies (Firebase, AdMob, RevenueCat, etc.) are declared in `starter_kit`’s `pubspec.yaml`; the host app will receive them transitively. Ensure your app’s `android/` and `ios/` are configured for any native SDKs you use (Firebase, OneSignal, etc.).
+All dependencies (Firebase, AdMob, RevenueCat, etc.) are declared in `genrevibes_starter_kit`’s `pubspec.yaml`; the host app will receive them transitively. Ensure your app’s `android/` and `ios/` are configured for any native SDKs you use (Firebase, OneSignal, etc.).
 
-**If you see "Target of URI doesn't exist" or missing-package errors:** run `flutter pub get` from the **host project root** (the app that depends on `starter_kit`). That resolves the path package and its dependencies.
+**If you see "Target of URI doesn't exist" or missing-package errors:** run `flutter pub get` from the **host project root** (the app that depends on `genrevibes_starter_kit`). That resolves the path package and its dependencies.
 
 ## Features at a Glance
 
@@ -171,7 +171,7 @@ To track ad revenue automatically across all providers (Firebase, PostHog, etc.)
 ```dart
 // No extra code needed! Just initialize properly:
 await StarterKit.initialize(
-  adsDataSource: MyAdMobDataSource(), // Your ads impl
+  adsRepository: MyAdsRepository(), // Optional: custom ads impl (AdMob is the default)
   // The kit automatically listens to paid events and logs them!
 );
 ```
@@ -226,12 +226,18 @@ StarterKit.analyticsBloc.add(
 Because `StarterKit` uses `GetIt`, you can inject your own implementations.
 
 **Example: Swapping Analytics Provider**
+
+`initialize()` accepts your own implementations of the feature repositories
+(e.g. `analyticsRepository`, `adsRepository`, `iapRepository`, …) plus
+`postHogDataSource`, `supportEmail`, and `feedbackNestApiKey`. Pass a repository
+to override the default provider:
+
 ```dart
-class MyMixpanelDataSource implements AnalyticsRemoteDataSource {
+class MyAnalyticsRepository implements AnalyticsRepository {
   // ... implementation ...
 }
 
 await StarterKit.initialize(
-  analyticsDataSources: [MyMixpanelDataSource()],
+  analyticsRepository: MyAnalyticsRepository(),
 );
 ```

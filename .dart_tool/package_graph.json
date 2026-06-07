@@ -1,10 +1,10 @@
 {
   "roots": [
-    "starter_kit"
+    "genrevibes_starter_kit"
   ],
   "packages": [
     {
-      "name": "starter_kit",
+      "name": "genrevibes_starter_kit",
       "version": "1.0.0",
       "dependencies": [
         "cloud_firestore",

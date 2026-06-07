@@ -1,8 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import '../../domain/entities/subscription_tier.dart';
-
-import '../../domain/repositories/user_profile_repository.dart';
 import '../models/user_profile_model.dart';
 
 /// Abstract interface for user profile data source

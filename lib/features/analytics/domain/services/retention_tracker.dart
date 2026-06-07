@@ -131,22 +131,29 @@ class RetentionTracker extends ChangeNotifier {
 
     // Use mapped names
     String mappedName = eventName;
-    if (eventName == 'retention_app_opened') mappedName = names.appOpened;
-    if (eventName == 'retention_session_started')
+    if (eventName == 'retention_app_opened') {
+      mappedName = names.appOpened;
+    }
+    if (eventName == 'retention_session_started') {
       mappedName = names.sessionStarted;
+    }
 
     await analytics.logRetentionEvent(mappedName, params);
 
     // Check for specific milestones and log them separately
     if (eventName == 'retention_app_opened') {
-      if (daysSinceInstall == 1)
+      if (daysSinceInstall == 1) {
         await analytics.logRetentionEvent(names.day1Returned, params);
-      if (daysSinceInstall == 3)
+      }
+      if (daysSinceInstall == 3) {
         await analytics.logRetentionEvent(names.day3Returned, params);
-      if (daysSinceInstall == 7)
+      }
+      if (daysSinceInstall == 7) {
         await analytics.logRetentionEvent(names.day7Returned, params);
-      if (daysSinceInstall == 30)
+      }
+      if (daysSinceInstall == 30) {
         await analytics.logRetentionEvent(names.day30Returned, params);
+      }
     }
   }
 

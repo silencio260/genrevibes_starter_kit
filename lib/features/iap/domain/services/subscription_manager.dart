@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:starter_kit/starter_kit.dart';
+import '../../../../core/utils/starter_log.dart';
 import '../entities/subscription_status.dart';
 
 /// Manages subscription state and provides a simple interface for the UI

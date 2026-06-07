@@ -12,10 +12,10 @@ class DoubleTapToExitWidget extends StatefulWidget {
   final DoubleTapExitConfig config;
 
   const DoubleTapToExitWidget({
-    Key? key,
+    super.key,
     required this.child,
     this.config = const DoubleTapExitConfig(),
-  }) : super(key: key);
+  });
 
   @override
   State<DoubleTapToExitWidget> createState() => _DoubleTapToExitWidgetState();

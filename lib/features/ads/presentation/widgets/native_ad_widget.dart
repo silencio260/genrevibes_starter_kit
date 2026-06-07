@@ -2,12 +2,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:starter_kit/starter_kit.dart';
+import 'package:genrevibes_starter_kit/starter_kit.dart';
 import '../../../analytics/domain/entities/ad_revenue_event.dart';
 import '../../domain/services/ad_suppression_manager.dart';
 import '../../../iap/presentation/bloc/iap_bloc.dart';
-import '../../domain/repositories/ads_repository.dart';
-import '../bloc/ads_bloc.dart';
 
 class NativeAdWidget extends StatefulWidget {
   final String? adUnitId;
@@ -224,7 +222,7 @@ class _NativeAdWidgetState extends State<NativeAdWidget> {
                         color: const Color(0xFF1E1E1E),
                         borderRadius: BorderRadius.circular(15),
                         border: Border.all(
-                          color: Colors.white.withOpacity(0.05),
+                          color: Colors.white.withValues(alpha: 0.05),
                         ),
                       ),
                       child: Center(

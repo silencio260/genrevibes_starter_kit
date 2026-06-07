@@ -1,5 +1,5 @@
 import 'package:dartz/dartz.dart';
-import 'package:starter_kit/core/error/failure.dart';
+import 'package:genrevibes_starter_kit/core/error/failure.dart';
 
 /// Repository for fetching remote configuration values
 abstract class RemoteConfigRepository {

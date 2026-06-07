@@ -10,7 +10,7 @@ import '../../domain/usecases/initialize_iap_usecase.dart';
 import '../../domain/usecases/purchase_product_usecase.dart';
 import '../../domain/usecases/restore_purchases_usecase.dart';
 import '../../domain/services/subscription_manager.dart';
-import 'package:starter_kit/starter_kit.dart';
+import '../../../../core/utils/starter_log.dart';
 
 part 'iap_event.dart';
 part 'iap_state.dart';

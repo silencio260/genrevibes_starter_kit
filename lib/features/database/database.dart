@@ -1,4 +1,5 @@
 /// Provides user profile management and subscription tracking.
+library;
 
 // Domain - Entities
 export 'domain/entities/subscription_tier.dart';

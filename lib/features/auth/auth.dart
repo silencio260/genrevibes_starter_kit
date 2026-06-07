@@ -2,7 +2,7 @@
 ///
 /// Provides anonymous, email/password, Google, and Apple sign-in
 /// with account linking support.
-library auth;
+library;
 
 // Domain - Entities
 export 'domain/entities/auth_provider.dart';

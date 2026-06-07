@@ -11,30 +11,27 @@ class StarterKitException implements Exception {
 
 /// Network exception
 class NetworkException extends StarterKitException {
-  const NetworkException({String message = 'Network error'})
-    : super(message: message);
+  const NetworkException({super.message = 'Network error'});
 }
 
 /// Server exception
 class ServerException extends StarterKitException {
   final int? statusCode;
 
-  const ServerException({String message = 'Server error', this.statusCode})
-    : super(message: message);
+  const ServerException({super.message = 'Server error', this.statusCode});
 }
 
 /// Configuration exception
 class ConfigurationException extends StarterKitException {
-  const ConfigurationException({String message = 'Configuration error'})
-    : super(message: message);
+  const ConfigurationException({super.message = 'Configuration error'});
 }
 
 /// Purchase exception
 class PurchaseException extends StarterKitException {
-  const PurchaseException({required String message}) : super(message: message);
+  const PurchaseException({required super.message});
 }
 
 /// Ad exception
 class AdException extends StarterKitException {
-  const AdException({required String message}) : super(message: message);
+  const AdException({required super.message});
 }

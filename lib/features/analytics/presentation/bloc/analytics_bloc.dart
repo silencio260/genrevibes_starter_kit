@@ -1,6 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../domain/entities/analytics_event.dart' as entity;
 import '../../domain/repositories/analytics_repository.dart';
 import '../../domain/usecases/log_event_usecase.dart';
 import '../../domain/usecases/log_ad_revenue_usecase.dart';

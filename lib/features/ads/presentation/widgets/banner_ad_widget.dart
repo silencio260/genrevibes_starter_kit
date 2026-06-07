@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:starter_kit/starter_kit.dart';
+import 'package:genrevibes_starter_kit/starter_kit.dart';
 import '../../domain/services/ad_suppression_manager.dart';
 import '../../../iap/presentation/bloc/iap_bloc.dart';
 import '../../../analytics/domain/entities/ad_revenue_event.dart';
-import '../../domain/repositories/ads_repository.dart';
-import '../bloc/ads_bloc.dart';
 
 class BannerAdWidget extends StatefulWidget {
   final AdSize adSize;

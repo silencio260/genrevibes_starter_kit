@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:starter_kit/starter_kit.dart';
+import 'package:genrevibes_starter_kit/starter_kit.dart';
 
 class PostHogWrapper extends StatefulWidget {
   final Widget child;

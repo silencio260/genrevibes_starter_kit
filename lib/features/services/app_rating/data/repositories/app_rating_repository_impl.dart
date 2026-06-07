@@ -1,8 +1,8 @@
 import 'package:dartz/dartz.dart';
 import 'package:in_app_review/in_app_review.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:starter_kit/core/error/failure.dart';
-import 'package:starter_kit/core/utils/starter_log.dart';
+import 'package:genrevibes_starter_kit/core/error/failure.dart';
+import 'package:genrevibes_starter_kit/core/utils/starter_log.dart';
 import '../../domain/repositories/app_rating_repository.dart';
 import '../../../../ads/domain/services/ad_suppression_manager.dart';
 

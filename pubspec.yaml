@@ -1,4 +1,4 @@
-name: starter_kit
+name: genrevibes_starter_kit
 description: A reusable Flutter plugin with IAP, Ads, Analytics, Onboarding, Settings, and support services (feedback, GDPR, remote config, push notifications).
 version: 1.0.0
 publish_to: 'none'

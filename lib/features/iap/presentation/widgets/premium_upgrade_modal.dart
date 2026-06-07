@@ -1,6 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:starter_kit/starter_kit.dart';
+import 'package:genrevibes_starter_kit/starter_kit.dart';
 
 /// Shows a premium upgrade modal dialog with app-consistent emerald branding
 /// 
@@ -45,19 +45,20 @@ Future<bool?> showPremiumUpgradeModal(
             child: Container(
               padding: const EdgeInsets.all(32),
               decoration: BoxDecoration(
-                color: isDark 
-                    ? Colors.black.withOpacity(0.6) 
-                    : Colors.white.withOpacity(0.85),
+                color: isDark
+                    ? Colors.black.withValues(alpha: 0.6)
+                    : Colors.white.withValues(alpha: 0.85),
                 borderRadius: BorderRadius.circular(32),
                 border: Border.all(
-                  color: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
+                  color: (isDark ? Colors.white : Colors.black)
+                      .withValues(alpha: 0.1),
                   width: 1.5,
                 ),
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    primary.withOpacity(0.15),
+                    primary.withValues(alpha: 0.15),
                     Colors.transparent,
                   ],
                 ),
@@ -80,7 +81,7 @@ Future<bool?> showPremiumUpgradeModal(
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: primary.withOpacity(0.4),
+                          color: primary.withValues(alpha: 0.4),
                           blurRadius: 20,
                           spreadRadius: 2,
                           offset: const Offset(0, 8),
@@ -113,7 +114,8 @@ Future<bool?> showPremiumUpgradeModal(
                     message,
                     style: TextStyle(
                       fontSize: 16,
-                      color: (isDark ? Colors.white : Colors.black).withOpacity(0.7),
+                      color: (isDark ? Colors.white : Colors.black)
+                          .withValues(alpha: 0.7),
                       height: 1.6,
                       fontWeight: FontWeight.w400,
                     ),
@@ -135,7 +137,7 @@ Future<bool?> showPremiumUpgradeModal(
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: primary.withOpacity(0.3),
+                              color: primary.withValues(alpha: 0.3),
                               blurRadius: 12,
                               offset: const Offset(0, 6),
                             ),
@@ -174,7 +176,9 @@ Future<bool?> showPremiumUpgradeModal(
                         TextButton(
                           onPressed: () => Navigator.of(context).pop(false),
                           style: TextButton.styleFrom(
-                            foregroundColor: (isDark ? Colors.white : Colors.black).withOpacity(0.5),
+                            foregroundColor:
+                                (isDark ? Colors.white : Colors.black)
+                                    .withValues(alpha: 0.5),
                             padding: const EdgeInsets.symmetric(vertical: 12),
                           ),
                           child: Text(

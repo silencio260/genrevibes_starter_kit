@@ -9,7 +9,7 @@ import '../../domain/usecases/show_app_open_usecase.dart';
 import '../../domain/repositories/ads_repository.dart';
 import '../../domain/services/ad_suppression_manager.dart';
 import '../../../analytics/domain/entities/ad_revenue_event.dart';
-import 'package:starter_kit/starter_kit.dart';
+import '../../../../core/utils/starter_log.dart';
 
 part 'ads_event.dart';
 part 'ads_state.dart';

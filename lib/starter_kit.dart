@@ -323,8 +323,8 @@ class StarterKit {
       );
     }
     return DoubleTapToExitWidget(
-      child: child,
       config: config ?? const DoubleTapExitConfig(),
+      child: child,
     );
   }
 }

@@ -1,5 +1,5 @@
 import '../utils/analytics_names.dart';
-import 'package:starter_kit/starter_kit.dart';
+import '../../../../core/utils/starter_log.dart';
 import '../../presentation/bloc/analytics_bloc.dart';
 import '../../presentation/bloc/analytics_event.dart' as bloc_event;
 import '../entities/ad_revenue_event.dart';

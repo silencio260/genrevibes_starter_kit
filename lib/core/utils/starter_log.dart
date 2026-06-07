@@ -4,7 +4,10 @@ import 'package:logger/logger.dart';
 ///
 /// Provides beautifully styled console output with frames, emojis, and colors.
 class StarterLog {
-  static late Logger _logger;
+  /// Default logger so log calls made before [init] (e.g. before
+  /// StarterKit.initialize) don't throw a LateInitializationError. [init]
+  /// replaces this with the configured pretty-printing logger.
+  static Logger _logger = Logger();
   static bool _loggingEnabled = true;
 
   /// Initialize the logger with custom settings

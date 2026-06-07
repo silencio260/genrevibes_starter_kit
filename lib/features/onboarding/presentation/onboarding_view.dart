@@ -20,7 +20,7 @@ class OnboardingView extends StatefulWidget {
   final String completeButtonText;
 
   const OnboardingView({
-    Key? key,
+    super.key,
     required this.pages,
     this.templateType = OnboardingTemplateType.standard,
     this.onComplete,
@@ -31,7 +31,7 @@ class OnboardingView extends StatefulWidget {
     this.nextButtonText = 'Next',
     this.skipButtonText = 'Skip',
     this.completeButtonText = 'Get Started',
-  }) : super(key: key);
+  });
 
   @override
   State<OnboardingView> createState() => _OnboardingViewState();

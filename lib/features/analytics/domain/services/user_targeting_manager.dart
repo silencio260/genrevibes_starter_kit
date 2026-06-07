@@ -5,11 +5,31 @@ import 'analytics_service.dart';
 
 /// User engagement levels
 enum UserEngagementLevel {
-  FIRST_TIME, // First session ever
-  LOW, // <3 days active or <5 total opens
-  MEDIUM, // 3-6 days active or 5-15 opens
-  HIGH, // 7-20 days active or 15-50 opens
-  POWER_USER, // 20+ days active or 50+ opens
+  firstTime, // First session ever
+  low, // <3 days active or <5 total opens
+  medium, // 3-6 days active or 5-15 opens
+  high, // 7-20 days active or 15-50 opens
+  powerUser, // 20+ days active or 50+ opens
+}
+
+extension UserEngagementLevelLabel on UserEngagementLevel {
+  /// Stable analytics wire value. Kept SCREAMING_CASE for dashboard continuity
+  /// after the enum identifiers were renamed to lowerCamelCase, so historical
+  /// `engagement_level` data isn't split.
+  String get analyticsLabel {
+    switch (this) {
+      case UserEngagementLevel.firstTime:
+        return 'FIRST_TIME';
+      case UserEngagementLevel.low:
+        return 'LOW';
+      case UserEngagementLevel.medium:
+        return 'MEDIUM';
+      case UserEngagementLevel.high:
+        return 'HIGH';
+      case UserEngagementLevel.powerUser:
+        return 'POWER_USER';
+    }
+  }
 }
 
 /// Targeting and segmentation logic using RetentionTracker data
@@ -61,14 +81,14 @@ class UserTargetingManager with WidgetsBindingObserver {
   }
 
   UserEngagementLevel getEngagementLevel() {
-    if (isFirstTimeUser()) return UserEngagementLevel.FIRST_TIME;
-    if (isPowerUser()) return UserEngagementLevel.POWER_USER;
+    if (isFirstTimeUser()) return UserEngagementLevel.firstTime;
+    if (isPowerUser()) return UserEngagementLevel.powerUser;
 
     final activeDays = _tracker.getActiveDays().length;
     final totalOpens = _tracker.getTotalAppOpens();
-    if (activeDays >= 7 || totalOpens >= 15) return UserEngagementLevel.HIGH;
-    if (activeDays >= 3 || totalOpens >= 5) return UserEngagementLevel.MEDIUM;
-    return UserEngagementLevel.LOW;
+    if (activeDays >= 7 || totalOpens >= 15) return UserEngagementLevel.high;
+    if (activeDays >= 3 || totalOpens >= 5) return UserEngagementLevel.medium;
+    return UserEngagementLevel.low;
   }
 
   String getUserSegment() {
@@ -82,7 +102,7 @@ class UserTargetingManager with WidgetsBindingObserver {
   Map<String, dynamic> getUserProfile() {
     return {
       'segment': getUserSegment(),
-      'engagement_level': getEngagementLevel().toString().split('.').last,
+      'engagement_level': getEngagementLevel().analyticsLabel,
       'is_first_time': isFirstTimeUser() ? 1 : 0,
       'is_new': isNewUser() ? 1 : 0,
       'is_loyal': isLoyalUser() ? 1 : 0,

@@ -237,7 +237,7 @@
     },
     {
       "name": "flutter",
-      "rootUri": "file:///Users/faruqshabi/development_library/flutter/packages/flutter",
+      "rootUri": "file:///Users/faruqshabi/fvm/versions/3.35.1/packages/flutter",
       "packageUri": "lib/",
       "languageVersion": "3.8"
     },
@@ -255,13 +255,13 @@
     },
     {
       "name": "flutter_test",
-      "rootUri": "file:///Users/faruqshabi/development_library/flutter/packages/flutter_test",
+      "rootUri": "file:///Users/faruqshabi/fvm/versions/3.35.1/packages/flutter_test",
       "packageUri": "lib/",
       "languageVersion": "3.8"
     },
     {
       "name": "flutter_web_plugins",
-      "rootUri": "file:///Users/faruqshabi/development_library/flutter/packages/flutter_web_plugins",
+      "rootUri": "file:///Users/faruqshabi/fvm/versions/3.35.1/packages/flutter_web_plugins",
       "packageUri": "lib/",
       "languageVersion": "3.8"
     },
@@ -579,7 +579,7 @@
     },
     {
       "name": "sky_engine",
-      "rootUri": "file:///Users/faruqshabi/development_library/flutter/bin/cache/pkg/sky_engine",
+      "rootUri": "file:///Users/faruqshabi/fvm/versions/3.35.1/bin/cache/pkg/sky_engine",
       "packageUri": "lib/",
       "languageVersion": "3.8"
     },
@@ -740,7 +740,7 @@
       "languageVersion": "3.3"
     },
     {
-      "name": "starter_kit",
+      "name": "genrevibes_starter_kit",
       "rootUri": "../",
       "packageUri": "lib/",
       "languageVersion": "3.0"
@@ -748,7 +748,7 @@
   ],
   "generator": "pub",
   "generatorVersion": "3.9.0",
-  "flutterRoot": "file:///Users/faruqshabi/development_library/flutter",
+  "flutterRoot": "file:///Users/faruqshabi/fvm/versions/3.35.1",
   "flutterVersion": "3.35.1",
   "pubCache": "file:///Users/faruqshabi/.pub-cache"
 }
