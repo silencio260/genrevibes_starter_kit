@@ -2,6 +2,13 @@
 
 A strictly architected, modular plugin system for Flutter apps.
 
+> **Note — dormant in `smart_launcher_app`:** this package is vendored into the
+> launcher as the shared exemplar (it is copied across the sibling apps), but the
+> launcher host does **not** depend on it: there is no path dependency in the host
+> `pubspec.yaml`, no imports, and `StarterKit.initialize()` is never called. That
+> is intentional, not an unfinished integration. The package is kept clean and
+> correct here so other apps consuming it inherit the fixes.
+
 ## Installation
 
 Starter Kit is a **standalone Flutter package** with its own `pubspec.yaml`. You can use it as a path dependency or copy the `packages/starter_kit` folder into any project.

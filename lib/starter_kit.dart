@@ -54,9 +54,15 @@ class StarterKit {
   /// Access the internal Service Locator if needed
   static GetIt get sl => _sl;
 
+  static String? _supportEmail;
+
+  /// The support email supplied at [initialize], if any. Useful for
+  /// "Contact support" links in host apps. `null` when not provided.
+  static String? get supportEmail => _supportEmail;
+
   /// Initialize the Starter Kit
   static Future<void> initialize({
-    required String supportEmail,
+    String? supportEmail,
     String? feedbackNestApiKey,
     AuthRepository? authRepository,
     UserProfileRepository? userProfileRepository,
@@ -71,6 +77,9 @@ class StarterKit {
     PostHogRemoteDataSource? postHogDataSource,
     bool debugLogging = kDebugMode,
   }) async {
+    // Store config for host-app accessors
+    _supportEmail = supportEmail;
+
     // Initialize Logger
     StarterLog.init(enableLogging: debugLogging);
     StarterLog.d('StarterKit Initializing...', tag: 'CORE');
@@ -114,6 +123,7 @@ class StarterKit {
       gdprRepository: gdprRepository,
       pushNotificationsRepository: pushNotificationsRepository,
       feedbackRepository: feedbackRepository,
+      feedbackNestApiKey: feedbackNestApiKey,
     );
 
     // Link Subscription status to Ad suppression

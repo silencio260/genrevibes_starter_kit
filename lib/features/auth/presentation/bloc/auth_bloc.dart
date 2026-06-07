@@ -26,12 +26,18 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final UserProfileRepository? _userProfileRepository;
   final Future<void> Function(String ghostUid, String permanentUid)?
       onAccountMerge;
+
+  /// Loading message shown while [onAccountMerge] runs. Generic by default so
+  /// the kit isn't tied to chat semantics; hosts can override per app.
+  // TODO(feature-audit): chat-specific; strip account-merge from kit when audited
+  final String mergeLoadingMessage;
   StreamSubscription<UserEntity?>? _authStateSubscription;
 
   AuthBloc({
     required AuthRepository repository,
     UserProfileRepository? userProfileRepository,
     this.onAccountMerge,
+    this.mergeLoadingMessage = 'Merging your account...',
   })  : _repository = repository,
         _userProfileRepository = userProfileRepository,
         super(const AuthInitial()) {
@@ -255,7 +261,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
             ghostUid != null &&
             user.uid != ghostUid &&
             onAccountMerge != null) {
-          emit(const AuthLoading(message: 'Merging your previous chats...'));
+          emit(AuthLoading(message: mergeLoadingMessage));
           await onAccountMerge!.call(ghostUid, user.uid);
         }
         emit(AuthAuthenticated(user: user));
@@ -286,7 +292,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
             ghostUid != null &&
             user.uid != ghostUid &&
             onAccountMerge != null) {
-          emit(const AuthLoading(message: 'Merging your previous chats...'));
+          emit(AuthLoading(message: mergeLoadingMessage));
           await onAccountMerge!.call(ghostUid, user.uid);
         }
         emit(AuthAuthenticated(user: user));
@@ -317,7 +323,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
             ghostUid != null &&
             user.uid != ghostUid &&
             onAccountMerge != null) {
-          emit(const AuthLoading(message: 'Merging your previous chats...'));
+          emit(AuthLoading(message: mergeLoadingMessage));
           await onAccountMerge!.call(ghostUid, user.uid);
         }
         emit(AuthAuthenticated(user: user));
@@ -352,7 +358,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
             ghostUid != null &&
             user.uid != ghostUid &&
             onAccountMerge != null) {
-          emit(const AuthLoading(message: 'Merging your previous chats...'));
+          emit(AuthLoading(message: mergeLoadingMessage));
           await onAccountMerge!.call(ghostUid, user.uid);
         }
         emit(AuthAuthenticated(user: user));

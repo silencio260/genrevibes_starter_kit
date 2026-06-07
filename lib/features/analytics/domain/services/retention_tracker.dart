@@ -20,13 +20,20 @@ class RetentionTracker extends ChangeNotifier {
   static const String _firstInstallKey = 'first_install_date';
   static const String _lastOpenKey = 'last_open_date';
   static const String _totalOpensKey = 'total_app_opens';
+  static const String _totalSessionsKey = 'total_sessions';
   static const String _sessionTimestampsKey = 'session_timestamps';
   static const String _dailyOpenDatesKey = 'daily_open_dates';
+
+  /// How many days of session/daily-open history to retain on disk. Only the
+  /// last ~month is needed for D7/D30 metrics; older entries are pruned so the
+  /// persisted lists don't grow unbounded over the app's lifetime.
+  static const int _retentionWindowDays = 35;
 
   // Cache
   DateTime? _firstInstallDate;
   DateTime? _lastOpenDate;
   int? _totalAppOpens;
+  int? _totalSessions;
   List<DateTime>? _sessionTimestamps;
   List<DateTime>? _dailyOpenDates;
   bool _isInitialized = false;
@@ -57,9 +64,13 @@ class RetentionTracker extends ChangeNotifier {
     _totalAppOpens = (_totalAppOpens ?? 0) + 1;
     await _saveInt(_totalOpensKey, _totalAppOpens!);
 
-    // Add session timestamp
+    // Add session timestamp (cumulative count tracked separately so pruning
+    // the windowed list doesn't lose the lifetime total).
+    _totalSessions = (_totalSessions ?? 0) + 1;
+    await _saveInt(_totalSessionsKey, _totalSessions!);
     _sessionTimestamps ??= [];
     _sessionTimestamps!.add(now);
+    _pruneByWindow(_sessionTimestamps!);
     await _saveDateTimeList(_sessionTimestampsKey, _sessionTimestamps!);
 
     // Add daily open date (if not already opened today)
@@ -71,6 +82,7 @@ class RetentionTracker extends ChangeNotifier {
           date.day == today.day,
     )) {
       _dailyOpenDates!.add(today);
+      _pruneByWindow(_dailyOpenDates!);
       await _saveDateTimeList(_dailyOpenDatesKey, _dailyOpenDates!);
     }
 
@@ -85,8 +97,11 @@ class RetentionTracker extends ChangeNotifier {
     await _ensureInitialized();
 
     final now = DateTime.now();
+    _totalSessions = (_totalSessions ?? 0) + 1;
+    await _saveInt(_totalSessionsKey, _totalSessions!);
     _sessionTimestamps ??= [];
     _sessionTimestamps!.add(now);
+    _pruneByWindow(_sessionTimestamps!);
     await _saveDateTimeList(_sessionTimestampsKey, _sessionTimestamps!);
 
     // Log to Analytics
@@ -199,7 +214,7 @@ class RetentionTracker extends ChangeNotifier {
     return {
       'total_opens': getTotalAppOpens(),
       'sessions_today': getSessionCountToday(),
-      'total_sessions': _sessionTimestamps?.length ?? 0,
+      'total_sessions': _totalSessions ?? 0,
       'active_days_count': _dailyOpenDates?.length ?? 0,
       'days_since_install': getDaysSinceInstall(),
       'days_since_last_open': getDaysSinceLastOpen(),
@@ -219,6 +234,7 @@ class RetentionTracker extends ChangeNotifier {
     _lastOpenDate = lastOpenStr != null ? DateTime.parse(lastOpenStr) : null;
 
     _totalAppOpens = await _storage!.getInt(_totalOpensKey);
+    _totalSessions = await _storage!.getInt(_totalSessionsKey);
 
     final sessionStrs = await _storage!.getStringList(_sessionTimestampsKey);
     _sessionTimestamps = sessionStrs?.map((s) => DateTime.parse(s)).toList();
@@ -226,7 +242,23 @@ class RetentionTracker extends ChangeNotifier {
     final dailyStrs = await _storage!.getStringList(_dailyOpenDatesKey);
     _dailyOpenDates = dailyStrs?.map((s) => DateTime.parse(s)).toList();
 
+    // Backfill the cumulative session counter for installs that predate it.
+    if (_totalSessions == null && _sessionTimestamps != null) {
+      _totalSessions = _sessionTimestamps!.length;
+    }
+
+    // Prune any history that has aged out of the retention window on load.
+    if (_sessionTimestamps != null) _pruneByWindow(_sessionTimestamps!);
+    if (_dailyOpenDates != null) _pruneByWindow(_dailyOpenDates!);
+
     _isInitialized = true;
+  }
+
+  /// Drop entries older than [_retentionWindowDays] from a timestamp list.
+  void _pruneByWindow(List<DateTime> list) {
+    final cutoff =
+        DateTime.now().subtract(const Duration(days: _retentionWindowDays));
+    list.removeWhere((dt) => dt.isBefore(cutoff));
   }
 
   Future<void> _saveDateTime(String key, DateTime value) async {

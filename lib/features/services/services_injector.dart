@@ -1,5 +1,6 @@
 import 'package:get_it/get_it.dart';
 import 'app_rating/domain/repositories/app_rating_repository.dart';
+import 'feedback/data/repositories/feedback_nest_repository_impl.dart';
 import 'feedback/domain/repositories/feedback_repository.dart';
 import 'gdpr/domain/repositories/gdpr_repository.dart';
 import 'push_notifications/domain/repositories/push_notifications_repository.dart';
@@ -13,6 +14,7 @@ void initServicesFeature(
   GdprRepository? gdprRepository,
   PushNotificationsRepository? pushNotificationsRepository,
   FeedbackRepository? feedbackRepository,
+  String? feedbackNestApiKey,
 }) {
   // --- App Rating ---
   if (appRatingRepository != null) {
@@ -33,6 +35,11 @@ void initServicesFeature(
   // --- Feedback ---
   if (feedbackRepository != null) {
     sl.registerLazySingleton<FeedbackRepository>(() => feedbackRepository);
+  } else if (feedbackNestApiKey != null && feedbackNestApiKey.isNotEmpty) {
+    // Auto-wire the FeedbackNest implementation from the supplied API key.
+    sl.registerLazySingleton<FeedbackRepository>(
+      () => FeedbackNestRepositoryImpl(apiKey: feedbackNestApiKey),
+    );
   }
 
   // --- Push Notifications ---

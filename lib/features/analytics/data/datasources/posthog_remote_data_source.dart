@@ -30,9 +30,16 @@ class PostHogRemoteDataSourceImpl implements PostHogRemoteDataSource {
     required String apiKey,
     required String host,
   }) async {
-    // In current posthog_flutter, init is typically native or automatic.
-    // We mark as initialized to allow calls.
-    _isInitialized = true;
+    if (_isInitialized) return;
+    try {
+      final config = PostHogConfig(apiKey)..host = host;
+      await _posthog.setup(config);
+      _isInitialized = true;
+    } catch (_) {
+      // Leave _isInitialized false so capture/identify/screen stay no-ops
+      // rather than throwing on every call after a failed setup.
+      _isInitialized = false;
+    }
   }
 
   @override

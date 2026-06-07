@@ -40,8 +40,16 @@ class UserProfileDataSourceImpl implements UserProfileDataSource {
   /// Collection path for user profiles
   static const String _usersCollection = 'users';
 
-  UserProfileDataSourceImpl({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+  /// Top-level subcollections (under the user doc) to delete when the account
+  /// is removed. Empty by default so the generic kit doesn't assume any
+  /// app-specific collections exist; hosts pass what they need (e.g. ['chats']).
+  // TODO(feature-audit): chat-specific; strip from kit when audited
+  final List<String> subcollectionsToDelete;
+
+  UserProfileDataSourceImpl({
+    FirebaseFirestore? firestore,
+    this.subcollectionsToDelete = const [],
+  }) : _firestore = firestore ?? FirebaseFirestore.instance;
 
   CollectionReference<Map<String, dynamic>> get _usersRef =>
       _firestore.collection(_usersCollection);
@@ -253,17 +261,17 @@ class UserProfileDataSourceImpl implements UserProfileDataSource {
   }
 
   Future<void> _deleteSubcollections(String uid) async {
-    // Delete chats subcollection
-    final chatsRef = _usersRef.doc(uid).collection('chats');
-    final chats = await chatsRef.get();
-    for (final chat in chats.docs) {
-      // Delete messages in each chat
-      final messagesRef = chat.reference.collection('messages');
-      final messages = await messagesRef.get();
-      for (final message in messages.docs) {
-        await message.reference.delete();
+    // Delete each host-configured subcollection. With the default empty list
+    // this is a no-op, so the generic kit doesn't touch collections that may
+    // not exist for a given app.
+    // TODO(feature-audit): chat-specific deep-delete previously hardcoded
+    // chats/messages; strip from kit when audited.
+    for (final name in subcollectionsToDelete) {
+      final ref = _usersRef.doc(uid).collection(name);
+      final docs = await ref.get();
+      for (final doc in docs.docs) {
+        await doc.reference.delete();
       }
-      await chat.reference.delete();
     }
 
     // Also delete any other documents in userDetails if they exist

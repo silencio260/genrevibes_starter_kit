@@ -42,6 +42,12 @@ class _OnboardingViewState extends State<OnboardingView> {
   int _currentPage = 0;
 
   @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
@@ -86,6 +92,16 @@ class _OnboardingViewState extends State<OnboardingView> {
 
   Widget _buildPage(OnboardingPageModel page) {
     switch (widget.templateType) {
+      case OnboardingTemplateType.custom:
+        // Fully host-driven page: render the supplied widget if present,
+        // otherwise fall back to the standard layout below.
+        if (page.customWidget != null) {
+          return Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: page.customWidget!,
+          );
+        }
+        return _buildStandardPage(page);
       case OnboardingTemplateType.minimal:
         return Padding(
           padding: const EdgeInsets.all(24.0),
@@ -111,42 +127,44 @@ class _OnboardingViewState extends State<OnboardingView> {
           ),
         );
       case OnboardingTemplateType.standard:
-      default:
-        return Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (page.imagePath != null)
-                Expanded(
-                  child: page.imagePath!.endsWith('.json')
-                      ? Lottie.asset(page.imagePath!)
-                      : Image.asset(page.imagePath!),
-                ),
-              if (page.customWidget != null)
-                Expanded(child: page.customWidget!),
+        return _buildStandardPage(page);
+    }
+  }
 
-              const SizedBox(height: 32),
-              Text(
-                page.title,
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+  Widget _buildStandardPage(OnboardingPageModel page) {
+    return Padding(
+      padding: const EdgeInsets.all(24.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          if (page.imagePath != null)
+            Expanded(
+              child: page.imagePath!.endsWith('.json')
+                  ? Lottie.asset(page.imagePath!)
+                  : Image.asset(page.imagePath!),
+            ),
+          if (page.customWidget != null) Expanded(child: page.customWidget!),
+
+          const SizedBox(height: 32),
+          Text(
+            page.title,
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: page.titleColor,
                 ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                page.description,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: page.descriptionColor ?? Colors.white60,
-                ),
-              ),
-            ],
+            textAlign: TextAlign.center,
           ),
-        );
-    }
+          const SizedBox(height: 16),
+          Text(
+            page.description,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: page.descriptionColor ?? Colors.white60,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildBottomControls() {

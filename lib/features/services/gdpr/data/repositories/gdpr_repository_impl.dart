@@ -65,9 +65,12 @@ class GdprRepositoryImpl implements GdprRepository {
                     tag: 'GDPR', error: error.message);
                 completer.complete(Left(ServerFailure(message: error.message)));
               } else {
-                // Check if more forms are needed or if consent is now obtained
+                // Form dismissed without error. Do NOT call requestConsent()
+                // again — if the user dismissed while still `required`, that
+                // would re-show the form in a loop. Complete successfully and
+                // let callers read isConsentGiven() for the final state.
                 StarterLog.i('Consent Form Dismissed', tag: 'GDPR');
-                requestConsent().then((result) => completer.complete(result));
+                completer.complete(const Right(null));
               }
             },
           );

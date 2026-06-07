@@ -68,10 +68,9 @@ class AnalyticsRepositoryImpl implements AnalyticsRepository {
   ) async {
     try {
       await remoteDataSource.setUserProperty(name, value);
-      await postHogDataSource?.identify(
-        userId: '', // PostHog identify requires userId, or use userProperties
-        userProperties: {name: value},
-      );
+      // Intentionally NOT forwarding to PostHog here: identify() with an empty
+      // distinct-id is invalid and can mis-merge users. PostHog user properties
+      // are attached via the real identify() call in setUserId().
       return const Right(null);
     } catch (e) {
       return Left(ServerFailure(message: e.toString()));
