@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:get_it/get_it.dart';
 
 import 'domain/repositories/analytics_repository.dart';
@@ -15,7 +16,9 @@ void initAnalyticsFeature(
   AnalyticsRepository? analyticsRepository,
   PostHogRemoteDataSource? postHogRemoteDataSource,
 }) {
-  print('[AnalyticsInjector] Initializing for sl: ${sl.hashCode}');
+  if (kDebugMode) {
+    print('[AnalyticsInjector] Initializing for sl: ${sl.hashCode}');
+  }
   // PostHog (Standalone datasource first)
   if (postHogRemoteDataSource != null) {
     if (!sl.isRegistered<PostHogRemoteDataSource>()) {

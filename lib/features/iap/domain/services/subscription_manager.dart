@@ -16,8 +16,11 @@ class SubscriptionManager extends ChangeNotifier {
   SubscriptionStatus _status = const SubscriptionStatus.free();
   bool _debugOverridePremium = false;
 
-  /// Returns true if user is premium OR if debug override is enabled
-  bool get isPremium => _debugOverridePremium || _status.isPremium;
+  /// Returns true if user is premium OR if debug override is enabled.
+  /// The debug override only applies in debug builds — a leftover `true`
+  /// can never grant premium in release.
+  bool get isPremium =>
+      (kDebugMode && _debugOverridePremium) || _status.isPremium;
 
   /// Current subscription status
   SubscriptionStatus get status => _status;
@@ -44,8 +47,11 @@ class SubscriptionManager extends ChangeNotifier {
     }
   }
 
-  /// Toggle debug premium override
+  /// Toggle debug premium override.
+  ///
+  /// No-op in release builds so it can never unlock premium at runtime.
   void setDebugOverride(bool value) {
+    if (!kDebugMode) return;
     if (_debugOverridePremium != value) {
       _debugOverridePremium = value;
       notifyListeners();

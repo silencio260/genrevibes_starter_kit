@@ -55,16 +55,16 @@ class StarterLog {
     _logger.w(_formatMessage(title, tag, values));
   }
 
-  /// Log an error message (Always logged by default unless force-disabled)
+  /// Log an error message (honors the global logging flag like d/i/w)
   static void e(
     String title, {
     String? tag,
     dynamic error,
     StackTrace? stackTrace,
     Map<String, dynamic>? values,
-    bool debugLog = true,
+    bool debugLog = false,
   }) {
-    if (!debugLog) return;
+    if (!_loggingEnabled && !debugLog) return;
     _logger.e(
       _formatMessage('❌ $title', tag, values),
       error: error,

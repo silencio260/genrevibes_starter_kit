@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 
@@ -68,7 +69,7 @@ class StarterKit {
     PushNotificationsRepository? pushNotificationsRepository,
     FeedbackRepository? feedbackRepository,
     PostHogRemoteDataSource? postHogDataSource,
-    bool debugLogging = true,
+    bool debugLogging = kDebugMode,
   }) async {
     // Initialize Logger
     StarterLog.init(enableLogging: debugLogging);

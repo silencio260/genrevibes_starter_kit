@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../domain/entities/product.dart';
@@ -93,6 +94,9 @@ class IapBloc extends Bloc<IapEvent, IapState> {
     IapDebugTogglePremium event,
     Emitter<IapState> emit,
   ) async {
+    // Never construct fake entitlements in release builds.
+    if (!kDebugMode) return;
+
     final newStatus = _currentStatus.isPremium
         ? const SubscriptionStatus.free()
         : SubscriptionStatus(

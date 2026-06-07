@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:equatable/equatable.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/error/failure.dart';
@@ -34,8 +35,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   })  : _repository = repository,
         _userProfileRepository = userProfileRepository,
         super(const AuthInitial()) {
-    print(
-        "DEBUG PREFILL: AuthBloc initialized. userProfileRepository is null? ${userProfileRepository == null}");
+    if (kDebugMode) {
+      print(
+          "DEBUG PREFILL: AuthBloc initialized. userProfileRepository is null? ${userProfileRepository == null}");
+    }
     // Register event handlers
     on<AuthCheckStatus>(_onCheckStatus);
     on<AuthSignInAnonymously>(_onSignInAnonymously);
@@ -111,8 +114,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       }
     } catch (e) {
       // Log but don't crash — profile sync is best-effort
-      // ignore: avoid_print
-      print('[AuthBloc] _ensureProfileExists error: $e');
+      if (kDebugMode) {
+        print('[AuthBloc] _ensureProfileExists error: $e');
+      }
     }
   }
 
@@ -174,16 +178,15 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     // newer Firebase projects even when the account exists.
     String? displayName;
 
-    //  print("DEBUG PREFILL {profileResult}: ${profileResult} ");
-    // print("DEBUG PREFILL {result}: ${result} ");
-
     if (_userProfileRepository != null) {
       try {
         final profileResult =
             await _userProfileRepository!.getUserProfileByEmail(event.email);
 
-        print("DEBUG PREFILL {prrofileResult}: ${profileResult} ");
-        print("DEBUG PREFILL {result}: ${result} ");
+        if (kDebugMode) {
+          print("DEBUG PREFILL {prrofileResult}: $profileResult ");
+          print("DEBUG PREFILL {result}: $result ");
+        }
 
         profileResult.fold(
           (failure) => null,

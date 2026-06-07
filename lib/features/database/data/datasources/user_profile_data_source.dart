@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import '../../domain/entities/subscription_tier.dart';
 
 import '../../domain/repositories/user_profile_repository.dart';
@@ -56,8 +57,10 @@ class UserProfileDataSourceImpl implements UserProfileDataSource {
   @override
   Future<UserProfileModel?> getUserProfileByEmail(String email) async {
     final cleanedEmail = email.trim().toLowerCase();
-    print(
-        'DEBUG PREFILL [DataSource SK]: Searching for email: "$cleanedEmail"');
+    if (kDebugMode) {
+      print(
+          'DEBUG PREFILL [DataSource SK]: Searching for email: "$cleanedEmail"');
+    }
 
     // Search top-level users collection for the email
     final topQuery =
@@ -66,25 +69,33 @@ class UserProfileDataSourceImpl implements UserProfileDataSource {
     if (topQuery.docs.isNotEmpty) {
       // We found the user's UID. Now fetch their full profile from the subcollection.
       final uid = topQuery.docs.first.id;
-      print('DEBUG PREFILL [DataSource SK]: Found top-level UID: "$uid"');
+      if (kDebugMode) {
+        print('DEBUG PREFILL [DataSource SK]: Found top-level UID: "$uid"');
+      }
 
       final profile = await getUserProfile(uid);
 
       // If profile exists in subcollection, return it.
       if (profile != null) {
-        print(
-            'DEBUG PREFILL [DataSource SK]: Found full profile in userDetails for UID "$uid", Name: "${profile.displayName}"');
+        if (kDebugMode) {
+          print(
+              'DEBUG PREFILL [DataSource SK]: Found full profile in userDetails for UID "$uid", Name: "${profile.displayName}"');
+        }
         return profile;
       }
 
       // Fallback: If they haven't been migrated to subcollection yet, return the top-level document
-      print(
-          'DEBUG PREFILL [DataSource SK]: Profile not found in userDetails, falling back to top-level doc for UID "$uid"');
+      if (kDebugMode) {
+        print(
+            'DEBUG PREFILL [DataSource SK]: Profile not found in userDetails, falling back to top-level doc for UID "$uid"');
+      }
       return UserProfileModel.fromFirestore(topQuery.docs.first);
     }
 
-    print(
-        'DEBUG PREFILL [DataSource SK]: NO user found with email "$cleanedEmail"');
+    if (kDebugMode) {
+      print(
+          'DEBUG PREFILL [DataSource SK]: NO user found with email "$cleanedEmail"');
+    }
     return null;
   }
 
