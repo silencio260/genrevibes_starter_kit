@@ -7,6 +7,7 @@ import 'features/ads/presentation/bloc/ads_bloc.dart';
 import 'features/ads/domain/services/ad_suppression_manager.dart';
 import 'features/analytics/analytics_injector.dart';
 import 'features/analytics/data/datasources/posthog_remote_data_source.dart';
+import 'features/analytics/data/datasources/mixpanel_remote_data_source.dart';
 import 'features/analytics/presentation/bloc/analytics_bloc.dart';
 import 'features/analytics/presentation/bloc/analytics_event.dart';
 import 'features/analytics/domain/repositories/analytics_repository.dart';
@@ -27,6 +28,7 @@ import 'features/navigation/presentation/widgets/double_tap_to_exit_widget.dart'
 import 'features/ads/presentation/widgets/banner_ad_widget.dart';
 import 'features/ads/presentation/widgets/native_ad_widget.dart';
 import 'features/analytics/presentation/widgets/posthog_wrapper.dart';
+import 'features/analytics/presentation/widgets/mixpanel_wrapper.dart';
 import 'core/utils/starter_log.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
@@ -35,6 +37,7 @@ export 'core/error/failure.dart';
 export 'features/ads/ads.dart';
 export 'features/iap/presentation/widgets/premium_upgrade_modal.dart';
 export 'features/analytics/domain/services/analytics_service.dart';
+export 'features/analytics/data/datasources/mixpanel_remote_data_source.dart';
 export 'features/analytics/presentation/bloc/analytics_bloc.dart';
 export 'features/onboarding/presentation/onboarding_view.dart';
 export 'features/onboarding/domain/models/onboarding_page_model.dart';
@@ -75,6 +78,7 @@ class StarterKit {
     PushNotificationsRepository? pushNotificationsRepository,
     FeedbackRepository? feedbackRepository,
     PostHogRemoteDataSource? postHogDataSource,
+    MixpanelRemoteDataSource? mixpanelDataSource,
     bool debugLogging = kDebugMode,
   }) async {
     // Store config for host-app accessors
@@ -89,6 +93,7 @@ class StarterKit {
       _sl,
       analyticsRepository: analyticsRepository,
       postHogRemoteDataSource: postHogDataSource,
+      mixpanelRemoteDataSource: mixpanelDataSource,
     );
 
     // Database (User Profile)
@@ -168,6 +173,17 @@ class StarterKit {
   static PostHogRemoteDataSource? get postHog {
     try {
       return _sl<PostHogRemoteDataSource>();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Access Mixpanel directly if registered. Use for session-replay lifecycle
+  /// control: `StarterKit.mixpanel?.stopReplay()` inside secure mini-apps and
+  /// `startReplay()` on exit.
+  static MixpanelRemoteDataSource? get mixpanel {
+    try {
+      return _sl<MixpanelRemoteDataSource>();
     } catch (_) {
       return null;
     }
@@ -299,6 +315,31 @@ class StarterKit {
       host: host,
       captureLocalStorage: captureLocalStorage,
       captureApplicationLifecycleEvents: captureApplicationLifecycleEvents,
+      child: child,
+    );
+  }
+
+  /// Build a Mixpanel Wrapper (events + session replay).
+  ///
+  /// Wrap the root (e.g. `MaterialApp`). Initializes Mixpanel with [token] and
+  /// mounts session replay. [distinctId] should be the app's anonymous install
+  /// UUID. Replay masks all text + images by default.
+  static Widget mixpanelWrapper({
+    required Widget child,
+    required String token,
+    required String distinctId,
+    bool maskAllText = true,
+    bool maskAllImages = true,
+    double sessionsPercent = 100.0,
+    bool wifiOnly = false,
+  }) {
+    return MixpanelWrapper(
+      token: token,
+      distinctId: distinctId,
+      maskAllText: maskAllText,
+      maskAllImages: maskAllImages,
+      sessionsPercent: sessionsPercent,
+      wifiOnly: wifiOnly,
       child: child,
     );
   }

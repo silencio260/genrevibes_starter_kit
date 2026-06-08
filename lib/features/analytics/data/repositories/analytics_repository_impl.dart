@@ -5,14 +5,17 @@ import '../../domain/entities/analytics_event.dart';
 import '../../domain/repositories/analytics_repository.dart';
 import '../datasources/analytics_remote_data_source.dart';
 import '../datasources/posthog_remote_data_source.dart';
+import '../datasources/mixpanel_remote_data_source.dart';
 
 class AnalyticsRepositoryImpl implements AnalyticsRepository {
   final AnalyticsRemoteDataSource remoteDataSource;
   final PostHogRemoteDataSource? postHogDataSource;
+  final MixpanelRemoteDataSource? mixpanelDataSource;
 
   AnalyticsRepositoryImpl({
     required this.remoteDataSource,
     this.postHogDataSource,
+    this.mixpanelDataSource,
   });
 
   @override
@@ -33,6 +36,10 @@ class AnalyticsRepositoryImpl implements AnalyticsRepository {
         eventName: event.name,
         properties: event.parameters,
       );
+      await mixpanelDataSource?.capture(
+        eventName: event.name,
+        properties: event.parameters,
+      );
       return const Right(null);
     } catch (e) {
       return Left(ServerFailure(message: e.toString()));
@@ -42,8 +49,11 @@ class AnalyticsRepositoryImpl implements AnalyticsRepository {
   @override
   Future<Either<Failure, void>> logAdRevenue(AdRevenueEvent event) async {
     try {
-      // ONLY send to Firebase (remoteDataSource), NOT PostHog as requested
+      // Firebase stays the canonical ad-revenue path (logAdImpression). PostHog
+      // is intentionally skipped, but Mixpanel gets it as an `ad_revenue` event
+      // so revenue shows up in Mixpanel funnels.
       await remoteDataSource.logAdRevenue(event);
+      await mixpanelDataSource?.logAdRevenue(event);
       return const Right(null);
     } catch (e) {
       return Left(ServerFailure(message: e.toString()));
@@ -55,6 +65,7 @@ class AnalyticsRepositoryImpl implements AnalyticsRepository {
     try {
       await remoteDataSource.setUserId(userId);
       await postHogDataSource?.identify(userId: userId);
+      await mixpanelDataSource?.identify(userId: userId);
       return const Right(null);
     } catch (e) {
       return Left(ServerFailure(message: e.toString()));
@@ -71,6 +82,9 @@ class AnalyticsRepositoryImpl implements AnalyticsRepository {
       // Intentionally NOT forwarding to PostHog here: identify() with an empty
       // distinct-id is invalid and can mis-merge users. PostHog user properties
       // are attached via the real identify() call in setUserId().
+      // Mixpanel is safe: getPeople().set() targets the current distinct-id, so
+      // forward profile properties for Mixpanel cohorts.
+      await mixpanelDataSource?.setUserProperty(name, value);
       return const Right(null);
     } catch (e) {
       return Left(ServerFailure(message: e.toString()));
@@ -82,6 +96,7 @@ class AnalyticsRepositoryImpl implements AnalyticsRepository {
     try {
       await remoteDataSource.logScreenView(screenName);
       await postHogDataSource?.screen(screenName: screenName);
+      await mixpanelDataSource?.screen(screenName: screenName);
       return const Right(null);
     } catch (e) {
       return Left(ServerFailure(message: e.toString()));
@@ -96,6 +111,10 @@ class AnalyticsRepositoryImpl implements AnalyticsRepository {
     try {
       await remoteDataSource.logRetentionEvent(eventName, parameters);
       await postHogDataSource?.capture(
+        eventName: eventName,
+        properties: parameters,
+      );
+      await mixpanelDataSource?.capture(
         eventName: eventName,
         properties: parameters,
       );
@@ -116,6 +135,10 @@ class AnalyticsRepositoryImpl implements AnalyticsRepository {
         eventName: eventName,
         properties: parameters,
       );
+      await mixpanelDataSource?.capture(
+        eventName: eventName,
+        properties: parameters,
+      );
       return const Right(null);
     } catch (e) {
       return Left(ServerFailure(message: e.toString()));
@@ -130,6 +153,10 @@ class AnalyticsRepositoryImpl implements AnalyticsRepository {
     try {
       await remoteDataSource.logTargetingEvent(eventName, parameters);
       await postHogDataSource?.capture(
+        eventName: eventName,
+        properties: parameters,
+      );
+      await mixpanelDataSource?.capture(
         eventName: eventName,
         properties: parameters,
       );

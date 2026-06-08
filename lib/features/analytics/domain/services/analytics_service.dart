@@ -29,6 +29,33 @@ class AnalyticsService {
     }
   }
 
+  /// Associate all subsequent events with a stable (anonymous) user id.
+  /// Fans out to Firebase Analytics + Crashlytics id + Mixpanel identify.
+  Future<void> setUserId(String userId, {bool debugLog = false}) async {
+    _bloc.add(bloc_event.AnalyticsSetUserId(userId: userId));
+    if (debugLog) {
+      StarterLog.d('Set User Id', tag: 'ANALYTICS', debugLog: true);
+    }
+  }
+
+  /// Set a user/profile property (fans out to Firebase user property +
+  /// Mixpanel people property). Use non-PII values only.
+  Future<void> setUserProperty(
+    String name,
+    String value, {
+    bool debugLog = false,
+  }) async {
+    _bloc.add(bloc_event.AnalyticsSetUserProperty(name: name, value: value));
+    if (debugLog) {
+      StarterLog.d(
+        'Set User Property: $name',
+        tag: 'ANALYTICS',
+        debugLog: true,
+        values: {name: value},
+      );
+    }
+  }
+
   /// Log ad revenue event
   Future<void> logAdRevenue(
     AdRevenueEvent event, {

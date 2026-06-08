@@ -21,6 +21,7 @@ class AnalyticsBloc extends Bloc<AnalyticsEvent, AnalyticsState> {
     on<AnalyticsLogScreenView>(_onLogScreenView);
     on<AnalyticsLogAdRevenue>(_onLogAdRevenue);
     on<AnalyticsSetUserId>(_onSetUserId);
+    on<AnalyticsSetUserProperty>(_onSetUserProperty);
     on<AnalyticsLogRetention>(_onLogRetention);
     on<AnalyticsLogUserSegment>(_onLogUserSegment);
     on<AnalyticsLogTargeting>(_onLogTargeting);
@@ -58,6 +59,13 @@ class AnalyticsBloc extends Bloc<AnalyticsEvent, AnalyticsState> {
     Emitter<AnalyticsState> emit,
   ) async {
     await repository.setUserId(event.userId);
+  }
+
+  Future<void> _onSetUserProperty(
+    AnalyticsSetUserProperty event,
+    Emitter<AnalyticsState> emit,
+  ) async {
+    await repository.setUserProperty(event.name, event.value);
   }
 
   Future<void> _onLogAdRevenue(

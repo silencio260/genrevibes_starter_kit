@@ -3,6 +3,7 @@ import 'package:get_it/get_it.dart';
 
 import 'domain/repositories/analytics_repository.dart';
 import 'data/datasources/posthog_remote_data_source.dart';
+import 'data/datasources/mixpanel_remote_data_source.dart';
 import 'domain/usecases/log_event_usecase.dart';
 import 'domain/usecases/log_ad_revenue_usecase.dart';
 import 'presentation/bloc/analytics_bloc.dart';
@@ -15,6 +16,7 @@ void initAnalyticsFeature(
   GetIt sl, {
   AnalyticsRepository? analyticsRepository,
   PostHogRemoteDataSource? postHogRemoteDataSource,
+  MixpanelRemoteDataSource? mixpanelRemoteDataSource,
 }) {
   if (kDebugMode) {
     print('[AnalyticsInjector] Initializing for sl: ${sl.hashCode}');
@@ -35,6 +37,22 @@ void initAnalyticsFeature(
     }
   }
 
+  // Mixpanel (events + session replay). Registered like PostHog; stays a safe
+  // no-op until initialize() runs with a token (via MixpanelWrapper).
+  if (mixpanelRemoteDataSource != null) {
+    if (!sl.isRegistered<MixpanelRemoteDataSource>()) {
+      sl.registerLazySingleton<MixpanelRemoteDataSource>(
+        () => mixpanelRemoteDataSource,
+      );
+    }
+  } else {
+    if (!sl.isRegistered<MixpanelRemoteDataSource>()) {
+      sl.registerLazySingleton<MixpanelRemoteDataSource>(
+        () => MixpanelRemoteDataSourceImpl(),
+      );
+    }
+  }
+
   // Repository
   if (analyticsRepository != null) {
     if (!sl.isRegistered<AnalyticsRepository>()) {
@@ -50,6 +68,7 @@ void initAnalyticsFeature(
       () => AnalyticsRepositoryImpl(
         remoteDataSource: sl(),
         postHogDataSource: sl<PostHogRemoteDataSource>(),
+        mixpanelDataSource: sl<MixpanelRemoteDataSource>(),
       ),
     );
   }

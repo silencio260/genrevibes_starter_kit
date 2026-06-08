@@ -40,6 +40,16 @@ class AnalyticsSetUserId extends AnalyticsEvent {
   List<Object?> get props => [userId];
 }
 
+class AnalyticsSetUserProperty extends AnalyticsEvent {
+  final String name;
+  final String value;
+
+  const AnalyticsSetUserProperty({required this.name, required this.value});
+
+  @override
+  List<Object?> get props => [name, value];
+}
+
 class AnalyticsLogAdRevenue extends AnalyticsEvent {
   final AdRevenueEvent revenueEvent;
 
