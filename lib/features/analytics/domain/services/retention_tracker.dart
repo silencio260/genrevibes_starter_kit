@@ -142,19 +142,70 @@ class RetentionTracker extends ChangeNotifier {
 
     // Check for specific milestones and log them separately
     if (eventName == 'retention_app_opened') {
-      if (daysSinceInstall == 1) {
-        await analytics.logRetentionEvent(names.day1Returned, params);
+      final dayEvent = _retentionDayEventName(names, daysSinceInstall);
+      if (dayEvent != null) {
+        await analytics.logRetentionEvent(dayEvent, params);
       }
-      if (daysSinceInstall == 3) {
-        await analytics.logRetentionEvent(names.day3Returned, params);
+
+      final openEvent = _openMilestoneEventName(names, getTotalAppOpens());
+      if (openEvent != null) {
+        await analytics.logRetentionEvent(openEvent, params);
       }
-      if (daysSinceInstall == 7) {
-        await analytics.logRetentionEvent(names.day7Returned, params);
-      }
-      if (daysSinceInstall == 30) {
-        await analytics.logRetentionEvent(names.day30Returned, params);
+
+      final sessionEvent = _sessionMilestoneEventName(
+        names,
+        _totalSessions ?? 0,
+      );
+      if (sessionEvent != null) {
+        await analytics.logRetentionEvent(sessionEvent, params);
       }
     }
+
+    if (eventName == 'retention_session_started') {
+      final sessionEvent = _sessionMilestoneEventName(
+        names,
+        _totalSessions ?? 0,
+      );
+      if (sessionEvent != null) {
+        await analytics.logRetentionEvent(sessionEvent, params);
+      }
+    }
+  }
+
+  String? _retentionDayEventName(AnalyticsNames names, int day) {
+    return switch (day) {
+      1 => names.day1Returned,
+      3 => names.day3Returned,
+      7 => names.day7Returned,
+      10 => names.day10Returned,
+      15 => names.day15Returned,
+      20 => names.day20Returned,
+      25 => names.day25Returned,
+      30 => names.day30Returned,
+      _ => null,
+    };
+  }
+
+  String? _openMilestoneEventName(AnalyticsNames names, int openCount) {
+    return switch (openCount) {
+      1 => names.firstOpen,
+      2 => names.secondOpen,
+      3 => names.thirdOpen,
+      4 => names.fourthOpen,
+      5 => names.fifthOpen,
+      _ => null,
+    };
+  }
+
+  String? _sessionMilestoneEventName(AnalyticsNames names, int sessionCount) {
+    return switch (sessionCount) {
+      1 => names.firstSession,
+      2 => names.secondSession,
+      3 => names.thirdSession,
+      4 => names.fourthSession,
+      5 => names.fifthSession,
+      _ => null,
+    };
   }
 
   // ========== DATA QUERIES ==========

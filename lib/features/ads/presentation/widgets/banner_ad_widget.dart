@@ -66,6 +66,12 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
       request: const AdRequest(),
       listener: BannerAdListener(
         onAdLoaded: (ad) {
+          _logLifecycle(
+            adType: 'banner',
+            action: 'load',
+            result: 'success',
+            adUnitId: adUnitId,
+          );
           if (mounted) {
             setState(() {
               _isLoaded = true;
@@ -79,7 +85,30 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
             error: error.message,
             values: {'UnitID': adUnitId, 'Code': error.code},
           );
+          _logLifecycle(
+            adType: 'banner',
+            action: 'load',
+            result: 'failure',
+            adUnitId: adUnitId,
+            error: error.message,
+          );
           ad.dispose();
+        },
+        onAdImpression: (ad) {
+          _logLifecycle(
+            adType: 'banner',
+            action: 'impression',
+            result: 'success',
+            adUnitId: ad.adUnitId,
+          );
+        },
+        onAdClicked: (ad) {
+          _logLifecycle(
+            adType: 'banner',
+            action: 'click',
+            result: 'success',
+            adUnitId: ad.adUnitId,
+          );
         },
         onPaidEvent: (ad, valueMicros, precision, currencyCode) {
           StarterKit.sl<AdsRepository>().recordAdRevenue(
@@ -95,6 +124,28 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
         },
       ),
     )..load();
+  }
+
+  void _logLifecycle({
+    required String adType,
+    required String action,
+    required String result,
+    required String adUnitId,
+    String? error,
+  }) {
+    if (!StarterKit.sl.isRegistered<AnalyticsBloc>()) return;
+    StarterKit.analytics.logEvent(
+      'ad_lifecycle',
+      parameters: {
+        'ad_type': adType,
+        'action': action,
+        'result': result,
+        'source': 'ad_widget',
+        'test_ads': adUnitId.contains('3940256099942544'),
+        'ad_unit_id': adUnitId,
+        if (error != null) 'error': error,
+      },
+    );
   }
 
   @override

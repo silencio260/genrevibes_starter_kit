@@ -70,6 +70,12 @@ class _NativeAdWidgetState extends State<NativeAdWidget> {
             tag: 'ADS',
             values: {'UnitID': adUnitId},
           );
+          _logLifecycle(
+            adType: 'native',
+            action: 'load',
+            result: 'success',
+            adUnitId: adUnitId,
+          );
           if (mounted) {
             setState(() {
               _isLoaded = true;
@@ -83,6 +89,13 @@ class _NativeAdWidgetState extends State<NativeAdWidget> {
             tag: 'ADS',
             error: error.message,
             values: {'UnitID': adUnitId, 'Code': error.code},
+          );
+          _logLifecycle(
+            adType: 'native',
+            action: 'load',
+            result: 'failure',
+            adUnitId: adUnitId,
+            error: error.message,
           );
           ad.dispose();
 
@@ -128,6 +141,22 @@ class _NativeAdWidgetState extends State<NativeAdWidget> {
             }
           }
         },
+        onAdImpression: (ad) {
+          _logLifecycle(
+            adType: 'native',
+            action: 'impression',
+            result: 'success',
+            adUnitId: ad.adUnitId,
+          );
+        },
+        onAdClicked: (ad) {
+          _logLifecycle(
+            adType: 'native',
+            action: 'click',
+            result: 'success',
+            adUnitId: ad.adUnitId,
+          );
+        },
         onPaidEvent: (ad, valueMicros, precision, currencyCode) {
           StarterKit.sl<AdsRepository>().recordAdRevenue(
             AdRevenueEvent(
@@ -141,8 +170,7 @@ class _NativeAdWidgetState extends State<NativeAdWidget> {
           );
         },
       ),
-      nativeTemplateStyle:
-          widget.templateStyle ??
+      nativeTemplateStyle: widget.templateStyle ??
           NativeTemplateStyle(
             templateType: _currentTemplateType,
             mainBackgroundColor: const Color(0xFF1E1E1E),
@@ -170,6 +198,28 @@ class _NativeAdWidgetState extends State<NativeAdWidget> {
             ),
           ),
     )..load();
+  }
+
+  void _logLifecycle({
+    required String adType,
+    required String action,
+    required String result,
+    required String adUnitId,
+    String? error,
+  }) {
+    if (!StarterKit.sl.isRegistered<AnalyticsBloc>()) return;
+    StarterKit.analytics.logEvent(
+      'ad_lifecycle',
+      parameters: {
+        'ad_type': adType,
+        'action': action,
+        'result': result,
+        'source': 'ad_widget',
+        'test_ads': adUnitId.contains('3940256099942544'),
+        'ad_unit_id': adUnitId,
+        if (error != null) 'error': error,
+      },
+    );
   }
 
   @override

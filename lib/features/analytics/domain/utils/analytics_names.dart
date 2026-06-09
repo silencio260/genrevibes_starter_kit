@@ -22,7 +22,21 @@ class AnalyticsNames {
   String day1Returned = 'retention_day_1_returned';
   String day3Returned = 'retention_day_3_returned';
   String day7Returned = 'retention_day_7_returned';
+  String day10Returned = 'retention_day_10_returned';
+  String day15Returned = 'retention_day_15_returned';
+  String day20Returned = 'retention_day_20_returned';
+  String day25Returned = 'retention_day_25_returned';
   String day30Returned = 'retention_day_30_returned';
+  String firstOpen = 'retention_first_open';
+  String secondOpen = 'retention_second_open';
+  String thirdOpen = 'retention_third_open';
+  String fourthOpen = 'retention_fourth_open';
+  String fifthOpen = 'retention_fifth_open';
+  String firstSession = 'retention_first_session';
+  String secondSession = 'retention_second_session';
+  String thirdSession = 'retention_third_session';
+  String fourthSession = 'retention_fourth_session';
+  String fifthSession = 'retention_fifth_session';
 
   // Targeting
   String segmentUpdate = 'user_segment_update';
@@ -171,7 +185,21 @@ class AnalyticsNames {
     day1Returned = _get(remoteConfig, 'event_day_1_returned', day1Returned);
     day3Returned = _get(remoteConfig, 'event_day_3_returned', day3Returned);
     day7Returned = _get(remoteConfig, 'event_day_7_returned', day7Returned);
+    day10Returned = _get(remoteConfig, 'event_day_10_returned', day10Returned);
+    day15Returned = _get(remoteConfig, 'event_day_15_returned', day15Returned);
+    day20Returned = _get(remoteConfig, 'event_day_20_returned', day20Returned);
+    day25Returned = _get(remoteConfig, 'event_day_25_returned', day25Returned);
     day30Returned = _get(remoteConfig, 'event_day_30_returned', day30Returned);
+    firstOpen = _get(remoteConfig, 'event_first_open', firstOpen);
+    secondOpen = _get(remoteConfig, 'event_second_open', secondOpen);
+    thirdOpen = _get(remoteConfig, 'event_third_open', thirdOpen);
+    fourthOpen = _get(remoteConfig, 'event_fourth_open', fourthOpen);
+    fifthOpen = _get(remoteConfig, 'event_fifth_open', fifthOpen);
+    firstSession = _get(remoteConfig, 'event_first_session', firstSession);
+    secondSession = _get(remoteConfig, 'event_second_session', secondSession);
+    thirdSession = _get(remoteConfig, 'event_third_session', thirdSession);
+    fourthSession = _get(remoteConfig, 'event_fourth_session', fourthSession);
+    fifthSession = _get(remoteConfig, 'event_fifth_session', fifthSession);
 
     // Targeting
     segmentUpdate = _get(remoteConfig, 'event_segment_update', segmentUpdate);
