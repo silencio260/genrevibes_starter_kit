@@ -1,5 +1,8 @@
 import 'package:get_it/get_it.dart';
 
+import 'data/datasources/admob_ads_remote_data_source.dart';
+import 'data/datasources/ads_remote_data_source.dart';
+import 'data/repositories/ads_repository_impl.dart';
 import 'domain/repositories/ads_repository.dart';
 import 'domain/usecases/show_interstitial_usecase.dart';
 import 'domain/usecases/show_rewarded_usecase.dart';
@@ -17,6 +20,15 @@ void initAdsFeature(
   // Repository
   if (adsRepository != null) {
     sl.registerLazySingleton<AdsRepository>(() => adsRepository);
+  } else if (!sl.isRegistered<AdsRepository>()) {
+    if (!sl.isRegistered<AdsRemoteDataSource>()) {
+      sl.registerLazySingleton<AdsRemoteDataSource>(
+        () => AdMobAdsRemoteDataSource(),
+      );
+    }
+    sl.registerLazySingleton<AdsRepository>(
+      () => AdsRepositoryImpl(remoteDataSource: sl()),
+    );
   }
 
   // Use cases

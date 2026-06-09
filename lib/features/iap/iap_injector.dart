@@ -1,5 +1,6 @@
 import 'package:get_it/get_it.dart';
 
+import 'data/repositories/noop_iap_repository.dart';
 import 'domain/repositories/iap_repository.dart';
 import 'domain/usecases/get_products_usecase.dart';
 import 'domain/usecases/get_subscription_status_usecase.dart';
@@ -13,6 +14,8 @@ void initIapFeature(GetIt sl, {IapRepository? iapRepository}) {
   // Repository
   if (iapRepository != null) {
     sl.registerLazySingleton<IapRepository>(() => iapRepository);
+  } else if (!sl.isRegistered<IapRepository>()) {
+    sl.registerLazySingleton<IapRepository>(() => const NoopIapRepository());
   }
 
   // Use cases
