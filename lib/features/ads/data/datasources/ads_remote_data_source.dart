@@ -13,6 +13,9 @@ abstract class AdsRemoteDataSource {
   /// Set callback for ad revenue events
   void setOnPaidEventListener(void Function(AdRevenueEvent) listener);
 
+  /// Set callback for ad click events.
+  void setOnAdClickListener(void Function(String adType) listener);
+
   /// Initialize the ads SDK
   Future<void> initialize(AdsConfig config);
 

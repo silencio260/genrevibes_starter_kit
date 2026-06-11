@@ -29,6 +29,7 @@ import 'features/ads/presentation/widgets/banner_ad_widget.dart';
 import 'features/ads/presentation/widgets/native_ad_widget.dart';
 import 'features/analytics/presentation/widgets/posthog_wrapper.dart';
 import 'features/analytics/presentation/widgets/mixpanel_wrapper.dart';
+import 'core/storage/local_storage.dart';
 import 'core/utils/starter_log.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
@@ -79,6 +80,16 @@ class StarterKit {
     FeedbackRepository? feedbackRepository,
     PostHogRemoteDataSource? postHogDataSource,
     MixpanelRemoteDataSource? mixpanelDataSource,
+    String? analyticsUserId,
+    String? mixpanelToken,
+    String? mixpanelDistinctId,
+    bool autoTrackAppOpen = true,
+    bool mirrorFirebaseFirstOpenToMixpanel = true,
+    LocalStorage? retentionStorage,
+    bool mixpanelMaskAllText = true,
+    bool mixpanelMaskAllImages = true,
+    double mixpanelSessionsPercent = 100.0,
+    bool mixpanelWifiOnly = false,
     bool debugLogging = kDebugMode,
   }) async {
     // Store config for host-app accessors
@@ -143,6 +154,71 @@ class StarterKit {
     // Handle initial state
     if (SubscriptionManager.instance.isPremium) {
       AdSuppressionManager.instance.suppressAds('premium');
+    }
+
+    await _initializeStartupAnalytics(
+      analyticsUserId: analyticsUserId,
+      mixpanelToken: mixpanelToken,
+      mixpanelDistinctId: mixpanelDistinctId,
+      autoTrackAppOpen: autoTrackAppOpen,
+      mirrorFirebaseFirstOpenToMixpanel: mirrorFirebaseFirstOpenToMixpanel,
+      retentionStorage: retentionStorage,
+      mixpanelMaskAllText: mixpanelMaskAllText,
+      mixpanelMaskAllImages: mixpanelMaskAllImages,
+      mixpanelSessionsPercent: mixpanelSessionsPercent,
+      mixpanelWifiOnly: mixpanelWifiOnly,
+    );
+  }
+
+  static Future<void> _initializeStartupAnalytics({
+    required String? analyticsUserId,
+    required String? mixpanelToken,
+    required String? mixpanelDistinctId,
+    required bool autoTrackAppOpen,
+    required bool mirrorFirebaseFirstOpenToMixpanel,
+    required LocalStorage? retentionStorage,
+    required bool mixpanelMaskAllText,
+    required bool mixpanelMaskAllImages,
+    required double mixpanelSessionsPercent,
+    required bool mixpanelWifiOnly,
+  }) async {
+    final mixpanelId = mixpanelDistinctId ?? analyticsUserId;
+    if (mixpanelToken != null &&
+        mixpanelToken.isNotEmpty &&
+        mixpanelId != null &&
+        mixpanelId.isNotEmpty) {
+      await mixpanel?.initialize(
+        token: mixpanelToken,
+        distinctId: mixpanelId,
+        maskAllText: mixpanelMaskAllText,
+        maskAllImages: mixpanelMaskAllImages,
+        sessionsPercent: mixpanelSessionsPercent,
+        wifiOnly: mixpanelWifiOnly,
+      );
+    }
+
+    if (analyticsUserId != null && analyticsUserId.isNotEmpty) {
+      await analytics.setUserId(analyticsUserId);
+    }
+
+    if (!retentionTracker.hasStorage) {
+      retentionTracker.init(retentionStorage ?? SharedPreferencesStorage());
+    }
+
+    if (!autoTrackAppOpen) return;
+
+    await analytics.logEvent('app_open');
+    await retentionTracker.trackAppOpen(analytics);
+
+    if (mirrorFirebaseFirstOpenToMixpanel &&
+        retentionTracker.getTotalAppOpens() == 1) {
+      await mixpanel?.capture(
+        eventName: 'first_open',
+        properties: {
+          'source': 'retention_tracker',
+          'mirrors_firebase_automatic_event': true,
+        },
+      );
     }
   }
 

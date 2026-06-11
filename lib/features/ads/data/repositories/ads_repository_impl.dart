@@ -10,6 +10,7 @@ import '../datasources/ads_remote_data_source.dart';
 class AdsRepositoryImpl implements AdsRepository {
   final AdsRemoteDataSource remoteDataSource;
   void Function(AdRevenueEvent)? _onPaidEvent;
+  void Function(String adType)? _onAdClick;
 
   AdsRepositoryImpl({required this.remoteDataSource});
 
@@ -20,8 +21,19 @@ class AdsRepositoryImpl implements AdsRepository {
   }
 
   @override
+  void setOnAdClickListener(void Function(String adType) listener) {
+    _onAdClick = listener;
+    remoteDataSource.setOnAdClickListener(listener);
+  }
+
+  @override
   void recordAdRevenue(AdRevenueEvent event) {
     _onPaidEvent?.call(event);
+  }
+
+  @override
+  void recordAdClick(String adType) {
+    _onAdClick?.call(adType);
   }
 
   @override

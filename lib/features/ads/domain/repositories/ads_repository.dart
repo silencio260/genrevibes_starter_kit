@@ -53,8 +53,14 @@ abstract class AdsRepository {
   /// Set callback for ad revenue events
   void setOnPaidEventListener(void Function(AdRevenueEvent) listener);
 
+  /// Set callback for ad click events.
+  void setOnAdClickListener(void Function(String adType) listener);
+
   /// Record ad revenue from an ad
   void recordAdRevenue(AdRevenueEvent event);
+
+  /// Record an ad click from an ad surface.
+  void recordAdClick(String adType);
 
   /// Initialize the ads SDK
   Future<Either<Failure, void>> initialize(AdsConfig config);

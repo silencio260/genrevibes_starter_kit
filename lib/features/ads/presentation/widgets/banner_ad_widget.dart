@@ -109,6 +109,7 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
             result: 'success',
             adUnitId: ad.adUnitId,
           );
+          StarterKit.sl<AdsRepository>().recordAdClick('banner');
         },
         onPaidEvent: (ad, valueMicros, precision, currencyCode) {
           StarterKit.sl<AdsRepository>().recordAdRevenue(

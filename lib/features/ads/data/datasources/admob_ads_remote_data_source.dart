@@ -16,10 +16,16 @@ class AdMobAdsRemoteDataSource implements AdsRemoteDataSource {
   bool _initialized = false;
   bool _nativeReady = false;
   void Function(AdRevenueEvent)? _onPaidEvent;
+  void Function(String adType)? _onAdClick;
 
   @override
   void setOnPaidEventListener(void Function(AdRevenueEvent) listener) {
     _onPaidEvent = listener;
+  }
+
+  @override
+  void setOnAdClickListener(void Function(String adType) listener) {
+    _onAdClick = listener;
   }
 
   @override
@@ -31,6 +37,10 @@ class AdMobAdsRemoteDataSource implements AdsRemoteDataSource {
     }
     await MobileAds.instance.initialize();
     _initialized = true;
+  }
+
+  void _recordAdClick(String format) {
+    _onAdClick?.call(format);
   }
 
   void _ensureInitialized() {
@@ -112,6 +122,7 @@ class AdMobAdsRemoteDataSource implements AdsRemoteDataSource {
     ad.fullScreenContentCallback = FullScreenContentCallback<InterstitialAd>(
       onAdDismissedFullScreenContent: (ad) => ad.dispose(),
       onAdFailedToShowFullScreenContent: (ad, _) => ad.dispose(),
+      onAdClicked: (_) => _recordAdClick('interstitial'),
     );
     await ad.show();
     return true;
@@ -178,6 +189,7 @@ class AdMobAdsRemoteDataSource implements AdsRemoteDataSource {
           rewardCompleter.completeError(StateError(error.message));
         }
       },
+      onAdClicked: (_) => _recordAdClick('rewarded'),
     );
     await ad.show(
       onUserEarnedReward: (_, reward) {
@@ -251,6 +263,7 @@ class AdMobAdsRemoteDataSource implements AdsRemoteDataSource {
     ad.fullScreenContentCallback = FullScreenContentCallback<AppOpenAd>(
       onAdDismissedFullScreenContent: (ad) => ad.dispose(),
       onAdFailedToShowFullScreenContent: (ad, _) => ad.dispose(),
+      onAdClicked: (_) => _recordAdClick('app_open'),
     );
     await ad.show();
     return true;

@@ -43,6 +43,8 @@ class RetentionTracker extends ChangeNotifier {
     _storage = storage;
   }
 
+  bool get hasStorage => _storage != null;
+
   /// Initialize and track app open
   Future<void> trackAppOpen(AnalyticsService analytics) async {
     await _ensureInitialized();
@@ -174,6 +176,7 @@ class RetentionTracker extends ChangeNotifier {
 
   String? _retentionDayEventName(AnalyticsNames names, int day) {
     return switch (day) {
+      0 => names.day0Returned,
       1 => names.day1Returned,
       3 => names.day3Returned,
       7 => names.day7Returned,

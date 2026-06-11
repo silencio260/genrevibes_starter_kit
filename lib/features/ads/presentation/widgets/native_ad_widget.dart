@@ -156,6 +156,7 @@ class _NativeAdWidgetState extends State<NativeAdWidget> {
             result: 'success',
             adUnitId: ad.adUnitId,
           );
+          StarterKit.sl<AdsRepository>().recordAdClick('native');
         },
         onPaidEvent: (ad, valueMicros, precision, currencyCode) {
           StarterKit.sl<AdsRepository>().recordAdRevenue(

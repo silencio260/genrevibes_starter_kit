@@ -10,6 +10,9 @@ import 'domain/usecases/show_app_open_usecase.dart';
 import 'presentation/bloc/ads_bloc.dart';
 
 import '../analytics/domain/entities/ad_revenue_event.dart';
+import '../analytics/domain/entities/analytics_event.dart' as analytics;
+import '../analytics/presentation/bloc/analytics_bloc.dart';
+import '../analytics/presentation/bloc/analytics_event.dart';
 
 /// Initialize Ads feature dependencies
 void initAdsFeature(
@@ -30,6 +33,21 @@ void initAdsFeature(
       () => AdsRepositoryImpl(remoteDataSource: sl()),
     );
   }
+
+  if (onPaidEvent != null) {
+    sl<AdsRepository>().setOnPaidEventListener(onPaidEvent);
+  }
+  sl<AdsRepository>().setOnAdClickListener((adType) {
+    if (!sl.isRegistered<AnalyticsBloc>()) return;
+    sl<AnalyticsBloc>().add(
+      AnalyticsLogEvent(
+        analytics.AnalyticsEvent(
+          name: 'ad_click',
+          parameters: {'ad_type': adType},
+        ),
+      ),
+    );
+  });
 
   // Use cases
   if (!sl.isRegistered<ShowInterstitialUseCase>()) {

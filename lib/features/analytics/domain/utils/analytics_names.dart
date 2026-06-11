@@ -19,6 +19,7 @@ class AnalyticsNames {
   // Retention
   String appOpened = 'retention_app_opened';
   String sessionStarted = 'retention_session_started';
+  String day0Returned = 'retention_day_0_returned';
   String day1Returned = 'retention_day_1_returned';
   String day3Returned = 'retention_day_3_returned';
   String day7Returned = 'retention_day_7_returned';
@@ -182,6 +183,7 @@ class AnalyticsNames {
       'event_session_started',
       sessionStarted,
     );
+    day0Returned = _get(remoteConfig, 'event_day_0_returned', day0Returned);
     day1Returned = _get(remoteConfig, 'event_day_1_returned', day1Returned);
     day3Returned = _get(remoteConfig, 'event_day_3_returned', day3Returned);
     day7Returned = _get(remoteConfig, 'event_day_7_returned', day7Returned);
