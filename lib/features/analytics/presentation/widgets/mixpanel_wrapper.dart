@@ -21,6 +21,10 @@ class MixpanelWrapper extends StatefulWidget {
   final double sessionsPercent;
   final bool wifiOnly;
 
+  /// When false, session replay is not initialized (events still are). Used to
+  /// keep replay off in dev/debug builds.
+  final bool enableSessionReplay;
+
   const MixpanelWrapper({
     super.key,
     required this.child,
@@ -30,6 +34,7 @@ class MixpanelWrapper extends StatefulWidget {
     this.maskAllImages = true,
     this.sessionsPercent = 100.0,
     this.wifiOnly = false,
+    this.enableSessionReplay = true,
   });
 
   @override
@@ -53,6 +58,7 @@ class _MixpanelWrapperState extends State<MixpanelWrapper> {
         maskAllImages: widget.maskAllImages,
         sessionsPercent: widget.sessionsPercent,
         wifiOnly: widget.wifiOnly,
+        enableSessionReplay: widget.enableSessionReplay,
       );
       // Rebuild so MixpanelSessionReplayWidget picks up the live instance.
       if (mounted) setState(() {});

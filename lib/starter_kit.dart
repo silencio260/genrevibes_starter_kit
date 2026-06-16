@@ -408,6 +408,7 @@ class StarterKit {
     bool maskAllImages = true,
     double sessionsPercent = 100.0,
     bool wifiOnly = false,
+    bool enableSessionReplay = true,
   }) {
     return MixpanelWrapper(
       token: token,
@@ -416,6 +417,7 @@ class StarterKit {
       maskAllImages: maskAllImages,
       sessionsPercent: sessionsPercent,
       wifiOnly: wifiOnly,
+      enableSessionReplay: enableSessionReplay,
       child: child,
     );
   }

@@ -22,6 +22,7 @@ abstract class MixpanelRemoteDataSource {
     bool maskAllImages = true,
     double sessionsPercent = 100.0,
     bool wifiOnly = false,
+    bool enableSessionReplay = true,
   });
 
   Future<void> capture({
@@ -70,6 +71,7 @@ class MixpanelRemoteDataSourceImpl implements MixpanelRemoteDataSource {
     bool maskAllImages = true,
     double sessionsPercent = 100.0,
     bool wifiOnly = false,
+    bool enableSessionReplay = true,
   }) async {
     if (_isInitialized) return;
     if (token.isEmpty) return;
@@ -81,24 +83,28 @@ class MixpanelRemoteDataSourceImpl implements MixpanelRemoteDataSource {
         optOutTrackingDefault: optOutTrackingDefault,
       );
 
-      // Session replay. autoMaskedViews drives global text/image masking.
-      final masked = <AutoMaskedView>{
-        if (maskAllText) AutoMaskedView.text,
-        if (maskAllImages) AutoMaskedView.image,
-      };
-      final result = await MixpanelSessionReplay.initialize(
-        token: token,
-        distinctId: distinctId,
-        options: SessionReplayOptions(
-          autoMaskedViews: masked,
-          autoRecordSessionsPercent: sessionsPercent,
-          platformOptions: PlatformOptions(
-            mobile: MobileOptions(wifiOnly: wifiOnly),
+      // Session replay. Skipped entirely when disabled (e.g. dev/debug builds),
+      // so no recorder is created and [sessionReplay] stays null — the events
+      // SDK above still works. autoMaskedViews drives global text/image masking.
+      if (enableSessionReplay) {
+        final masked = <AutoMaskedView>{
+          if (maskAllText) AutoMaskedView.text,
+          if (maskAllImages) AutoMaskedView.image,
+        };
+        final result = await MixpanelSessionReplay.initialize(
+          token: token,
+          distinctId: distinctId,
+          options: SessionReplayOptions(
+            autoMaskedViews: masked,
+            autoRecordSessionsPercent: sessionsPercent,
+            platformOptions: PlatformOptions(
+              mobile: MobileOptions(wifiOnly: wifiOnly),
+            ),
           ),
-        ),
-      );
-      if (result.success) {
-        _sessionReplay = result.instance;
+        );
+        if (result.success) {
+          _sessionReplay = result.instance;
+        }
       }
 
       _isInitialized = true;
