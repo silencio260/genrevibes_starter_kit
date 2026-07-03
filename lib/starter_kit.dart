@@ -210,6 +210,11 @@ class StarterKit {
     await analytics.logEvent('app_open');
     await retentionTracker.trackAppOpen(analytics);
 
+    // Log the user segment and attach the resume-driven session observer.
+    // The app open was already tracked above, so use startSegmentTracking to
+    // avoid double-counting it.
+    await UserTargetingManager.startSegmentTracking(analytics);
+
     if (mirrorFirebaseFirstOpenToMixpanel &&
         retentionTracker.getTotalAppOpens() == 1) {
       await mixpanel?.capture(

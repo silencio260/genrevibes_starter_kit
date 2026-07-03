@@ -45,9 +45,14 @@ class UserTargetingManager with WidgetsBindingObserver {
   static UserTargetingManager get instance => _instance;
 
   final RetentionTracker _tracker = RetentionTracker.instance;
-  late AnalyticsService _analytics;
+  AnalyticsService? _analytics;
+  bool _observerRegistered = false;
 
-  /// Initialize and start tracking
+  /// Initialize and start tracking, recording an app open in the process.
+  ///
+  /// Use when the caller owns the full retention lifecycle. If the app open
+  /// has already been tracked elsewhere (e.g. `StarterKit.initialize`), use
+  /// [startSegmentTracking] instead to avoid double-counting the open.
   static Future<void> startTracking(AnalyticsService analytics) async {
     _instance._analytics = analytics;
 
@@ -58,13 +63,32 @@ class UserTargetingManager with WidgetsBindingObserver {
     await _instance.logUserSegment();
 
     // 3. Register lifecycle observer
-    WidgetsBinding.instance.addObserver(_instance);
+    _instance._registerLifecycleObserver();
+  }
+
+  /// Begin segmentation + resume-driven session tracking WITHOUT recording an
+  /// app open. Intended for callers that have already invoked
+  /// [RetentionTracker.trackAppOpen] (such as `StarterKit.initialize`) and only
+  /// need the user segment logged and the lifecycle observer attached.
+  static Future<void> startSegmentTracking(AnalyticsService analytics) async {
+    _instance._analytics = analytics;
+    await _instance.logUserSegment();
+    _instance._registerLifecycleObserver();
+  }
+
+  /// Attach the app-lifecycle observer once. Guarded so repeated
+  /// initialization (e.g. hot restart) doesn't register duplicate observers.
+  void _registerLifecycleObserver() {
+    if (_observerRegistered) return;
+    WidgetsBinding.instance.addObserver(this);
+    _observerRegistered = true;
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      _tracker.trackSession(_analytics);
+    final analytics = _analytics;
+    if (analytics != null && state == AppLifecycleState.resumed) {
+      _tracker.trackSession(analytics);
     }
   }
 
@@ -115,23 +139,29 @@ class UserTargetingManager with WidgetsBindingObserver {
   // ========== ANALYTICS HELPERS ==========
 
   Future<void> logUserSegment() async {
+    final analytics = _analytics;
+    if (analytics == null) return;
+
     final profile = getUserProfile();
     final names = AnalyticsNames.instance;
 
-    await _analytics.logUserSegmentEvent(names.segmentUpdate, profile);
+    await analytics.logUserSegmentEvent(names.segmentUpdate, profile);
 
     if (isLoyalUser()) {
-      await _analytics.logUserSegmentEvent(names.userIsLoyal, profile);
+      await analytics.logUserSegmentEvent(names.userIsLoyal, profile);
     }
     if (isPowerUser()) {
-      await _analytics.logUserSegmentEvent(names.userIsPowerUser, profile);
+      await analytics.logUserSegmentEvent(names.userIsPowerUser, profile);
     }
   }
 
   Future<void> logOfferShown(String offerType) async {
+    final analytics = _analytics;
+    if (analytics == null) return;
+
     final params = getUserProfile();
     final names = AnalyticsNames.instance;
     params['offer_type'] = offerType;
-    await _analytics.logTargetingEvent(names.offerShown, params);
+    await analytics.logTargetingEvent(names.offerShown, params);
   }
 }
