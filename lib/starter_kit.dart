@@ -40,6 +40,8 @@ export 'features/iap/presentation/widgets/premium_upgrade_modal.dart';
 export 'features/analytics/domain/services/analytics_service.dart';
 export 'features/analytics/data/datasources/mixpanel_remote_data_source.dart';
 export 'features/analytics/presentation/bloc/analytics_bloc.dart';
+export 'features/analytics/presentation/widgets/posthog_wrapper.dart';
+export 'features/analytics/presentation/widgets/mixpanel_wrapper.dart';
 export 'features/onboarding/presentation/onboarding_view.dart';
 export 'features/onboarding/domain/models/onboarding_page_model.dart';
 
