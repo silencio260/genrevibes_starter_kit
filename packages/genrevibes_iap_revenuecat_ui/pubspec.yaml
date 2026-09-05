@@ -1,5 +1,5 @@
-name: genrevibes_iap_revenuecat
-description: RevenueCat provider adapter for the GenreVibes IAP contract.
+name: genrevibes_iap_revenuecat_ui
+description: Optional RevenueCat paywall and customer-center UI adapter for GenreVibes IAP.
 version: 0.1.0-dev.1
 publish_to: none
 
@@ -10,12 +10,13 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  genrevibes_core: ^0.1.0-dev.1
   genrevibes_iap: ^0.1.0-dev.1
+  genrevibes_iap_revenuecat: ^0.1.0-dev.1
   purchases_flutter: ">=9.6.0 <10.0.0"
+  purchases_ui_flutter: ">=9.6.0 <10.0.0"
 
 dev_dependencies:
   flutter_lints: ^5.0.0
   flutter_test:
     sdk: flutter
-  genrevibes_iap_test: ^0.1.0-dev.1
+

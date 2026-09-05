@@ -5,6 +5,7 @@ import 'package:genrevibes_core/genrevibes_core.dart';
 import 'package:genrevibes_iap/genrevibes_iap.dart';
 import 'package:purchases_flutter/purchases_flutter.dart' as revenuecat;
 
+import 'revenuecat_client.dart';
 import 'revenuecat_configuration.dart';
 import 'revenuecat_mapper.dart';
 import 'revenuecat_ui_presenter.dart';
@@ -15,10 +16,12 @@ final class RevenueCatIapProvider implements IapProvider {
   RevenueCatIapProvider({
     required RevenueCatConfiguration configuration,
     RevenueCatUiPresenter? uiPresenter,
+    RevenueCatClient client = const DefaultRevenueCatClient(),
     KitClock clock = const SystemKitClock(),
     KitLogger logger = const NoopKitLogger(),
   })  : _configuration = configuration,
         _uiPresenter = uiPresenter,
+        _client = client,
         _clock = clock,
         _logger = logger,
         _health = ModuleHealth(
@@ -30,6 +33,7 @@ final class RevenueCatIapProvider implements IapProvider {
 
   final RevenueCatConfiguration _configuration;
   final RevenueCatUiPresenter? _uiPresenter;
+  final RevenueCatClient _client;
   final KitClock _clock;
   final KitLogger _logger;
   final Map<String, revenuecat.StoreProduct> _products =
@@ -88,18 +92,18 @@ final class RevenueCatIapProvider implements IapProvider {
 
     _setHealth(ModuleState.initializing);
     try {
-      await revenuecat.Purchases.setLogLevel(_mapLogLevel());
-      if (!await revenuecat.Purchases.isConfigured) {
+      await _client.setLogLevel(_mapLogLevel());
+      if (!await _client.isConfigured()) {
         final sdkConfiguration = revenuecat.PurchasesConfiguration(apiKey)
           ..appUserID = _configuration.initialAppUserId;
-        await revenuecat.Purchases.configure(sdkConfiguration);
+        await _client.configure(sdkConfiguration);
       }
 
       _customerInfoListener = _handleCustomerInfoUpdate;
-      revenuecat.Purchases.addCustomerInfoUpdateListener(
+      _client.addCustomerInfoUpdateListener(
         _customerInfoListener!,
       );
-      final customerInfo = await revenuecat.Purchases.getCustomerInfo();
+      final customerInfo = await _client.getCustomerInfo();
       _initialized = true;
       _emitCustomerInfo(customerInfo);
       _setHealth(ModuleState.ready);
@@ -119,7 +123,7 @@ final class RevenueCatIapProvider implements IapProvider {
 
     try {
       if (productIds.isNotEmpty) {
-        final products = await revenuecat.Purchases.getProducts(
+        final products = await _client.getProducts(
           productIds.toList(growable: false),
         );
         _cacheProducts(products);
@@ -129,8 +133,8 @@ final class RevenueCatIapProvider implements IapProvider {
       }
 
       final offering = placementId == null
-          ? (await revenuecat.Purchases.getOfferings()).current
-          : await revenuecat.Purchases.getCurrentOfferingForPlacement(
+          ? (await _client.getOfferings()).current
+          : await _client.getCurrentOfferingForPlacement(
               placementId,
             );
       if (offering == null) {
@@ -164,7 +168,7 @@ final class RevenueCatIapProvider implements IapProvider {
     try {
       var product = _products[productId];
       if (product == null) {
-        final products = await revenuecat.Purchases.getProducts(<String>[
+        final products = await _client.getProducts(<String>[
           productId,
         ]);
         _cacheProducts(products);
@@ -177,9 +181,7 @@ final class RevenueCatIapProvider implements IapProvider {
         );
       }
 
-      final result = await revenuecat.Purchases.purchase(
-        revenuecat.PurchaseParams.storeProduct(product),
-      );
+      final result = await _client.purchase(product);
       final snapshot = _emitCustomerInfo(result.customerInfo);
       return KitSuccess<PurchaseResult>(
         PurchaseResult(
@@ -227,7 +229,7 @@ final class RevenueCatIapProvider implements IapProvider {
         requiredEntitlementId: requiredEntitlementId,
       );
       final snapshot = mapRevenueCatCustomerInfo(
-        await revenuecat.Purchases.getCustomerInfo(),
+        await _client.getCustomerInfo(),
       );
       _entitlementChanges.add(snapshot);
       return KitSuccess<PurchaseResult>(
@@ -263,7 +265,7 @@ final class RevenueCatIapProvider implements IapProvider {
     final ready = _requireReady<EntitlementSnapshot>();
     if (ready != null) return ready;
     try {
-      final customerInfo = await revenuecat.Purchases.restorePurchases();
+      final customerInfo = await _client.restorePurchases();
       return KitSuccess<EntitlementSnapshot>(_emitCustomerInfo(customerInfo));
     } on Object catch (error, stackTrace) {
       return _mapFailure<EntitlementSnapshot>(error, stackTrace);
@@ -278,9 +280,9 @@ final class RevenueCatIapProvider implements IapProvider {
     if (ready != null) return ready;
     try {
       if (forceRefresh) {
-        await revenuecat.Purchases.invalidateCustomerInfoCache();
+        await _client.invalidateCustomerInfoCache();
       }
-      final customerInfo = await revenuecat.Purchases.getCustomerInfo();
+      final customerInfo = await _client.getCustomerInfo();
       return KitSuccess<EntitlementSnapshot>(_emitCustomerInfo(customerInfo));
     } on Object catch (error, stackTrace) {
       return _mapFailure<EntitlementSnapshot>(error, stackTrace);
@@ -298,10 +300,8 @@ final class RevenueCatIapProvider implements IapProvider {
       );
     }
     try {
-      final result = await revenuecat.Purchases.logIn(appUserId.trim());
-      return KitSuccess<EntitlementSnapshot>(
-        _emitCustomerInfo(result.customerInfo),
-      );
+      final customerInfo = await _client.logIn(appUserId.trim());
+      return KitSuccess<EntitlementSnapshot>(_emitCustomerInfo(customerInfo));
     } on Object catch (error, stackTrace) {
       return _mapFailure<EntitlementSnapshot>(error, stackTrace);
     }
@@ -312,7 +312,7 @@ final class RevenueCatIapProvider implements IapProvider {
     final ready = _requireReady<EntitlementSnapshot>();
     if (ready != null) return ready;
     try {
-      final customerInfo = await revenuecat.Purchases.logOut();
+      final customerInfo = await _client.logOut();
       return KitSuccess<EntitlementSnapshot>(_emitCustomerInfo(customerInfo));
     } on Object catch (error, stackTrace) {
       return _mapFailure<EntitlementSnapshot>(error, stackTrace);
@@ -324,7 +324,7 @@ final class RevenueCatIapProvider implements IapProvider {
     if (_disposed) return const KitSuccess<void>(null);
     final listener = _customerInfoListener;
     if (listener != null) {
-      revenuecat.Purchases.removeCustomerInfoUpdateListener(listener);
+      _client.removeCustomerInfoUpdateListener(listener);
     }
     _products.clear();
     _initialized = false;

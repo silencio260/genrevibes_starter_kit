@@ -14,3 +14,16 @@ dependency contract.
 All new packages remain `publish_to: none` until names, ownership, licensing,
 documentation, examples, and release automation have been approved.
 
+## Current package family
+
+- `genrevibes_core`: provider-neutral results, errors, lifecycle, diagnostics,
+  clock, and logging boundaries.
+- `genrevibes_iap`: provider-neutral IAP models, provider contract, and feature
+  entitlement policy.
+- `genrevibes_iap_test`: reusable behavioral contract tests for IAP adapters.
+- `genrevibes_iap_revenuecat`: RevenueCat purchases and entitlements without a
+  hosted-UI dependency.
+- `genrevibes_iap_revenuecat_ui`: optional RevenueCat paywall and customer
+  center integration.
+- `genrevibes_analytics`: consent-aware analytics contracts and a multi-sink
+  pipeline with per-provider failure isolation.

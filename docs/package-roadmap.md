@@ -7,14 +7,19 @@
 - [x] Create the provider-neutral `genrevibes_iap` contract.
 - [x] Extract RevenueCat configuration, products, purchases, identity,
   restore, and entitlement behavior into `genrevibes_iap_revenuecat`.
-- [ ] Extract hosted paywall and customer-center presentation into the
+- [x] Extract hosted paywall and customer-center presentation into the
   optional `genrevibes_iap_revenuecat_ui` adapter.
-- [ ] Add an IAP provider contract-test harness.
+- [x] Add an IAP provider contract-test harness.
+- [x] Add a RevenueCat composition example without committed SDK keys.
 - [ ] Build a RevenueCat example on Android and iOS.
 
 ## Proven-provider milestone
 
-- [ ] Create analytics contract, pipeline, and Firebase/PostHog adapters.
+- [x] Create the provider-neutral analytics contract and consent-aware,
+  failure-isolated multi-sink pipeline.
+- [ ] Extract the Firebase Analytics adapter.
+- [ ] Extract the PostHog adapter.
+- [ ] Extract the Mixpanel adapter.
 - [ ] Create remote-config contract and Firebase adapter.
 - [ ] Create ads contract, policy layer, and AdMob adapter.
 - [ ] Create notification contract and OneSignal adapter.

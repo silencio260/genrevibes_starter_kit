@@ -3,5 +3,4 @@ dependency_overrides:
     path: ../genrevibes_core
   genrevibes_iap:
     path: ../genrevibes_iap
-  genrevibes_iap_test:
-    path: ../genrevibes_iap_test
+
