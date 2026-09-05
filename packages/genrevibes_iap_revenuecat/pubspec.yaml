@@ -1,0 +1,21 @@
+name: genrevibes_iap_revenuecat
+description: RevenueCat provider adapter for the GenreVibes IAP contract.
+version: 0.1.0-dev.1
+publish_to: none
+
+environment:
+  sdk: ">=3.6.0 <4.0.0"
+  flutter: ">=3.27.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  genrevibes_core: ^0.1.0-dev.1
+  genrevibes_iap: ^0.1.0-dev.1
+  purchases_flutter: ">=9.6.0 <10.0.0"
+
+dev_dependencies:
+  flutter_lints: ^5.0.0
+  flutter_test:
+    sdk: flutter
+

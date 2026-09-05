@@ -1,0 +1,28 @@
+.DS_Store
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+build/
+coverage/
+doc/api/
+*.iml
+packages/*/pubspec.lock
+
+# IDE state
+.idea/
+.vscode/
+
+# Local environment and secrets
+.env
+.env.*
+*.jks
+*.keystore
+key.properties
+
+# Generated platform files
+android/.gradle/
+ios/Pods/
+ios/.symlinks/
+macos/Pods/
+macos/.symlinks/
