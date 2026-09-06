@@ -70,6 +70,11 @@ fast architecture check.
 - `genrevibes_onboarding`: onboarding completion state with legacy-key adoption
   and an optional theme-driven presentation template.
 - `genrevibes_settings`: sealed settings row models and embeddable settings UI.
+- `genrevibes_crash`: neutral crash report model, reporter contract, observer, and
+  the coordinator that applies the collection decision once.
+- `genrevibes_crash_test`: reusable crash reporter contract tests.
+- `genrevibes_crash_crashlytics`: isolated Firebase Crashlytics adapter with
+  framework and zone error hooks.
 - `genrevibes_ads`: logical placements, formats, rewards, provider events, and
   premium/suppression/frequency policy without an ad SDK.
 - `genrevibes_ads_test`: reusable ad-provider lifecycle and inventory contract

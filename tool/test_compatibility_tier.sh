@@ -30,6 +30,9 @@ case "$tier" in
       genrevibes_consent_test
       genrevibes_consent_ump
       genrevibes_core
+      genrevibes_crash
+      genrevibes_crash_crashlytics
+      genrevibes_crash_test
       genrevibes_feedback
       genrevibes_feedbacknest
       genrevibes_iap

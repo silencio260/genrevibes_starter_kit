@@ -15,10 +15,11 @@ neutral_packages=(
   genrevibes_consent
   genrevibes_app_rating
   genrevibes_feedback
+  genrevibes_crash
   genrevibes_starter_kit
 )
 
-vendor_pattern='in_app_review|url_launcher|feedbacknest_core|onesignal_flutter|flutter_local_notifications|google_mobile_ads|firebase_analytics|firebase_remote_config|posthog_flutter|mixpanel_flutter|mixpanel_flutter_session_replay|purchases_flutter|purchases_ui_flutter|shared_preferences'
+vendor_pattern='firebase_crashlytics|in_app_review|url_launcher|feedbacknest_core|onesignal_flutter|flutter_local_notifications|google_mobile_ads|firebase_analytics|firebase_remote_config|posthog_flutter|mixpanel_flutter|mixpanel_flutter_session_replay|purchases_flutter|purchases_ui_flutter|shared_preferences'
 failed=0
 
 for package_name in "${neutral_packages[@]}"; do
@@ -48,6 +49,7 @@ while IFS= read -r dart_file; do
       purchases_flutter:packages/genrevibes_iap_revenuecat/*|purchases_flutter:packages/genrevibes_iap_revenuecat_ui/*|purchases_ui_flutter:packages/genrevibes_iap_revenuecat_ui/*) ;;
       in_app_review:packages/genrevibes_app_rating_in_app_review/*|url_launcher:packages/genrevibes_app_rating_in_app_review/*) ;;
       feedbacknest_core:packages/genrevibes_feedbacknest/*) ;;
+      firebase_crashlytics:packages/genrevibes_crash_crashlytics/*) ;;
       shared_preferences:packages/genrevibes_remote_config_shared_preferences/*|shared_preferences:packages/genrevibes_storage_shared_preferences/*) ;;
       *)
         echo "ERROR: $imported_vendor is imported outside its isolated adapter: $dart_file"

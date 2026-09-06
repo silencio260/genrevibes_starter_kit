@@ -1,0 +1,5 @@
+dependency_overrides:
+  genrevibes_core:
+    path: ../genrevibes_core
+  genrevibes_crash:
+    path: ../genrevibes_crash

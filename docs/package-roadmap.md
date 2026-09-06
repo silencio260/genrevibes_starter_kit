@@ -53,6 +53,18 @@
   presentation templates.
 - [x] Create `genrevibes_settings` with reusable models and embeddable UI.
 
+## Story Saver baseline milestone
+
+- [x] Create `genrevibes_crash` with a neutral reporter contract, coordinator,
+  contract harness, and the Crashlytics adapter with framework hooks.
+- [ ] Create `genrevibes_engagement` (retention + user targeting).
+- [ ] Create `genrevibes_remote_policy` (ads policy schema, analytics names).
+- [ ] Create `genrevibes_permissions` and the `permission_handler` adapter.
+- [ ] Create `genrevibes_device_identity`.
+- [ ] Create `genrevibes_app_links` and the launcher adapter.
+- [ ] Create `genrevibes_auth` / `genrevibes_database` contracts and Firebase
+  adapters (consumers: ai_chatbot, note_ai; never Story Saver).
+
 ## Production-hardening milestone
 
 - [ ] Test the minimum supported and current stable Flutter versions. The
