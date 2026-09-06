@@ -1,0 +1,80 @@
+name: Package compatibility
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/package-compatibility.yml'
+      - 'packages/**'
+      - 'tool/**'
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  minimum-flutter:
+    name: Flutter ${{ matrix.flutter }} / ${{ matrix.tier }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - flutter: 3.19.0
+            tier: base
+          - flutter: 3.22.0
+            tier: local
+          - flutter: 3.27.0
+            tier: revenuecat
+          - flutter: 3.38.0
+            tier: replay
+    steps:
+      - uses: actions/checkout@v6
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ matrix.flutter }}
+          cache: true
+      - run: bash tool/test_compatibility_tier.sh "${{ matrix.tier }}"
+
+  current-stable:
+    name: Current Flutter stable
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: bash tool/test_compatibility_tier.sh current
+
+  android-release:
+    name: Android release smoke build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - working-directory: examples/genrevibes_smoke_app
+        run: |
+          flutter pub upgrade
+          flutter test
+          flutter build apk --release
+
+  ios-release:
+    name: iOS release smoke build
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - working-directory: examples/genrevibes_smoke_app
+        run: |
+          flutter pub upgrade
+          flutter test
+          flutter build ios --release --no-codesign

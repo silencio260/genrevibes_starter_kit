@@ -1,243 +1,93 @@
-# Starter Kit Plugin
+# GenreVibes Starter Kit
 
-A strictly architected, modular plugin system for Flutter apps.
+A modular Flutter package family for capabilities shared across the GenreVibes
+app portfolio. Applications install only the contracts and provider adapters
+they select; an unused vendor SDK is not resolved or compiled into the app.
 
-> **Note — dormant in `smart_launcher_app`:** this package is vendored into the
-> launcher as the shared exemplar (it is copied across the sibling apps), but the
-> launcher host does **not** depend on it: there is no path dependency in the host
-> `pubspec.yaml`, no imports, and `StarterKit.initialize()` is never called. That
-> is intentional, not an unfinished integration. The package is kept clean and
-> correct here so other apps consuming it inherit the fixes.
+The production package family lives in `packages/`. The legacy implementation
+in the repository-level `lib/` directory is retained only as a behavior and
+migration reference.
 
-## Installation
+## Package model
 
-Starter Kit is a **standalone Flutter package** with its own `pubspec.yaml`. Its pub name is `genrevibes_starter_kit` (matching its directory). You can use it as a path dependency or copy the `packages/genrevibes_starter_kit` folder into any project.
+```text
+application
+  -> genrevibes_starter_kit        optional lifecycle coordinator
+  -> selected provider adapter     RevenueCat, AdMob, Firebase, etc.
+       -> neutral capability       IAP, ads, analytics, etc.
+            -> genrevibes_core
+```
 
-### Option 1: Path dependency (in same repo)
+The neutral packages do not expose vendor types. A host can replace RevenueCat
+with a future Adapty adapter, or AdMob with another mediation adapter, without
+rewriting its entitlement, ad-policy, analytics, or notification behavior.
 
-If the package lives in `packages/genrevibes_starter_kit` of your project:
+Current capabilities include:
+
+- IAP contracts, RevenueCat, and optional RevenueCat UI.
+- Ads contracts, policy, test harnesses, AdMob, and optional inline ad UI.
+- Consent-aware multi-sink analytics with Firebase, PostHog, Mixpanel events,
+  and separately installable Mixpanel Session Replay.
+- Typed remote config with Firebase and optional SharedPreferences caching.
+- Push contracts and OneSignal diagnostics.
+- Persistent local notification campaigns with bundled or remotely supplied
+  schedules.
+- A provider-neutral, instance-based lifecycle coordinator.
+
+## Consuming packages from this repository
+
+Add only the packages the app uses. For example:
 
 ```yaml
-# pubspec.yaml
 dependencies:
   genrevibes_starter_kit:
-    path: packages/genrevibes_starter_kit
+    path: ../genrevibes_starter_kit/packages/genrevibes_starter_kit
+  genrevibes_iap_revenuecat:
+    path: ../genrevibes_starter_kit/packages/genrevibes_iap_revenuecat
+  genrevibes_notifications_onesignal:
+    path: ../genrevibes_starter_kit/packages/genrevibes_notifications_onesignal
 ```
 
-### Option 2: Copy into another project
+Until packages are published, local development also needs path overrides for
+their neutral GenreVibes dependencies. Each package's committed
+`pubspec_overrides.yaml` demonstrates that repository-local wiring. Published
+apps will use normal semantic version constraints instead.
 
-1. Copy the entire `genrevibes_starter_kit` folder (the one that contains `pubspec.yaml`, `lib/`, etc.) into your project, e.g. `packages/genrevibes_starter_kit` or `plugins/genrevibes_starter_kit`.
-2. In your app’s `pubspec.yaml`:
+Provider selection happens in the application composition root. The thin
+coordinator never imports or automatically selects a vendor, DI container, or
+state-management library.
 
-```yaml
-dependencies:
-  genrevibes_starter_kit:
-    path: packages/genrevibes_starter_kit   # or path: plugins/genrevibes_starter_kit
+## Verification
+
+Run the complete locally installed Flutter tier:
+
+```sh
+bash tool/test_compatibility_tier.sh current
 ```
 
-3. Run `flutter pub get`.
-4. Use in Dart: `import 'package:genrevibes_starter_kit/starter_kit.dart';`
+Run the native provider-graph smoke app:
 
-All dependencies (Firebase, AdMob, RevenueCat, etc.) are declared in `genrevibes_starter_kit`’s `pubspec.yaml`; the host app will receive them transitively. Ensure your app’s `android/` and `ios/` are configured for any native SDKs you use (Firebase, OneSignal, etc.).
-
-**If you see "Target of URI doesn't exist" or missing-package errors:** run `flutter pub get` from the **host project root** (the app that depends on `genrevibes_starter_kit`). That resolves the path package and its dependencies.
-
-## Features at a Glance
-
-| Feature | Description | Stack | Swappable? |
-| :--- | :--- | :--- | :--- |
-| **IAP** | Subscriptions & One-Time Purchases | Bloc + Clean Arch | ✅ (RevenueCat default) |
-| **Ads** | Interstitial, Reward, Banner | Bloc + Clean Arch | ✅ (AdMob default) |
-| **Analytics** | Unified Event Logging | Bloc (Retention) | ✅ (Firebase default) |
-| **PostHog** | Product Analytics | Wrapper | ✅ |
-| **Templates** | Onboarding & Settings | Widget Builders | N/A |
-| **Services** | Config, Rating, GDPR, Feedback | Repositories | ✅ |
-
----
-
-## 🚀 Getting Started
-
-### 1. Initialization
-
-In your `main.dart`, initialize the kit before `runApp`.
-
-```dart
-await StarterKit.initialize(
-  // Optional: Add PostHog
-  postHogDataSource: PostHogRemoteDataSourceImpl(), // Or custom
-  
-  // Optional: Custom Support Email for Feedback
-  supportEmail: 'support@myapp.com',
-);
+```sh
+cd examples/genrevibes_smoke_app
+flutter pub upgrade
+flutter test
+flutter build apk --release
+flutter build ios --release --no-codesign
 ```
 
----
+The CI matrix runs exact per-package Flutter floors plus current stable and
+Android/iOS native release builds. A native compile proves dependency and
+plugin-registration compatibility; real provider keys, dashboards, purchases,
+ads, push delivery, permissions, and lifecycle behavior still require app-level
+integration/device tests.
 
-## 🎨 UI Templates
+## Project documents
 
-### 1. Onboarding
-Create a robust onboarding flow in seconds.
+- [Architecture](docs/architecture.md)
+- [Compatibility matrix](docs/compatibility-matrix.md)
+- [Package roadmap](docs/package-roadmap.md)
+- [Toolchain risk register](docs/toolchain-risks.md)
+- [Notification migration notes](docs/notifications-migration.md)
 
-```dart
-class MyOnboardingScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return StarterKit.onboarding(
-      template: OnboardingTemplateType.standard, // standard, minimal, or custom
-      pages: [
-        OnboardingPageModel(
-          title: 'Welcome',
-          description: 'The best app ever.',
-          imagePath: 'assets/welcome.png',
-          titleColor: Colors.blue,
-        ),
-        OnboardingPageModel(
-          title: 'Get Started',
-          description: 'Sign up now.',
-          customWidget: MyCustomHeroWidget(),
-        ),
-      ],
-      onComplete: () {
-        // Navigate or save state
-        Navigator.of(context).pushReplacementNamed('/home');
-      },
-      onSkip: () {
-        // Handle skip
-      },
-    );
-  }
-}
-```
-
-### 2. Settings Page
-Generate a settings screen dynamically.
-
-```dart
-class MySettingsScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return StarterKit.settings(
-      template: SettingsTemplateType.grouped, // list or grouped
-      title: 'Preferences',
-      sections: [
-        SettingsSection(
-          title: 'General',
-          tiles: [
-            SettingsTile(
-              title: 'Dark Mode',
-              icon: Icons.dark_mode,
-              onTap: () { /* Toggle Theme */ },
-            ),
-            SettingsTile(
-              title: 'Language',
-              icon: Icons.language,
-              subtitle: 'English',
-              onTap: () { /* Change Language */ },
-            ),
-          ],
-        ),
-        SettingsSection(
-          title: 'Account',
-          tiles: [
-            SettingsTile(
-              title: 'Restore Purchases',
-              icon: Icons.restore,
-              onTap: () { StarterKit.iapBloc.add(const IapRestorePurchases()); },
-            ),
-            SettingsTile(
-              title: 'Privacy Policy',
-              icon: Icons.lock,
-              onTap: () { /* Open Webview */ },
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-}
-```
-
----
-
-## 📊 Analytics & PostHog
-
-### 3. Ad Revenue Analytics (Auto-Wired) 💸
-To track ad revenue automatically across all providers (Firebase, PostHog, etc.):
-
-1.  **StarterKit handles the wiring**: When you initialize the kit, `AdsBloc` events are automatically piped to `AnalyticsBloc`.
-2.  **Firebase**: Logs as `ad_impression` (ROAS ready).
-3.  **PostHog**: Logs as `ad_revenue` custom event.
-
-```dart
-// No extra code needed! Just initialize properly:
-await StarterKit.initialize(
-  adsRepository: MyAdsRepository(), // Optional: custom ads impl (AdMob is the default)
-  // The kit automatically listens to paid events and logs them!
-);
-```
-
-### Accessing PostHog
-If you initialized PostHog, you can access it safely:
-
-```dart
-StarterKit.postHog?.capture(
-  eventName: 'video_shared',
-  properties: {'platform': 'tiktok'},
-);
-
-StarterKit.postHog?.identify(
-  userId: 'user_123',
-  userProperties: {'plan': 'premium'},
-);
-```
-
-### Unified Analytics (Firebase + Others)
-Use the Bloc for general event logging (goes to Firebase by default).
-
-```dart
-StarterKit.analyticsBloc.add(
-  const AnalyticsLogEvent(name: 'app_open'),
-);
-```
-
----
-
-## 🛠 Feature Reference
-
-### In-App Purchases (IAP)
-*   **Bloc**: `StarterKit.iapBloc`
-*   **Events**: `IapInitialize`, `IapPurchaseProduct`, `IapRestorePurchases`.
-*   **States**: `IapLoading`, `IapInitialized` (contains `SubscriptionStatus`, `products`), `IapError`.
-
-### Ads
-*   **Bloc**: `StarterKit.adsBloc`
-*   **Events**: `AdsInitialize`, `AdsLoadInterstitial`, `AdsShowInterstitial`.
-*   **States**: `AdsReady`, `AdsShowSuccess`, `AdsError`.
-
-### Services
-*   **Remote Config**: `StarterKit.sl<RemoteConfigRepository>()`
-*   **GDPR**: `StarterKit.sl<GdprRepository>()`
-*   **App Rating**: `StarterKit.sl<AppRatingRepository>()`
-*   **Feedback**: `StarterKit.sl<FeedbackRepository>()`
-
----
-
-## 🧩 Dependency Injection
-Because `StarterKit` uses `GetIt`, you can inject your own implementations.
-
-**Example: Swapping Analytics Provider**
-
-`initialize()` accepts your own implementations of the feature repositories
-(e.g. `analyticsRepository`, `adsRepository`, `iapRepository`, …) plus
-`postHogDataSource`, `supportEmail`, and `feedbackNestApiKey`. Pass a repository
-to override the default provider:
-
-```dart
-class MyAnalyticsRepository implements AnalyticsRepository {
-  // ... implementation ...
-}
-
-await StarterKit.initialize(
-  analyticsRepository: MyAnalyticsRepository(),
-);
-```
+The package names and license are deliberately not final until the pub.dev
+release decision is made. Packages therefore remain `publish_to: none`.

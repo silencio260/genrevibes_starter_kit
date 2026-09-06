@@ -54,12 +54,12 @@ final class PostHogAnalyticsSink implements AnalyticsSink {
     if (_disposed) return _notReady();
     if (_configuration.apiKey.trim().isEmpty ||
         _configuration.host.trim().isEmpty) {
-      final error = const KitError(
+      const error = KitError(
         code: KitErrorCode.invalidConfiguration,
         message: 'PostHog API key and host must not be empty.',
       );
       _setHealth(ModuleState.failed, error: error);
-      return KitFailure<void>(error);
+      return const KitFailure<void>(error);
     }
     _setHealth(ModuleState.initializing);
     final result = await _guard(

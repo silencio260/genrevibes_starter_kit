@@ -79,11 +79,11 @@ New pure-Dart contracts initially target Dart `>=3.3.0 <4.0.0`. We do not use
 native Pub workspaces yet because workspace membership would raise the package
 minimum to Dart 3.6. Each package remains independently resolvable.
 
-Before the first public release, CI will establish the actual minimum Flutter
-version for every Flutter adapter. A vendor SDK upgrade that raises the minimum
-Flutter, Dart, Gradle, Android SDK, Kotlin, CocoaPods, Xcode, or iOS deployment
-target requires a new adapter major version when existing consumers cannot
-upgrade safely.
+The compatibility matrix establishes an exact minimum Flutter tier for every
+adapter and rechecks the complete family on current stable. A vendor SDK upgrade
+that raises the minimum Flutter, Dart, Gradle, Android SDK, Kotlin, CocoaPods,
+Xcode, or iOS deployment target requires a new adapter major version when
+existing consumers cannot upgrade safely.
 
 Provider extensions with a higher toolchain floor are separate packages. For
 example, Mixpanel events currently support the portfolio baseline while its

@@ -1,0 +1,66 @@
+name: genrevibes_smoke_app
+description: Native Android/iOS compile and plugin-registration smoke app for the GenreVibes package family.
+publish_to: none
+version: 0.1.0+1
+
+environment:
+  sdk: ">=3.8.0 <4.0.0"
+  flutter: ">=3.38.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  genrevibes_ads_admob:
+    path: ../../packages/genrevibes_ads_admob
+  genrevibes_ads_admob_ui:
+    path: ../../packages/genrevibes_ads_admob_ui
+  genrevibes_analytics_firebase:
+    path: ../../packages/genrevibes_analytics_firebase
+  genrevibes_analytics_mixpanel:
+    path: ../../packages/genrevibes_analytics_mixpanel
+  genrevibes_analytics_mixpanel_replay:
+    path: ../../packages/genrevibes_analytics_mixpanel_replay
+  genrevibes_analytics_posthog:
+    path: ../../packages/genrevibes_analytics_posthog
+  genrevibes_iap_revenuecat:
+    path: ../../packages/genrevibes_iap_revenuecat
+  genrevibes_iap_revenuecat_ui:
+    path: ../../packages/genrevibes_iap_revenuecat_ui
+  genrevibes_notifications_local:
+    path: ../../packages/genrevibes_notifications_local
+  genrevibes_notifications_onesignal:
+    path: ../../packages/genrevibes_notifications_onesignal
+  genrevibes_remote_config_firebase:
+    path: ../../packages/genrevibes_remote_config_firebase
+  genrevibes_remote_config_shared_preferences:
+    path: ../../packages/genrevibes_remote_config_shared_preferences
+  genrevibes_starter_kit:
+    path: ../../packages/genrevibes_starter_kit
+
+dev_dependencies:
+  flutter_lints: ^6.0.0
+  flutter_test:
+    sdk: flutter
+
+dependency_overrides:
+  genrevibes_ads:
+    path: ../../packages/genrevibes_ads
+  genrevibes_ads_admob:
+    path: ../../packages/genrevibes_ads_admob
+  genrevibes_analytics:
+    path: ../../packages/genrevibes_analytics
+  genrevibes_core:
+    path: ../../packages/genrevibes_core
+  genrevibes_iap:
+    path: ../../packages/genrevibes_iap
+  genrevibes_iap_revenuecat:
+    path: ../../packages/genrevibes_iap_revenuecat
+  genrevibes_notifications:
+    path: ../../packages/genrevibes_notifications
+  genrevibes_remote_config:
+    path: ../../packages/genrevibes_remote_config
+
+flutter:
+  uses-material-design: true
+  config:
+    enable-swift-package-manager: false

@@ -33,8 +33,13 @@
 
 ## Production-hardening milestone
 
-- [ ] Test the minimum supported and current stable Flutter versions.
-- [ ] Add Android and iOS release-build examples.
+- [ ] Test the minimum supported and current stable Flutter versions. The
+  exact-version CI matrix is implemented; Flutter 3.44.1 passes locally, and
+  the first hosted matrix run remains outstanding.
+- [x] Add an Android/iOS release-build smoke app containing every native
+  provider adapter. Android release is locally verified; iOS CocoaPods
+  resolution passes, while the local Xcode platform installation must be
+  repaired before its device compile can be called verified.
 - [ ] Add contract, unit, widget, integration, and lifecycle tests.
 - [x] Add dependency-boundary and accidental-vendor-import checks.
 - [ ] Add changelogs, examples, API docs, repository metadata, and a license.

@@ -15,7 +15,7 @@ dependencies:
   mixpanel_flutter: ">=2.8.0 <3.0.0"
 
 dev_dependencies:
-  flutter_lints: ^5.0.0
+  flutter_lints: ^4.0.0
   flutter_test:
     sdk: flutter
   genrevibes_analytics_test: ^0.1.0-dev.1
