@@ -2,6 +2,10 @@
 
 ## Foundation milestone
 
+- [x] Archive the pre-modular monolith to `deprecated_old_version_1/` under the
+  name `genrevibes_starter_kit_legacy`, leaving the repository root as a plain
+  workspace with no package of its own.
+
 - [x] Record the modular architecture and dependency rules.
 - [x] Create `genrevibes_core`.
 - [x] Create the provider-neutral `genrevibes_iap` contract.

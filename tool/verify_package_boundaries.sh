@@ -57,6 +57,13 @@ while IFS= read -r dart_file; do
   done < <(sed -nE "s/.*package:($vendor_pattern)\/.*/\1/p" "$dart_file" | sort -u)
 done < <(find packages -path '*/lib/*.dart' -type f | sort)
 
+# The archived monolith is a behavior reference, never a dependency.
+if grep -RIlE "deprecated_old_version_1|package:genrevibes_starter_kit_legacy" packages examples --include='*.dart' --include='pubspec.yaml' 2>/dev/null | grep -q .; then
+  echo "ERROR: something imports the archived legacy kit"
+  grep -RIlE "deprecated_old_version_1|package:genrevibes_starter_kit_legacy" packages examples --include='*.dart' --include='pubspec.yaml'
+  failed=1
+fi
+
 coordinator_dependencies="$(
   awk '
     /^dependencies:/ { in_dependencies = 1; next }

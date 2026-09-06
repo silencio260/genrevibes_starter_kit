@@ -1,4 +1,6 @@
-name: genrevibes_starter_kit
+# Read-only behavior reference. This is the pre-modular monolith. It is not a
+# dependency of anything and must never be imported by a package or an app.
+name: genrevibes_starter_kit_legacy
 description: A reusable Flutter plugin with IAP, Ads, Analytics, Onboarding, Settings, and support services (feedback, GDPR, remote config, push notifications).
 version: 1.0.0
 publish_to: 'none'

@@ -9,8 +9,8 @@ packages. Applications install only the capabilities and provider adapters
 they use. A provider that is absent from an application's `pubspec.yaml` must
 not be downloaded, compiled, initialized, or added to a native build.
 
-The existing single-package implementation remains in `lib/` as a reference
-during the migration. New production APIs are developed under `packages/`.
+The pre-modular implementation is archived in `deprecated_old_version_1/` as a
+reference during the migration. New production APIs are developed under `packages/`.
 Features move only after their behavior has been compared with the working
 Story Saver implementation and covered by tests.
 

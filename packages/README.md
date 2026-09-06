@@ -1,7 +1,7 @@
 # GenRevibes packages
 
 This directory contains the new modular package family. The original package
-under the repository-level `lib/` directory remains a migration reference and
+under the `deprecated_old_version_1/` directory remains a migration reference and
 must not be imported by these packages.
 
 Packages are intentionally standalone rather than members of a native Pub

@@ -4,9 +4,9 @@ A modular Flutter package family for capabilities shared across the GenRevibes
 app portfolio. Applications install only the contracts and provider adapters
 they select; an unused vendor SDK is not resolved or compiled into the app.
 
-The production package family lives in `packages/`. The legacy implementation
-in the repository-level `lib/` directory is retained only as a behavior and
-migration reference.
+The production package family lives in `packages/`. The pre-modular monolith is archived read-only in `deprecated_old_version_1/`
+as a behavior and migration reference; nothing depends on it and the boundary
+script fails if anything tries.
 
 ## Package model
 
