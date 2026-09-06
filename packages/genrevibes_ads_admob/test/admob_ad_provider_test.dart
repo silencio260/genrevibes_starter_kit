@@ -15,7 +15,7 @@ void main() {
     providerName: 'AdMob',
     createProvider: () async {
       final provider = AdMobAdProvider(
-        configuration: GenreVibesAdMobConfiguration(
+        configuration: GenRevibesAdMobConfiguration(
           adUnits: const <AdMobAdUnit>[
             AdMobAdUnit(placement: placement, adUnitId: 'test-unit'),
           ],
@@ -29,7 +29,7 @@ void main() {
   test('unknown placement fails without calling the client', () async {
     final client = _FakeAdMobClient();
     final provider = AdMobAdProvider(
-      configuration: GenreVibesAdMobConfiguration(
+      configuration: GenRevibesAdMobConfiguration(
         adUnits: const <AdMobAdUnit>[
           AdMobAdUnit(placement: placement, adUnitId: 'test-unit'),
         ],
@@ -68,7 +68,7 @@ final class _FakeAdMobClient implements AdMobClient {
   }
 
   @override
-  Future<void> initialize(GenreVibesAdMobConfiguration configuration) async {}
+  Future<void> initialize(GenRevibesAdMobConfiguration configuration) async {}
 
   @override
   bool isReady(AdPlacement placement) => _ready.contains(placement);

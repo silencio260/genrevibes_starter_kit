@@ -1,4 +1,4 @@
-/// Optional AdMob banner and native presentation for GenreVibes apps.
+/// Optional AdMob banner and native presentation for GenRevibes apps.
 library;
 
 export 'src/admob_inline_ad_client.dart';

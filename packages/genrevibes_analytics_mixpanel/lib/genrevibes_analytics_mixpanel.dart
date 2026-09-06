@@ -1,4 +1,4 @@
-/// Mixpanel integration for GenreVibes analytics.
+/// Mixpanel integration for GenRevibes analytics.
 library;
 
 export 'src/mixpanel_analytics_client.dart';

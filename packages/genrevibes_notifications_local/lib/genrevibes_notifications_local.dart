@@ -1,4 +1,4 @@
-/// flutter_local_notifications implementation of GenreVibes scheduling APIs.
+/// flutter_local_notifications implementation of GenRevibes scheduling APIs.
 library;
 
 export 'src/flutter_local_notifications_client.dart';

@@ -1,5 +1,5 @@
 name: genrevibes_smoke_app
-description: Native Android/iOS compile and plugin-registration smoke app for the GenreVibes package family.
+description: Native Android/iOS compile and plugin-registration smoke app for the GenRevibes package family.
 publish_to: none
 version: 0.1.0+1
 
@@ -10,6 +10,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  genrevibes_ads:
+    path: ../../packages/genrevibes_ads
   genrevibes_ads_admob:
     path: ../../packages/genrevibes_ads_admob
   genrevibes_ads_admob_ui:

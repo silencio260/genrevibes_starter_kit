@@ -1,4 +1,4 @@
-/// Provider-neutral advertising APIs for GenreVibes applications.
+/// Provider-neutral advertising APIs for GenRevibes applications.
 library;
 
 export 'src/ad_coordinator.dart';

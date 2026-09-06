@@ -25,6 +25,16 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <!-- Google Mobile Ads registers MobileAdsInitProvider, a ContentProvider
+             that runs during Application creation, before Flutter starts Dart.
+             Without this meta-data the SDK throws "Invalid application ID" and
+             the process dies at launch, whether or not any Dart code ever calls
+             the ads SDK. This is Google's PUBLIC sample application ID and is
+             safe to commit. A real app must supply its own. -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-3940256099942544~3347511713" />
+
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

@@ -1,4 +1,4 @@
-/// RevenueCat adapter for the GenreVibes IAP contract.
+/// RevenueCat adapter for the GenRevibes IAP contract.
 library;
 
 export 'src/revenuecat_client.dart';

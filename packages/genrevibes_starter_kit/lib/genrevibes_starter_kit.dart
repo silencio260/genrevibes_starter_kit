@@ -1,4 +1,4 @@
-/// Thin lifecycle composition for independently installed GenreVibes modules.
+/// Thin lifecycle composition for independently installed GenRevibes modules.
 library;
 
 export 'src/starter_kit.dart';

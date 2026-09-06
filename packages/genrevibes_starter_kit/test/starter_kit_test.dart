@@ -7,7 +7,7 @@ import 'package:test/test.dart';
 void main() {
   test('disabled module factory is never invoked', () async {
     var created = false;
-    final kit = GenreVibesStarterKit(
+    final kit = GenRevibesStarterKit(
       modules: <StarterModuleRegistration>[
         StarterModuleRegistration.disabled(
           moduleId: 'analytics.posthog',
@@ -30,7 +30,7 @@ void main() {
 
   test('optional failure degrades without blocking healthy modules', () async {
     final healthy = _FakeModule('healthy');
-    final kit = GenreVibesStarterKit(
+    final kit = GenRevibesStarterKit(
       modules: <StarterModuleRegistration>[
         StarterModuleRegistration.enabled(
           moduleId: 'optional',
@@ -52,7 +52,7 @@ void main() {
   test('required failure is returned after independent modules are attempted',
       () async {
     final healthy = _FakeModule('healthy');
-    final kit = GenreVibesStarterKit(
+    final kit = GenRevibesStarterKit(
       modules: <StarterModuleRegistration>[
         StarterModuleRegistration.enabled(
           moduleId: 'required',
@@ -75,7 +75,7 @@ void main() {
     final order = <String>[];
     final first = _FakeModule('first', disposalOrder: order);
     final second = _FakeModule('second', disposalOrder: order);
-    final kit = GenreVibesStarterKit(
+    final kit = GenRevibesStarterKit(
       modules: <StarterModuleRegistration>[
         StarterModuleRegistration.enabled(
           moduleId: 'first',
@@ -101,7 +101,7 @@ void main() {
 
   test('rejects duplicate module ids before creating providers', () async {
     var createCalls = 0;
-    final kit = GenreVibesStarterKit(
+    final kit = GenRevibesStarterKit(
       modules: <StarterModuleRegistration>[
         for (var index = 0; index < 2; index++)
           StarterModuleRegistration.enabled(

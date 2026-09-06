@@ -1,5 +1,5 @@
 name: genrevibes_analytics_posthog
-description: PostHog analytics and optional session-replay sink for GenreVibes analytics.
+description: PostHog analytics and optional session-replay sink for GenRevibes analytics.
 version: 0.1.0-dev.1
 publish_to: none
 

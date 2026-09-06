@@ -1,5 +1,5 @@
 name: genrevibes_analytics_mixpanel
-description: Mixpanel analytics sink adapter for the GenreVibes analytics pipeline.
+description: Mixpanel analytics sink adapter for the GenRevibes analytics pipeline.
 version: 0.1.0-dev.1
 publish_to: none
 

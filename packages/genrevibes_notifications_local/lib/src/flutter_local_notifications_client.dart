@@ -13,7 +13,7 @@ typedef LocalNotificationResponseListener = void Function(
 /// Injectable seam around `flutter_local_notifications`.
 abstract interface class FlutterLocalNotificationsClient {
   Future<void> initialize(
-    GenreVibesLocalNotificationsConfiguration configuration,
+    GenRevibesLocalNotificationsConfiguration configuration,
     LocalNotificationResponseListener onResponse,
   );
   Future<bool> requestPermission();
@@ -45,12 +45,12 @@ final class DefaultFlutterLocalNotificationsClient
   }) : _plugin = plugin ?? FlutterLocalNotificationsPlugin();
 
   final FlutterLocalNotificationsPlugin _plugin;
-  late GenreVibesLocalNotificationsConfiguration _configuration;
+  late GenRevibesLocalNotificationsConfiguration _configuration;
   late tz.Location _location;
 
   @override
   Future<void> initialize(
-    GenreVibesLocalNotificationsConfiguration configuration,
+    GenRevibesLocalNotificationsConfiguration configuration,
     LocalNotificationResponseListener onResponse,
   ) async {
     _configuration = configuration;
@@ -196,7 +196,7 @@ final class DefaultFlutterLocalNotificationsClient
 
   AndroidScheduleMode get _androidScheduleMode =>
       _configuration.androidScheduleMode ==
-              GenreVibesAndroidScheduleMode.exactAllowWhileIdle
+              GenRevibesAndroidScheduleMode.exactAllowWhileIdle
           ? AndroidScheduleMode.exactAllowWhileIdle
           : AndroidScheduleMode.inexactAllowWhileIdle;
 

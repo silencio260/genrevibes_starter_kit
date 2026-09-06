@@ -12,7 +12,7 @@ abstract interface class AdMobClient {
   Stream<AdEvent> get events;
 
   /// Initializes Google Mobile Ads.
-  Future<void> initialize(GenreVibesAdMobConfiguration configuration);
+  Future<void> initialize(GenRevibesAdMobConfiguration configuration);
 
   /// Loads [unit], coalescing concurrent requests for the same placement.
   Future<void> load(AdMobAdUnit unit);
@@ -50,7 +50,7 @@ final class DefaultAdMobClient implements AdMobClient {
   Stream<AdEvent> get events => _events.stream;
 
   @override
-  Future<void> initialize(GenreVibesAdMobConfiguration configuration) async {
+  Future<void> initialize(GenRevibesAdMobConfiguration configuration) async {
     _fullScreenShowTimeout = configuration.fullScreenShowTimeout;
     if (configuration.testDeviceIds.isNotEmpty) {
       await MobileAds.instance.updateRequestConfiguration(

@@ -11,5 +11,5 @@ after independent modules have had a chance to initialize. Concurrent startup
 calls coalesce and disposal runs in reverse order.
 
 The application remains the composition root and may keep its existing DI
-container. `GenreVibesStarterKit.module<T>()` is only an instance lookup for
+container. `GenRevibesStarterKit.module<T>()` is only an instance lookup for
 already-created modules, not a global service locator.

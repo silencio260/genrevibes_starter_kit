@@ -5,9 +5,9 @@ import 'package:genrevibes_core/genrevibes_core.dart';
 import 'starter_module_registration.dart';
 
 /// Starts and observes only the modules explicitly selected by an application.
-final class GenreVibesStarterKit implements StarterModule {
+final class GenRevibesStarterKit implements StarterModule {
   /// Creates a provider-agnostic starter-kit coordinator.
-  GenreVibesStarterKit({
+  GenRevibesStarterKit({
     required Iterable<StarterModuleRegistration> modules,
     KitClock clock = const SystemKitClock(),
     KitLogger logger = const NoopKitLogger(),

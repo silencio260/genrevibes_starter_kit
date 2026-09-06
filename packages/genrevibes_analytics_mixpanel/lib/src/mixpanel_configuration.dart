@@ -1,7 +1,7 @@
 /// Application-owned configuration for the Mixpanel events SDK.
-final class GenreVibesMixpanelConfiguration {
+final class GenRevibesMixpanelConfiguration {
   /// Creates Mixpanel configuration.
-  const GenreVibesMixpanelConfiguration({
+  const GenRevibesMixpanelConfiguration({
     required this.token,
     this.trackAutomaticEvents = false,
     this.optOutTrackingDefault = false,

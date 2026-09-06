@@ -16,6 +16,12 @@ packages/*/pubspec.lock
 # Local environment and secrets
 .env
 .env.*
+*.env
+
+# Real credential files. Never commit these. The committed template for the
+# example apps is examples/<app>/env.example.json.
+env/
+examples/*/env/
 *.jks
 *.keystore
 key.properties

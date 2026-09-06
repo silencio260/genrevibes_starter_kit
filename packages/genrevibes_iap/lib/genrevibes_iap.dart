@@ -1,4 +1,4 @@
-/// Provider-neutral in-app purchase APIs for GenreVibes applications.
+/// Provider-neutral in-app purchase APIs for GenRevibes applications.
 library;
 
 export 'src/entitlement/entitlement_access_policy.dart';

@@ -1,4 +1,4 @@
-/// Typed, provider-neutral remote configuration for GenreVibes applications.
+/// Typed, provider-neutral remote configuration for GenRevibes applications.
 library;
 
 export 'src/remote_config_cache.dart';

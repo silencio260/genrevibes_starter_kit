@@ -19,7 +19,7 @@ final firstInterstitial = RemoteConfigKey<int>(
 final schema = RemoteConfigSchema([
   remoteConfigKey(firstInterstitial),
 ]);
-final provider = GenreVibesFirebaseRemoteConfigProvider(schema: schema);
+final provider = GenRevibesFirebaseRemoteConfigProvider(schema: schema);
 final config = RemoteConfigCoordinator(
   schema: schema,
   provider: provider,

@@ -1,4 +1,4 @@
-/// Optional Mixpanel session replay integration for GenreVibes applications.
+/// Optional Mixpanel session replay integration for GenRevibes applications.
 library;
 
 export 'src/mixpanel_replay_client.dart';

@@ -1,5 +1,5 @@
 name: genrevibes_notifications_onesignal
-description: OneSignal adapter for the provider-neutral GenreVibes notifications contract.
+description: OneSignal adapter for the provider-neutral GenRevibes notifications contract.
 version: 0.1.0-dev.1
 publish_to: none
 

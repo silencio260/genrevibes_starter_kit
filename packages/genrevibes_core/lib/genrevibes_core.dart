@@ -1,4 +1,4 @@
-/// Provider-neutral foundations for the GenreVibes package family.
+/// Provider-neutral foundations for the GenRevibes package family.
 library;
 
 export 'src/clock/kit_clock.dart';

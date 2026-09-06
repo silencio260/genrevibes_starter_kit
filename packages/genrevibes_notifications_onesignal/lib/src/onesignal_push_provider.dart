@@ -10,7 +10,7 @@ import 'onesignal_configuration.dart';
 final class OneSignalPushProvider implements PushNotificationProvider {
   /// Creates a OneSignal push provider.
   OneSignalPushProvider({
-    required GenreVibesOneSignalConfiguration configuration,
+    required GenRevibesOneSignalConfiguration configuration,
     OneSignalClient? client,
     KitClock clock = const SystemKitClock(),
     KitLogger logger = const NoopKitLogger(),
@@ -25,7 +25,7 @@ final class OneSignalPushProvider implements PushNotificationProvider {
           observedAt: clock.now(),
         );
 
-  final GenreVibesOneSignalConfiguration _configuration;
+  final GenRevibesOneSignalConfiguration _configuration;
   final OneSignalClient _client;
   final KitClock _clock;
   final KitLogger _logger;

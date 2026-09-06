@@ -1,5 +1,5 @@
 name: genrevibes_remote_config_firebase
-description: Firebase Remote Config adapter for the GenreVibes typed remote-config contract.
+description: Firebase Remote Config adapter for the GenRevibes typed remote-config contract.
 version: 0.1.0-dev.1
 publish_to: none
 

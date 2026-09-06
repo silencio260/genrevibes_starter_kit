@@ -1,7 +1,7 @@
 /// Application-owned Firebase Remote Config fetch policy.
-final class GenreVibesFirebaseRemoteConfigConfiguration {
+final class GenRevibesFirebaseRemoteConfigConfiguration {
   /// Creates Firebase fetch settings.
-  const GenreVibesFirebaseRemoteConfigConfiguration({
+  const GenRevibesFirebaseRemoteConfigConfiguration({
     this.fetchTimeout = const Duration(minutes: 1),
     this.minimumFetchInterval = const Duration(hours: 12),
   });

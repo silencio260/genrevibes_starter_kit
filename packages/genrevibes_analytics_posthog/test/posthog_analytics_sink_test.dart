@@ -7,13 +7,13 @@ void main() {
   runAnalyticsSinkContractTests(
     sinkName: 'PostHog',
     createSink: () async => PostHogAnalyticsSink(
-      configuration: const GenreVibesPostHogConfiguration(apiKey: 'test-key'),
+      configuration: const GenRevibesPostHogConfiguration(apiKey: 'test-key'),
       client: _FakePostHogClient(),
     ),
   );
 
   test('session replay remains privacy masked by default', () {
-    final config = const GenreVibesPostHogConfiguration(
+    final config = const GenRevibesPostHogConfiguration(
       apiKey: 'test-key',
       sessionReplayEnabled: true,
     ).toSdkConfiguration();

@@ -6,11 +6,11 @@ import 'package:genrevibes_core/genrevibes_core.dart';
 import 'mixpanel_analytics_client.dart';
 import 'mixpanel_configuration.dart';
 
-/// Mixpanel implementation of the GenreVibes analytics sink contract.
+/// Mixpanel implementation of the GenRevibes analytics sink contract.
 final class MixpanelAnalyticsSink implements AnalyticsSink {
   /// Creates a Mixpanel analytics sink.
   MixpanelAnalyticsSink({
-    required GenreVibesMixpanelConfiguration configuration,
+    required GenRevibesMixpanelConfiguration configuration,
     MixpanelAnalyticsClient? client,
     KitClock clock = const SystemKitClock(),
     KitLogger logger = const NoopKitLogger(),
@@ -25,7 +25,7 @@ final class MixpanelAnalyticsSink implements AnalyticsSink {
           observedAt: clock.now(),
         );
 
-  final GenreVibesMixpanelConfiguration _configuration;
+  final GenRevibesMixpanelConfiguration _configuration;
   final MixpanelAnalyticsClient _client;
   final KitClock _clock;
   final KitLogger _logger;

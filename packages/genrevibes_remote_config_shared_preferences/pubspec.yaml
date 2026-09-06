@@ -1,5 +1,5 @@
 name: genrevibes_remote_config_shared_preferences
-description: SharedPreferences last-known-good cache for GenreVibes remote config.
+description: SharedPreferences last-known-good cache for GenRevibes remote config.
 version: 0.1.0-dev.1
 publish_to: none
 

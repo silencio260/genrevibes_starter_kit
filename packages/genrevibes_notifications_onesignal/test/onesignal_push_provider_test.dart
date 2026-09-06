@@ -7,7 +7,7 @@ void main() {
       () async {
     final client = _FakeOneSignalClient();
     final provider = OneSignalPushProvider(
-      configuration: const GenreVibesOneSignalConfiguration(appId: 'test-app'),
+      configuration: const GenRevibesOneSignalConfiguration(appId: 'test-app'),
       client: client,
     );
 
@@ -31,7 +31,7 @@ void main() {
       ),
     );
     final provider = OneSignalPushProvider(
-      configuration: const GenreVibesOneSignalConfiguration(appId: 'test-app'),
+      configuration: const GenRevibesOneSignalConfiguration(appId: 'test-app'),
       client: client,
     );
     await provider.initialize();
@@ -52,7 +52,7 @@ void main() {
   test('emits foreground, open, and observed state changes', () async {
     final client = _FakeOneSignalClient();
     final provider = OneSignalPushProvider(
-      configuration: const GenreVibesOneSignalConfiguration(appId: 'test-app'),
+      configuration: const GenRevibesOneSignalConfiguration(appId: 'test-app'),
       client: client,
     );
     await provider.initialize();

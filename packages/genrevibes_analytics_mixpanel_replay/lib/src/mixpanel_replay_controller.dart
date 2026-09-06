@@ -10,7 +10,7 @@ import 'mixpanel_replay_configuration.dart';
 final class MixpanelReplayController implements StarterModule {
   /// Creates a replay controller.
   MixpanelReplayController({
-    required GenreVibesMixpanelReplayConfiguration configuration,
+    required GenRevibesMixpanelReplayConfiguration configuration,
     MixpanelReplayClient? client,
     KitClock clock = const SystemKitClock(),
     KitLogger logger = const NoopKitLogger(),
@@ -25,7 +25,7 @@ final class MixpanelReplayController implements StarterModule {
          observedAt: clock.now(),
        );
 
-  final GenreVibesMixpanelReplayConfiguration _configuration;
+  final GenRevibesMixpanelReplayConfiguration _configuration;
   final MixpanelReplayClient _client;
   final KitClock _clock;
   final KitLogger _logger;

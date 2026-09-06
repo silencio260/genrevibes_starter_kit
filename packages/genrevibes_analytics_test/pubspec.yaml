@@ -1,5 +1,5 @@
 name: genrevibes_analytics_test
-description: Shared contract-test harness for GenreVibes analytics sink adapters.
+description: Shared contract-test harness for GenRevibes analytics sink adapters.
 version: 0.1.0-dev.1
 publish_to: none
 

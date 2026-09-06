@@ -16,7 +16,7 @@ void main() {
   test('loads provider-persisted values during initialization', () async {
     final client = _FakeFirebaseClient()
       ..values = <String, Object?>{'ad_interval': 6};
-    final provider = GenreVibesFirebaseRemoteConfigProvider(
+    final provider = GenRevibesFirebaseRemoteConfigProvider(
       schema: schema,
       client: client,
     );
@@ -31,7 +31,7 @@ void main() {
 
   test('refresh returns newly activated values', () async {
     final client = _FakeFirebaseClient();
-    final provider = GenreVibesFirebaseRemoteConfigProvider(
+    final provider = GenRevibesFirebaseRemoteConfigProvider(
       schema: schema,
       client: client,
     );
@@ -51,7 +51,7 @@ void main() {
   test('fetch failure preserves the previously activated snapshot', () async {
     final client = _FakeFirebaseClient()
       ..values = <String, Object?>{'ad_interval': 6};
-    final provider = GenreVibesFirebaseRemoteConfigProvider(
+    final provider = GenRevibesFirebaseRemoteConfigProvider(
       schema: schema,
       client: client,
     );
@@ -89,7 +89,7 @@ final class _FakeFirebaseClient implements FirebaseRemoteConfigClient {
 
   @override
   Future<void> setup(
-    GenreVibesFirebaseRemoteConfigConfiguration configuration,
+    GenRevibesFirebaseRemoteConfigConfiguration configuration,
     Map<String, Object> defaults,
   ) async {}
 }

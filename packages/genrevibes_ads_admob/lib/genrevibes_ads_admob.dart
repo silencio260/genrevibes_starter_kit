@@ -1,4 +1,4 @@
-/// Google Mobile Ads adapter for GenreVibes advertising.
+/// Google Mobile Ads adapter for GenRevibes advertising.
 library;
 
 export 'src/admob_ad_provider.dart';

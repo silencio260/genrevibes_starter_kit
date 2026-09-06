@@ -1,5 +1,5 @@
 name: genrevibes_analytics_mixpanel_replay
-description: Optional Mixpanel session-replay integration for GenreVibes applications.
+description: Optional Mixpanel session-replay integration for GenRevibes applications.
 version: 0.1.0-dev.1
 publish_to: none
 

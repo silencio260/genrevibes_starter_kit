@@ -1,4 +1,4 @@
-/// Shared contract tests for GenreVibes analytics sink adapters.
+/// Shared contract tests for GenRevibes analytics sink adapters.
 library;
 
 export 'src/analytics_sink_contract.dart';

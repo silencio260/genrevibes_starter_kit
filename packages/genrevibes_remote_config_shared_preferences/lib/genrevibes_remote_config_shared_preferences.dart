@@ -1,4 +1,4 @@
-/// SharedPreferences cache for GenreVibes remote configuration.
+/// SharedPreferences cache for GenRevibes remote configuration.
 library;
 
 export 'src/remote_config_preferences_client.dart';

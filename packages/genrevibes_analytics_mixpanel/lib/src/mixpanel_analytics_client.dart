@@ -5,7 +5,7 @@ import 'mixpanel_configuration.dart';
 /// Injectable boundary around the Mixpanel Flutter plugin.
 abstract interface class MixpanelAnalyticsClient {
   /// Initializes the SDK.
-  Future<void> setup(GenreVibesMixpanelConfiguration configuration);
+  Future<void> setup(GenRevibesMixpanelConfiguration configuration);
 
   /// Enables or disables analytics collection.
   Future<void> setCollectionEnabled(bool enabled);
@@ -39,7 +39,7 @@ final class DefaultMixpanelAnalyticsClient implements MixpanelAnalyticsClient {
   }
 
   @override
-  Future<void> setup(GenreVibesMixpanelConfiguration configuration) async {
+  Future<void> setup(GenRevibesMixpanelConfiguration configuration) async {
     final mixpanel = await Mixpanel.init(
       configuration.token.trim(),
       trackAutomaticEvents: configuration.trackAutomaticEvents,

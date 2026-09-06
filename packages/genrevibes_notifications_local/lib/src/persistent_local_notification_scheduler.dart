@@ -11,7 +11,7 @@ final class PersistentLocalNotificationScheduler
     implements LocalNotificationScheduler {
   /// Creates a local notification scheduler.
   PersistentLocalNotificationScheduler({
-    required GenreVibesLocalNotificationsConfiguration configuration,
+    required GenRevibesLocalNotificationsConfiguration configuration,
     FlutterLocalNotificationsClient? client,
     KitClock clock = const SystemKitClock(),
     KitLogger logger = const NoopKitLogger(),
@@ -26,7 +26,7 @@ final class PersistentLocalNotificationScheduler
           observedAt: clock.now(),
         );
 
-  final GenreVibesLocalNotificationsConfiguration _configuration;
+  final GenRevibesLocalNotificationsConfiguration _configuration;
   final FlutterLocalNotificationsClient _client;
   final KitClock _clock;
   final KitLogger _logger;

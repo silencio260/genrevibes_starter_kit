@@ -13,9 +13,9 @@ final class AdMobAdUnit {
 }
 
 /// Application-owned AdMob configuration.
-final class GenreVibesAdMobConfiguration {
+final class GenRevibesAdMobConfiguration {
   /// Creates AdMob configuration.
-  GenreVibesAdMobConfiguration({
+  GenRevibesAdMobConfiguration({
     required Iterable<AdMobAdUnit> adUnits,
     List<String> testDeviceIds = const <String>[],
     this.fullScreenShowTimeout = const Duration(minutes: 2),

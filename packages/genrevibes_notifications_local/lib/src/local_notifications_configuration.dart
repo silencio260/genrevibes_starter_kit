@@ -1,5 +1,5 @@
 /// Accuracy/battery policy for Android scheduled notifications.
-enum GenreVibesAndroidScheduleMode {
+enum GenRevibesAndroidScheduleMode {
   /// Allows Android to batch delivery while still running during idle.
   inexactAllowWhileIdle,
 
@@ -8,13 +8,13 @@ enum GenreVibesAndroidScheduleMode {
 }
 
 /// Platform initialization and timezone policy.
-final class GenreVibesLocalNotificationsConfiguration {
+final class GenRevibesLocalNotificationsConfiguration {
   /// Creates local notification configuration.
-  const GenreVibesLocalNotificationsConfiguration({
+  const GenRevibesLocalNotificationsConfiguration({
     required this.androidDefaultIcon,
     required this.timeZoneName,
     this.androidScheduleMode =
-        GenreVibesAndroidScheduleMode.inexactAllowWhileIdle,
+        GenRevibesAndroidScheduleMode.inexactAllowWhileIdle,
   });
 
   /// Android drawable/mipmap resource, for example `@mipmap/ic_launcher`.
@@ -27,5 +27,5 @@ final class GenreVibesLocalNotificationsConfiguration {
   final String timeZoneName;
 
   /// Android alarm accuracy policy.
-  final GenreVibesAndroidScheduleMode androidScheduleMode;
+  final GenRevibesAndroidScheduleMode androidScheduleMode;
 }

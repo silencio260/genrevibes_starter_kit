@@ -1,4 +1,4 @@
-/// Provider-neutral analytics APIs for GenreVibes applications.
+/// Provider-neutral analytics APIs for GenRevibes applications.
 library;
 
 export 'src/analytics_pipeline.dart';

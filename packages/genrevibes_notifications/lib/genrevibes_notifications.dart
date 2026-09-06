@@ -1,4 +1,4 @@
-/// Provider-neutral notification APIs for GenreVibes applications.
+/// Provider-neutral notification APIs for GenRevibes applications.
 library;
 
 export 'src/local_notification_scheduler.dart';

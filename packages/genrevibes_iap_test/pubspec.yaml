@@ -1,5 +1,5 @@
 name: genrevibes_iap_test
-description: Shared contract-test harness for GenreVibes IAP provider adapters.
+description: Shared contract-test harness for GenRevibes IAP provider adapters.
 version: 0.1.0-dev.1
 publish_to: none
 

@@ -6,7 +6,7 @@ import 'package:genrevibes_core/genrevibes_core.dart';
 
 import 'firebase_analytics_client.dart';
 
-/// Firebase implementation of the GenreVibes analytics sink contract.
+/// Firebase implementation of the GenRevibes analytics sink contract.
 final class FirebaseAnalyticsSink implements AnalyticsSink {
   /// Creates a Firebase Analytics sink.
   FirebaseAnalyticsSink({

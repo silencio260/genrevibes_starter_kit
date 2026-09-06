@@ -6,11 +6,11 @@ import 'package:genrevibes_core/genrevibes_core.dart';
 import 'admob_client.dart';
 import 'admob_configuration.dart';
 
-/// Google Mobile Ads implementation of the GenreVibes ad-provider contract.
+/// Google Mobile Ads implementation of the GenRevibes ad-provider contract.
 final class AdMobAdProvider implements AdProvider {
   /// Creates an AdMob provider.
   AdMobAdProvider({
-    required GenreVibesAdMobConfiguration configuration,
+    required GenRevibesAdMobConfiguration configuration,
     AdMobClient? client,
     KitClock clock = const SystemKitClock(),
     KitLogger logger = const NoopKitLogger(),
@@ -31,7 +31,7 @@ final class AdMobAdProvider implements AdProvider {
     AdFormat.appOpen,
   };
 
-  final GenreVibesAdMobConfiguration _configuration;
+  final GenRevibesAdMobConfiguration _configuration;
   final AdMobClient _client;
   final KitClock _clock;
   final KitLogger _logger;

@@ -1,7 +1,7 @@
 /// OneSignal initialization policy owned by the host application.
-final class GenreVibesOneSignalConfiguration {
+final class GenRevibesOneSignalConfiguration {
   /// Creates OneSignal configuration.
-  const GenreVibesOneSignalConfiguration({
+  const GenRevibesOneSignalConfiguration({
     required this.appId,
     this.verboseLogging = false,
     this.consentRequired = false,

@@ -1,4 +1,4 @@
-/// Firebase Analytics integration for GenreVibes analytics.
+/// Firebase Analytics integration for GenRevibes analytics.
 library;
 
 export 'src/firebase_analytics_client.dart';

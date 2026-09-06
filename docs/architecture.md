@@ -1,4 +1,4 @@
-# GenreVibes Starter Kit architecture
+# GenRevibes Starter Kit architecture
 
 Status: accepted for the `feature/modular-provider-architecture` branch.
 
@@ -50,7 +50,7 @@ adapter. Vendor SDK types must not appear in a contract package's public API.
 1. A feature is explicitly enabled or disabled. Required features never fall
    back silently to a no-op provider.
 2. Provider packages own all direct dependencies on their vendor SDK.
-3. Public contracts use GenreVibes models rather than vendor models.
+3. Public contracts use GenRevibes models rather than vendor models.
 4. Configuration is passed through constructors or immutable configuration
    objects. Secrets are never committed or embedded in a published package.
 5. The application owns dependency injection. The coordinator must not force

@@ -1,5 +1,5 @@
 name: genrevibes_ads_test
-description: Shared contract-test harness for GenreVibes ad provider adapters.
+description: Shared contract-test harness for GenRevibes ad provider adapters.
 version: 0.1.0-dev.1
 publish_to: none
 

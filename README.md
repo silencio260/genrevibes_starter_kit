@@ -1,6 +1,6 @@
-# GenreVibes Starter Kit
+# GenRevibes Starter Kit
 
-A modular Flutter package family for capabilities shared across the GenreVibes
+A modular Flutter package family for capabilities shared across the GenRevibes
 app portfolio. Applications install only the contracts and provider adapters
 they select; an unused vendor SDK is not resolved or compiled into the app.
 
@@ -49,7 +49,7 @@ dependencies:
 ```
 
 Until packages are published, local development also needs path overrides for
-their neutral GenreVibes dependencies. Each package's committed
+their neutral GenRevibes dependencies. Each package's committed
 `pubspec_overrides.yaml` demonstrates that repository-local wiring. Published
 apps will use normal semantic version constraints instead.
 

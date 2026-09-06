@@ -1,5 +1,5 @@
 name: genrevibes_analytics_firebase
-description: Firebase Analytics sink adapter for the GenreVibes analytics pipeline.
+description: Firebase Analytics sink adapter for the GenRevibes analytics pipeline.
 version: 0.1.0-dev.1
 publish_to: none
 

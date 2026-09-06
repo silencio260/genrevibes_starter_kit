@@ -1,9 +1,9 @@
 import 'package:posthog_flutter/posthog_flutter.dart';
 
 /// Application-owned PostHog SDK configuration.
-final class GenreVibesPostHogConfiguration {
+final class GenRevibesPostHogConfiguration {
   /// Creates PostHog configuration.
-  const GenreVibesPostHogConfiguration({
+  const GenRevibesPostHogConfiguration({
     required this.apiKey,
     this.host = 'https://us.i.posthog.com',
     this.debug = false,

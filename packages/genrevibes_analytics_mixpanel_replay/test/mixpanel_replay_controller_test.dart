@@ -4,7 +4,7 @@ import 'package:genrevibes_analytics_mixpanel_replay/genrevibes_analytics_mixpan
 
 void main() {
   test('defaults to privacy masking and zero-percent recording', () {
-    const configuration = GenreVibesMixpanelReplayConfiguration(
+    const configuration = GenRevibesMixpanelReplayConfiguration(
       token: 'token',
       distinctId: 'anonymous-id',
     );
@@ -17,7 +17,7 @@ void main() {
   test('initializes idempotently and supports privacy stop', () async {
     final client = _FakeReplayClient();
     final controller = MixpanelReplayController(
-      configuration: const GenreVibesMixpanelReplayConfiguration(
+      configuration: const GenRevibesMixpanelReplayConfiguration(
         token: 'token',
         distinctId: 'anonymous-id',
         sessionsPercent: 25,
@@ -49,7 +49,7 @@ final class _FakeReplayClient implements MixpanelReplayClient {
 
   @override
   Future<void> setup(
-    GenreVibesMixpanelReplayConfiguration configuration,
+    GenRevibesMixpanelReplayConfiguration configuration,
   ) async {
     setupCalls += 1;
   }

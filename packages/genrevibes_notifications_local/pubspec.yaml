@@ -1,5 +1,5 @@
 name: genrevibes_notifications_local
-description: Persistent local notification scheduler adapter for the GenreVibes notifications contract.
+description: Persistent local notification scheduler adapter for the GenRevibes notifications contract.
 version: 0.1.0-dev.1
 publish_to: none
 

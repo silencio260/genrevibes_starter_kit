@@ -273,7 +273,7 @@ packages:
     source: sdk
     version: "0.0.0"
   genrevibes_ads:
-    dependency: "direct overridden"
+    dependency: "direct main"
     description:
       path: "../../packages/genrevibes_ads"
       relative: true

@@ -1,4 +1,4 @@
-/// PostHog integration for GenreVibes analytics.
+/// PostHog integration for GenRevibes analytics.
 library;
 
 export 'src/posthog_analytics_client.dart';

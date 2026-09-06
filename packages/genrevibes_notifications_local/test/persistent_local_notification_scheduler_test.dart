@@ -72,7 +72,7 @@ const _content = LocalNotificationContent(
 
 PersistentLocalNotificationScheduler _scheduler(_FakeClient client) =>
     PersistentLocalNotificationScheduler(
-      configuration: const GenreVibesLocalNotificationsConfiguration(
+      configuration: const GenRevibesLocalNotificationsConfiguration(
         androidDefaultIcon: '@mipmap/ic_launcher',
         timeZoneName: 'Africa/Lagos',
       ),
@@ -94,7 +94,7 @@ final class _FakeClient implements FlutterLocalNotificationsClient {
 
   @override
   Future<void> initialize(
-    GenreVibesLocalNotificationsConfiguration configuration,
+    GenRevibesLocalNotificationsConfiguration configuration,
     LocalNotificationResponseListener onResponse,
   ) async {
     initializeCalls++;

@@ -90,7 +90,7 @@ final class _RevenueCatExampleAppState extends State<RevenueCatExampleApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
-        appBar: AppBar(title: const Text('GenreVibes RevenueCat example')),
+        appBar: AppBar(title: const Text('GenRevibes RevenueCat example')),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),

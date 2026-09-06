@@ -1,7 +1,7 @@
 # Toolchain risk register
 
 This file records build warnings and native requirements that can turn into
-future compile failures even when the GenreVibes Dart APIs do not change. Check
+future compile failures even when the GenRevibes Dart APIs do not change. Check
 it during every Flutter stable upgrade and before widening a vendor constraint.
 
 ## Open risks

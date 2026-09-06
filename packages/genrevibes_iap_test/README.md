@@ -1,6 +1,6 @@
 # genrevibes_iap_test
 
-Shared behavioral contract tests for GenreVibes IAP adapters.
+Shared behavioral contract tests for GenRevibes IAP adapters.
 
 Provider packages add this package as a development dependency and invoke
 `runIapProviderContractTests` with a deterministic provider fixture. RevenueCat,

@@ -23,7 +23,7 @@ final class FirebaseRemoteConfigReadResult {
 abstract interface class FirebaseRemoteConfigClient {
   /// Configures the SDK, bundled defaults, and persisted activated values.
   Future<void> setup(
-    GenreVibesFirebaseRemoteConfigConfiguration configuration,
+    GenRevibesFirebaseRemoteConfigConfiguration configuration,
     Map<String, Object> defaults,
   );
 
@@ -48,7 +48,7 @@ final class DefaultFirebaseRemoteConfigClient
 
   @override
   Future<void> setup(
-    GenreVibesFirebaseRemoteConfigConfiguration configuration,
+    GenRevibesFirebaseRemoteConfigConfiguration configuration,
     Map<String, Object> defaults,
   ) async {
     await _remoteConfig.setConfigSettings(

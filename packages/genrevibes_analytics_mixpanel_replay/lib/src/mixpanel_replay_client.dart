@@ -6,7 +6,7 @@ import 'mixpanel_replay_configuration.dart';
 /// Injectable boundary around the Mixpanel session-replay plugin.
 abstract interface class MixpanelReplayClient {
   /// Initializes replay storage, sampling, and upload services.
-  Future<void> setup(GenreVibesMixpanelReplayConfiguration configuration);
+  Future<void> setup(GenRevibesMixpanelReplayConfiguration configuration);
 
   /// Wraps the application tree with the replay capture widget when ready.
   Widget wrap(Widget child);
@@ -38,7 +38,7 @@ final class DefaultMixpanelReplayClient implements MixpanelReplayClient {
 
   @override
   Future<void> setup(
-    GenreVibesMixpanelReplayConfiguration configuration,
+    GenRevibesMixpanelReplayConfiguration configuration,
   ) async {
     final result = await MixpanelSessionReplay.initialize(
       token: configuration.token.trim(),

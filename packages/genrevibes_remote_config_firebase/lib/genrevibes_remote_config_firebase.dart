@@ -1,4 +1,4 @@
-/// Firebase adapter for GenreVibes typed remote configuration.
+/// Firebase adapter for GenRevibes typed remote configuration.
 library;
 
 export 'src/firebase_remote_config_client.dart';

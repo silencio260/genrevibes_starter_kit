@@ -7,14 +7,14 @@ import 'package:genrevibes_remote_config/genrevibes_remote_config.dart';
 import 'firebase_remote_config_client.dart';
 import 'firebase_remote_config_configuration.dart';
 
-/// Firebase implementation of the GenreVibes remote-config provider contract.
-final class GenreVibesFirebaseRemoteConfigProvider
+/// Firebase implementation of the GenRevibes remote-config provider contract.
+final class GenRevibesFirebaseRemoteConfigProvider
     implements RemoteConfigProvider {
   /// Creates a Firebase Remote Config provider.
-  GenreVibesFirebaseRemoteConfigProvider({
+  GenRevibesFirebaseRemoteConfigProvider({
     required RemoteConfigSchema schema,
-    GenreVibesFirebaseRemoteConfigConfiguration configuration =
-        const GenreVibesFirebaseRemoteConfigConfiguration(),
+    GenRevibesFirebaseRemoteConfigConfiguration configuration =
+        const GenRevibesFirebaseRemoteConfigConfiguration(),
     FirebaseRemoteConfigClient? client,
     KitClock clock = const SystemKitClock(),
     KitLogger logger = const NoopKitLogger(),
@@ -38,7 +38,7 @@ final class GenreVibesFirebaseRemoteConfigProvider
         );
 
   final RemoteConfigSchema _schema;
-  final GenreVibesFirebaseRemoteConfigConfiguration _configuration;
+  final GenRevibesFirebaseRemoteConfigConfiguration _configuration;
   final FirebaseRemoteConfigClient _client;
   final KitClock _clock;
   final KitLogger _logger;

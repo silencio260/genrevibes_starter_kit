@@ -1,9 +1,9 @@
 import 'package:mixpanel_flutter_session_replay/mixpanel_flutter_session_replay.dart';
 
 /// Privacy-first configuration for Mixpanel session replay.
-final class GenreVibesMixpanelReplayConfiguration {
+final class GenRevibesMixpanelReplayConfiguration {
   /// Creates session-replay configuration.
-  const GenreVibesMixpanelReplayConfiguration({
+  const GenRevibesMixpanelReplayConfiguration({
     required this.token,
     required this.distinctId,
     this.maskAllText = true,

@@ -6,7 +6,7 @@ void main() {
   runAnalyticsSinkContractTests(
     sinkName: 'Mixpanel',
     createSink: () async => MixpanelAnalyticsSink(
-      configuration: const GenreVibesMixpanelConfiguration(token: 'test-token'),
+      configuration: const GenRevibesMixpanelConfiguration(token: 'test-token'),
       client: _FakeMixpanelClient(),
     ),
   );
@@ -14,7 +14,7 @@ void main() {
   test('rejects an invalid flush batch size before SDK setup', () async {
     final client = _FakeMixpanelClient();
     final sink = MixpanelAnalyticsSink(
-      configuration: const GenreVibesMixpanelConfiguration(
+      configuration: const GenRevibesMixpanelConfiguration(
         token: 'test-token',
         flushBatchSize: 51,
       ),
@@ -47,7 +47,7 @@ final class _FakeMixpanelClient implements MixpanelAnalyticsClient {
   Future<void> setPeopleProperties(Map<String, Object> properties) async {}
 
   @override
-  Future<void> setup(GenreVibesMixpanelConfiguration configuration) async {
+  Future<void> setup(GenRevibesMixpanelConfiguration configuration) async {
     setupCalls += 1;
   }
 

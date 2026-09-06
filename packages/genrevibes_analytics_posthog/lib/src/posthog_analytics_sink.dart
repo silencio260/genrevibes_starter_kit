@@ -6,11 +6,11 @@ import 'package:genrevibes_core/genrevibes_core.dart';
 import 'posthog_analytics_client.dart';
 import 'posthog_configuration.dart';
 
-/// PostHog implementation of the GenreVibes analytics sink contract.
+/// PostHog implementation of the GenRevibes analytics sink contract.
 final class PostHogAnalyticsSink implements AnalyticsSink {
   /// Creates a PostHog analytics sink.
   PostHogAnalyticsSink({
-    required GenreVibesPostHogConfiguration configuration,
+    required GenRevibesPostHogConfiguration configuration,
     PostHogAnalyticsClient? client,
     KitClock clock = const SystemKitClock(),
     KitLogger logger = const NoopKitLogger(),
@@ -25,7 +25,7 @@ final class PostHogAnalyticsSink implements AnalyticsSink {
           observedAt: clock.now(),
         );
 
-  final GenreVibesPostHogConfiguration _configuration;
+  final GenRevibesPostHogConfiguration _configuration;
   final PostHogAnalyticsClient _client;
   final KitClock _clock;
   final KitLogger _logger;
