@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:genrevibes_ads_admob/genrevibes_ads_admob.dart';
 import 'package:genrevibes_ads_admob_ui/genrevibes_ads_admob_ui.dart';
 import 'package:genrevibes_analytics_firebase/genrevibes_analytics_firebase.dart';
+import 'package:genrevibes_app_rating_in_app_review/genrevibes_app_rating_in_app_review.dart';
+import 'package:genrevibes_consent_ump/genrevibes_consent_ump.dart';
+import 'package:genrevibes_feedbacknest/genrevibes_feedbacknest.dart';
 import 'package:genrevibes_analytics_mixpanel/genrevibes_analytics_mixpanel.dart';
 import 'package:genrevibes_analytics_mixpanel_replay/genrevibes_analytics_mixpanel_replay.dart';
 import 'package:genrevibes_analytics_posthog/genrevibes_analytics_posthog.dart';
@@ -12,6 +15,7 @@ import 'package:genrevibes_notifications_onesignal/genrevibes_notifications_ones
 import 'package:genrevibes_remote_config_firebase/genrevibes_remote_config_firebase.dart';
 import 'package:genrevibes_remote_config_shared_preferences/genrevibes_remote_config_shared_preferences.dart';
 import 'package:genrevibes_starter_kit/genrevibes_starter_kit.dart';
+import 'package:genrevibes_storage_shared_preferences/genrevibes_storage_shared_preferences.dart';
 
 import 'smoke_env.dart';
 
@@ -32,6 +36,10 @@ const adapterTypes = <Type>[
   GenRevibesFirebaseRemoteConfigProvider,
   SharedPreferencesRemoteConfigCache,
   GenRevibesStarterKit,
+  UmpConsentProvider,
+  InAppReviewStoreProvider,
+  FeedbackNestFeedbackProvider,
+  SharedPreferencesKeyValueStore,
 ];
 
 class SmokeApp extends StatelessWidget {

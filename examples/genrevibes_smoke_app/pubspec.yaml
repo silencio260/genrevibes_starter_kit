@@ -39,6 +39,15 @@ dependencies:
   genrevibes_starter_kit:
     path: ../../packages/genrevibes_starter_kit
 
+  genrevibes_app_rating_in_app_review:
+    path: ../../packages/genrevibes_app_rating_in_app_review
+  genrevibes_consent_ump:
+    path: ../../packages/genrevibes_consent_ump
+  genrevibes_feedbacknest:
+    path: ../../packages/genrevibes_feedbacknest
+  genrevibes_storage_shared_preferences:
+    path: ../../packages/genrevibes_storage_shared_preferences
+
 dev_dependencies:
   flutter_lints: ^6.0.0
   flutter_test:
@@ -61,6 +70,15 @@ dependency_overrides:
     path: ../../packages/genrevibes_notifications
   genrevibes_remote_config:
     path: ../../packages/genrevibes_remote_config
+
+  genrevibes_app_rating:
+    path: ../../packages/genrevibes_app_rating
+  genrevibes_consent:
+    path: ../../packages/genrevibes_consent
+  genrevibes_feedback:
+    path: ../../packages/genrevibes_feedback
+  genrevibes_storage:
+    path: ../../packages/genrevibes_storage
 
 flutter:
   uses-material-design: true
