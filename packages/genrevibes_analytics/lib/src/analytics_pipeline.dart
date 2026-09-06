@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:genrevibes_core/genrevibes_core.dart';
 
+import 'analytics_event_names.dart';
 import 'analytics_sink.dart';
 import 'model/analytics_consent.dart';
 import 'model/analytics_delivery_report.dart';
@@ -14,10 +15,12 @@ final class AnalyticsPipeline implements StarterModule {
   AnalyticsPipeline({
     required Iterable<AnalyticsSink> sinks,
     AnalyticsConsent initialConsent = AnalyticsConsent.unknown,
+    AnalyticsEventNames names = const CanonicalAnalyticsEventNames(),
     KitClock clock = const SystemKitClock(),
     KitLogger logger = const NoopKitLogger(),
   })  : _sinks = List<AnalyticsSink>.unmodifiable(sinks),
         _consent = initialConsent,
+        _names = names,
         _clock = clock,
         _logger = logger,
         _health = ModuleHealth(
@@ -27,6 +30,7 @@ final class AnalyticsPipeline implements StarterModule {
         );
 
   final List<AnalyticsSink> _sinks;
+  final AnalyticsEventNames _names;
   final KitClock _clock;
   final KitLogger _logger;
   final StreamController<ModuleHealth> _healthChanges =
@@ -113,13 +117,27 @@ final class AnalyticsPipeline implements StarterModule {
   }
 
   /// Sends [event] to every configured sink concurrently.
+  ///
+  /// The event name is passed through [AnalyticsEventNames] first, so a
+  /// remote or per-app rename applies to every sink and every kit emitter.
   Future<KitResult<AnalyticsDeliveryReport>> track(AnalyticsEvent event) {
+    final outgoing = _resolveName(event);
     if (_consent != AnalyticsConsent.granted) {
       return Future<KitResult<AnalyticsDeliveryReport>>.value(
-        KitSuccess<AnalyticsDeliveryReport>(_suppressedReport(event.name)),
+        KitSuccess<AnalyticsDeliveryReport>(_suppressedReport(outgoing.name)),
       );
     }
-    return _dispatch(event.name, (sink) => sink.track(event));
+    return _dispatch(outgoing.name, (sink) => sink.track(outgoing));
+  }
+
+  AnalyticsEvent _resolveName(AnalyticsEvent event) {
+    final resolved = _names.resolve(event.name);
+    if (resolved == event.name || resolved.trim().isEmpty) return event;
+    return AnalyticsEvent(
+      name: resolved,
+      properties: event.properties,
+      occurredAt: event.occurredAt,
+    );
   }
 
   /// Identifies [user] in every configured sink.

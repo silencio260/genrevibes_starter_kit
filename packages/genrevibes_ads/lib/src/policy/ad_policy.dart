@@ -40,6 +40,19 @@ final class AdPlacementPolicy {
 
   /// Minimum time between successful displays.
   final Duration minimumInterval;
+
+  /// Returns a copy with the given fields replaced.
+  AdPlacementPolicy copyWith({
+    bool? enabled,
+    Duration? initialDelay,
+    Duration? minimumInterval,
+  }) {
+    return AdPlacementPolicy(
+      enabled: enabled ?? this.enabled,
+      initialDelay: initialDelay ?? this.initialDelay,
+      minimumInterval: minimumInterval ?? this.minimumInterval,
+    );
+  }
 }
 
 /// Decision returned by [AdPolicyController.evaluate].
@@ -66,14 +79,14 @@ final class AdPolicyController {
     AdPlacementPolicy defaultPolicy = const AdPlacementPolicy(),
     bool isPremium = false,
     KitClock clock = const SystemKitClock(),
-  })  : _placements = Map<String, AdPlacementPolicy>.unmodifiable(placements),
+  })  : _placements = Map<String, AdPlacementPolicy>.of(placements),
         _defaultPolicy = defaultPolicy,
         _isPremium = isPremium,
         _clock = clock,
         _sessionStartedAt = clock.now();
 
   final Map<String, AdPlacementPolicy> _placements;
-  final AdPlacementPolicy _defaultPolicy;
+  AdPlacementPolicy _defaultPolicy;
   final KitClock _clock;
   final Map<String, int> _suppressionCounts = <String, int>{};
   final Map<String, DateTime> _lastShownAt = <String, DateTime>{};
@@ -83,6 +96,25 @@ final class AdPolicyController {
 
   /// Whether the customer currently has ad-free entitlement.
   bool get isPremium => _isPremium;
+
+  /// Current per-placement policies, for diagnostics.
+  Map<String, AdPlacementPolicy> get placements =>
+      Map<String, AdPlacementPolicy>.unmodifiable(_placements);
+
+  /// Policy used for placements without an explicit entry.
+  AdPlacementPolicy get defaultPolicy => _defaultPolicy;
+
+  /// Replaces the policies for the given placement IDs, keeping the rest.
+  ///
+  /// Retunes intervals live, typically from remote configuration, without
+  /// recreating the controller. Recreating it would drop active suppression
+  /// reasons and the full-screen display lock mid-session.
+  void updatePlacements(Map<String, AdPlacementPolicy> updates) {
+    _placements.addAll(updates);
+  }
+
+  /// Replaces the fallback policy for placements without an explicit entry.
+  void setDefaultPolicy(AdPlacementPolicy policy) => _defaultPolicy = policy;
 
   /// Active suppression reasons for diagnostics.
   Set<String> get suppressionReasons =>

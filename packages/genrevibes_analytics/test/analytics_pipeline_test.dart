@@ -56,6 +56,33 @@ void main() {
     expect(pipeline.health.state, ModuleState.ready);
     await pipeline.dispose();
   });
+
+  test('event names are resolved before reaching any sink', () async {
+    final sink = _FakeAnalyticsSink('firebase');
+    final pipeline = AnalyticsPipeline(
+      sinks: <AnalyticsSink>[sink],
+      initialConsent: AnalyticsConsent.granted,
+      names: MappedAnalyticsEventNames(<String, String>{
+        'rating_submitted': 'custom_rating_submitted',
+      }),
+    );
+    await pipeline.initialize();
+
+    await pipeline.track(const AnalyticsEvent(name: 'rating_submitted'));
+    await pipeline.track(const AnalyticsEvent(name: 'app_open'));
+
+    expect(
+      sink.events.map((e) => e.name),
+      <String>['custom_rating_submitted', 'app_open'],
+    );
+  });
+
+  test('a blank override keeps the canonical name', () {
+    final names = MappedAnalyticsEventNames(<String, String>{'x': '  '});
+
+    expect(names.resolve('x'), 'x');
+    expect(const CanonicalAnalyticsEventNames().resolve('x'), 'x');
+  });
 }
 
 T _value<T>(KitResult<T> result) {

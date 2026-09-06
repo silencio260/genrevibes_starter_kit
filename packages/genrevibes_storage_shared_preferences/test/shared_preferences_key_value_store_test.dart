@@ -17,6 +17,14 @@ void main() {
       expect(await _value(store.getString('name')), 'genrevibes');
     });
 
+    test('round-trips a string list', () async {
+      final store = SharedPreferencesKeyValueStore(client: _FakeClient());
+
+      await store.setStringList('days', <String>['a', 'b']);
+
+      expect(await _value(store.getStringList('days')), <String>['a', 'b']);
+    });
+
     test('an absent key reads as null rather than failing', () async {
       final store = SharedPreferencesKeyValueStore(client: _FakeClient());
 
@@ -113,6 +121,18 @@ final class _FakeClient implements PreferencesClient {
   Future<String?> readString(String key) async {
     _maybeThrow();
     return values[key] as String?;
+  }
+
+  @override
+  Future<List<String>?> readStringList(String key) async {
+    _maybeThrow();
+    return values[key] as List<String>?;
+  }
+
+  @override
+  Future<void> writeStringList(String key, List<String> value) async {
+    _maybeThrow();
+    values[key] = value;
   }
 
   @override

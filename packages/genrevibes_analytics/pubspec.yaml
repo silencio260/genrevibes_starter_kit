@@ -1,6 +1,6 @@
 name: genrevibes_analytics
 description: Provider-neutral analytics contracts and a failure-isolated multi-sink pipeline.
-version: 0.1.0-dev.1
+version: 0.1.0-dev.2
 publish_to: none
 
 environment:

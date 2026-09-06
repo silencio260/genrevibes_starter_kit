@@ -80,6 +80,48 @@ void main() {
     policy.finishShow(placement);
     expect(policy.beginShow(other).isAllowed, isTrue);
   });
+
+  test('placements can be retuned live without losing suppression state', () {
+    final policy = AdPolicyController(
+      placements: <String, AdPlacementPolicy>{
+        'interstitial': const AdPlacementPolicy(
+          minimumInterval: Duration(minutes: 5),
+        ),
+      },
+    );
+    const placement =
+        AdPlacement(id: 'interstitial', format: AdFormat.interstitial);
+    policy.suppress('paywall');
+
+    policy.updatePlacements(<String, AdPlacementPolicy>{
+      'interstitial': policy.placements['interstitial']!
+          .copyWith(minimumInterval: const Duration(seconds: 1)),
+    });
+
+    expect(
+      policy.placements['interstitial']!.minimumInterval,
+      const Duration(seconds: 1),
+    );
+    expect(policy.suppressionReasons, contains('paywall'));
+    expect(
+      policy.evaluate(placement).blockReason,
+      AdPolicyBlockReason.suppressed,
+    );
+  });
+
+  test('the default policy can be replaced for unlisted placements', () {
+    final policy = AdPolicyController();
+
+    policy.setDefaultPolicy(const AdPlacementPolicy(enabled: false));
+
+    expect(policy.defaultPolicy.enabled, isFalse);
+    expect(
+      policy
+          .evaluate(const AdPlacement(id: 'anything', format: AdFormat.banner))
+          .isAllowed,
+      isFalse,
+    );
+  });
 }
 
 final class _FakeClock implements KitClock {

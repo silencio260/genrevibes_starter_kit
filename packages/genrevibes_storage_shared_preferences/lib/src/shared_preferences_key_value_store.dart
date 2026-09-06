@@ -32,6 +32,19 @@ final class SharedPreferencesKeyValueStore implements KeyValueStore {
   }
 
   @override
+  Future<KitResult<List<String>?>> getStringList(String key) {
+    return _guard(() => _client.readStringList(key), 'read_string_list');
+  }
+
+  @override
+  Future<KitResult<void>> setStringList(String key, List<String> value) {
+    return _guard(
+      () => _client.writeStringList(key, List<String>.of(value)),
+      'write_string_list',
+    );
+  }
+
+  @override
   Future<KitResult<void>> setBool(String key, bool value) {
     return _guard(() => _client.writeBool(key, value), 'write_bool');
   }

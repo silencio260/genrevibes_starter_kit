@@ -49,6 +49,19 @@ final class MigratingKeyValueStore implements KeyValueStore {
   }
 
   @override
+  Future<KitResult<List<String>?>> getStringList(String key) {
+    return _readWithFallback(
+      key,
+      _delegate.getStringList,
+      _delegate.setStringList,
+    );
+  }
+
+  @override
+  Future<KitResult<void>> setStringList(String key, List<String> value) =>
+      _delegate.setStringList(key, value);
+
+  @override
   Future<KitResult<void>> setBool(String key, bool value) =>
       _delegate.setBool(key, value);
 

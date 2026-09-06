@@ -64,6 +64,27 @@ void main() {
       expect(await _string(store, 'new.name'), 'story saver');
     });
 
+    test('migrates a string list, which retention history depends on',
+        () async {
+      // Session timestamps and daily open dates are lists. Without list
+      // support these could never be adopted from a legacy install.
+      final delegate = MemoryKeyValueStore(
+        initialValues: {
+          'session_timestamps': <String>['2026-01-01T09:00:00Z'],
+        },
+      );
+      final store = MigratingKeyValueStore(
+        delegate: delegate,
+        legacyKeys: const {'new.sessions': 'session_timestamps'},
+      );
+
+      final migrated = (await store.getStringList('new.sessions'))
+          .fold(onSuccess: (v) => v, onFailure: (_) => null);
+
+      expect(migrated, <String>['2026-01-01T09:00:00Z']);
+      expect(delegate.values['new.sessions'], isNotNull);
+    });
+
     test('a key with no legacy mapping simply reads as absent', () async {
       final store = _migrating(MemoryKeyValueStore());
 

@@ -1,6 +1,6 @@
 name: genrevibes_storage
 description: Provider-neutral key-value storage contracts for GenRevibes packages.
-version: 0.1.0-dev.1
+version: 0.1.0-dev.2
 publish_to: none
 
 environment:

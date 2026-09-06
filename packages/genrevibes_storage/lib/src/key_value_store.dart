@@ -18,6 +18,9 @@ abstract interface class KeyValueStore {
   /// Reads a string, or `null` when [key] is absent.
   Future<KitResult<String?>> getString(String key);
 
+  /// Reads a string list, or `null` when [key] is absent.
+  Future<KitResult<List<String>?>> getStringList(String key);
+
   /// Stores a boolean under [key].
   Future<KitResult<void>> setBool(String key, bool value);
 
@@ -26,6 +29,9 @@ abstract interface class KeyValueStore {
 
   /// Stores a string under [key].
   Future<KitResult<void>> setString(String key, String value);
+
+  /// Stores a string list under [key]. The list is copied.
+  Future<KitResult<void>> setStringList(String key, List<String> value);
 
   /// Removes [key]. Removing an absent key succeeds.
   Future<KitResult<void>> remove(String key);

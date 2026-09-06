@@ -27,6 +27,10 @@ final class MemoryKeyValueStore implements KeyValueStore {
   Future<KitResult<String?>> getString(String key) async => _read<String>(key);
 
   @override
+  Future<KitResult<List<String>?>> getStringList(String key) async =>
+      _read<List<String>>(key);
+
+  @override
   Future<KitResult<void>> setBool(String key, bool value) async =>
       _write(key, value);
 
@@ -37,6 +41,10 @@ final class MemoryKeyValueStore implements KeyValueStore {
   @override
   Future<KitResult<void>> setString(String key, String value) async =>
       _write(key, value);
+
+  @override
+  Future<KitResult<void>> setStringList(String key, List<String> value) async =>
+      _write(key, List<String>.unmodifiable(value));
 
   @override
   Future<KitResult<void>> remove(String key) async {
