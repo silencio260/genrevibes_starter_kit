@@ -12,6 +12,14 @@ dependencies:
     sdk: flutter
   genrevibes_ads:
     path: ../../packages/genrevibes_ads
+  genrevibes_app_links_launcher:
+    path: ../../packages/genrevibes_app_links_launcher
+  genrevibes_crash_crashlytics:
+    path: ../../packages/genrevibes_crash_crashlytics
+  genrevibes_device_identity_platform:
+    path: ../../packages/genrevibes_device_identity_platform
+  genrevibes_permissions_handler:
+    path: ../../packages/genrevibes_permissions_handler
   genrevibes_ads_admob:
     path: ../../packages/genrevibes_ads_admob
   genrevibes_ads_admob_ui:
@@ -56,6 +64,14 @@ dev_dependencies:
 dependency_overrides:
   genrevibes_ads:
     path: ../../packages/genrevibes_ads
+  genrevibes_app_links:
+    path: ../../packages/genrevibes_app_links
+  genrevibes_crash:
+    path: ../../packages/genrevibes_crash
+  genrevibes_device_identity:
+    path: ../../packages/genrevibes_device_identity
+  genrevibes_permissions:
+    path: ../../packages/genrevibes_permissions
   genrevibes_ads_admob:
     path: ../../packages/genrevibes_ads_admob
   genrevibes_analytics:

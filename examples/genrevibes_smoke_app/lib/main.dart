@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:genrevibes_app_links_launcher/genrevibes_app_links_launcher.dart';
+import 'package:genrevibes_crash_crashlytics/genrevibes_crash_crashlytics.dart';
+import 'package:genrevibes_device_identity_platform/genrevibes_device_identity_platform.dart';
+import 'package:genrevibes_permissions_handler/genrevibes_permissions_handler.dart';
 import 'package:genrevibes_ads_admob/genrevibes_ads_admob.dart';
 import 'package:genrevibes_ads_admob_ui/genrevibes_ads_admob_ui.dart';
 import 'package:genrevibes_analytics_firebase/genrevibes_analytics_firebase.dart';
@@ -24,6 +28,10 @@ void main() => runApp(const SmokeApp());
 /// Provider types referenced by this example so every adapter is compiled.
 const adapterTypes = <Type>[
   AdMobAdProvider,
+  AttAdvertisingIdSource,
+  CrashlyticsReporter,
+  PermissionHandlerProvider,
+  UrlLauncherLinkOpener,
   AdMobBannerView,
   FirebaseAnalyticsSink,
   MixpanelAnalyticsSink,
