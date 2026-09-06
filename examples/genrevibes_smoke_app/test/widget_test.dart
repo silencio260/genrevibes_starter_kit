@@ -6,6 +6,6 @@ void main() {
     await tester.pumpWidget(const SmokeApp());
 
     expect(find.text('GenRevibes native smoke app'), findsOneWidget);
-    expect(adapterTypes, hasLength(21));
+    expect(adapterTypes, hasLength(23));
   });
 }

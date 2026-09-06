@@ -14,6 +14,10 @@ dependencies:
     path: ../../packages/genrevibes_ads
   genrevibes_app_links_launcher:
     path: ../../packages/genrevibes_app_links_launcher
+  genrevibes_auth_firebase:
+    path: ../../packages/genrevibes_auth_firebase
+  genrevibes_database_firestore:
+    path: ../../packages/genrevibes_database_firestore
   genrevibes_crash_crashlytics:
     path: ../../packages/genrevibes_crash_crashlytics
   genrevibes_device_identity_platform:
@@ -64,6 +68,10 @@ dev_dependencies:
 dependency_overrides:
   genrevibes_ads:
     path: ../../packages/genrevibes_ads
+  genrevibes_auth:
+    path: ../../packages/genrevibes_auth
+  genrevibes_database:
+    path: ../../packages/genrevibes_database
   genrevibes_app_links:
     path: ../../packages/genrevibes_app_links
   genrevibes_crash:

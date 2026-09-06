@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:genrevibes_app_links_launcher/genrevibes_app_links_launcher.dart';
+import 'package:genrevibes_auth_firebase/genrevibes_auth_firebase.dart';
+import 'package:genrevibes_database_firestore/genrevibes_database_firestore.dart';
 import 'package:genrevibes_crash_crashlytics/genrevibes_crash_crashlytics.dart';
 import 'package:genrevibes_device_identity_platform/genrevibes_device_identity_platform.dart';
 import 'package:genrevibes_permissions_handler/genrevibes_permissions_handler.dart';
@@ -29,6 +31,8 @@ void main() => runApp(const SmokeApp());
 const adapterTypes = <Type>[
   AdMobAdProvider,
   AttAdvertisingIdSource,
+  FirebaseAuthProvider,
+  FirestoreDocumentStore,
   CrashlyticsReporter,
   PermissionHandlerProvider,
   UrlLauncherLinkOpener,
