@@ -1,0 +1,21 @@
+name: genrevibes_app_links_launcher
+description: url_launcher and share_plus adapter for GenRevibes app links.
+version: 0.1.0-dev.1
+publish_to: none
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+  flutter: ">=3.19.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  genrevibes_app_links: ^0.1.0-dev.1
+  genrevibes_core: ^0.1.0-dev.1
+  share_plus: ">=10.1.3 <11.0.0"
+  url_launcher: ">=6.3.1 <7.0.0"
+
+dev_dependencies:
+  flutter_lints: ^4.0.0
+  flutter_test:
+    sdk: flutter
