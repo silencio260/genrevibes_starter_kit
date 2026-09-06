@@ -31,6 +31,24 @@
 - [x] Create local-notification scheduling adapter.
 - [x] Add the thin `genrevibes_starter_kit` coordinator.
 
+## Capability milestone
+
+- [x] Create `genrevibes_storage` with a neutral key-value contract, an
+  in-memory implementation, and legacy-key adoption so adopting a capability
+  never resets state an app already persisted.
+- [x] Add the optional `genrevibes_storage_shared_preferences` implementation.
+- [x] Create `genrevibes_consent` with a neutral consent state machine and a
+  gate that ads and analytics initialization can await.
+- [x] Add the Google UMP consent adapter. Each ad network ships its own.
+- [x] Create `genrevibes_app_rating` with a clock-driven eligibility engine and
+  provider-neutral outcome routing.
+- [x] Add the `in_app_review` store adapter and the FeedbackNest rating adapter.
+- [x] Create `genrevibes_feedback` with submission and attachment contracts.
+- [x] Add the FeedbackNest feedback adapter.
+- [x] Create `genrevibes_onboarding` with completion state and optional
+  presentation templates.
+- [x] Create `genrevibes_settings` with reusable models and embeddable UI.
+
 ## Production-hardening milestone
 
 - [ ] Test the minimum supported and current stable Flutter versions. The

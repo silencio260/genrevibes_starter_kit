@@ -23,14 +23,26 @@ case "$tier" in
       genrevibes_analytics_mixpanel
       genrevibes_analytics_posthog
       genrevibes_analytics_test
+      genrevibes_app_rating
+      genrevibes_app_rating_in_app_review
+      genrevibes_app_rating_test
+      genrevibes_consent
+      genrevibes_consent_test
+      genrevibes_consent_ump
       genrevibes_core
+      genrevibes_feedback
+      genrevibes_feedbacknest
       genrevibes_iap
       genrevibes_iap_test
       genrevibes_notifications
       genrevibes_notifications_onesignal
+      genrevibes_onboarding
+      genrevibes_settings
       genrevibes_remote_config
       genrevibes_remote_config_firebase
       genrevibes_remote_config_shared_preferences
+      genrevibes_storage
+      genrevibes_storage_shared_preferences
       genrevibes_starter_kit
     )
     ;;

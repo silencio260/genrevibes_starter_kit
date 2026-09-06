@@ -1,0 +1,7 @@
+dependency_overrides:
+  genrevibes_consent:
+    path: ../genrevibes_consent
+  genrevibes_consent_test:
+    path: ../genrevibes_consent_test
+  genrevibes_core:
+    path: ../genrevibes_core

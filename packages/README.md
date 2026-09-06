@@ -49,6 +49,27 @@ fast architecture check.
   persisted-value adapter.
 - `genrevibes_remote_config_shared_preferences`: optional cross-launch cache
   for validated snapshots.
+- `genrevibes_storage`: provider-neutral key-value persistence contract, an
+  in-memory implementation, and legacy-key adoption for capabilities that must
+  remember state across launches.
+- `genrevibes_storage_shared_preferences`: optional SharedPreferences
+  implementation of the storage contract.
+- `genrevibes_consent`: neutral privacy-consent state, snapshots, debug
+  configuration, and the gate that sequences consent ahead of ads and analytics.
+- `genrevibes_consent_test`: reusable consent provider contract tests.
+- `genrevibes_consent_ump`: isolated Google User Messaging Platform adapter.
+- `genrevibes_app_rating`: clock-driven rating eligibility, cooldown, snooze,
+  opt-out policy, and store-versus-feedback outcome routing.
+- `genrevibes_app_rating_test`: reusable store review provider contract tests.
+- `genrevibes_app_rating_in_app_review`: platform in-app review adapter with a
+  store listing fallback.
+- `genrevibes_feedback`: neutral feedback submission, attachment, and kind
+  contracts.
+- `genrevibes_feedbacknest`: isolated FeedbackNest adapters for feedback
+  submission and rating capture.
+- `genrevibes_onboarding`: onboarding completion state with legacy-key adoption
+  and an optional theme-driven presentation template.
+- `genrevibes_settings`: sealed settings row models and embeddable settings UI.
 - `genrevibes_ads`: logical placements, formats, rewards, provider events, and
   premium/suppression/frequency policy without an ad SDK.
 - `genrevibes_ads_test`: reusable ad-provider lifecycle and inventory contract

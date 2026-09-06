@@ -1,0 +1,19 @@
+name: genrevibes_onboarding
+description: Onboarding completion state and optional presentation templates for GenRevibes apps.
+version: 0.1.0-dev.1
+publish_to: none
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+  flutter: ">=3.19.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  genrevibes_core: ^0.1.0-dev.1
+  genrevibes_storage: ^0.1.0-dev.1
+
+dev_dependencies:
+  flutter_lints: ^4.0.0
+  flutter_test:
+    sdk: flutter
