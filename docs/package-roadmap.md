@@ -59,7 +59,7 @@
   contract harness, and the Crashlytics adapter with framework hooks.
 - [x] Create `genrevibes_engagement` (retention + user targeting).
 - [x] Create `genrevibes_remote_policy` (ads policy schema, analytics names).
-- [ ] Create `genrevibes_permissions` and the `permission_handler` adapter.
+- [x] Create `genrevibes_permissions` and the `permission_handler` adapter.
 - [ ] Create `genrevibes_device_identity`.
 - [ ] Create `genrevibes_app_links` and the launcher adapter.
 - [ ] Create `genrevibes_auth` / `genrevibes_database` contracts and Firebase

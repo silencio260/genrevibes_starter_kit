@@ -41,6 +41,8 @@ case "$tier" in
       genrevibes_notifications
       genrevibes_notifications_onesignal
       genrevibes_onboarding
+      genrevibes_permissions
+      genrevibes_permissions_handler
       genrevibes_settings
       genrevibes_remote_config
       genrevibes_remote_config_firebase
