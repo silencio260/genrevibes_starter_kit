@@ -19,10 +19,12 @@ neutral_packages=(
   genrevibes_engagement
   genrevibes_remote_policy
   genrevibes_permissions
+  genrevibes_device_identity
+  genrevibes_app_links
   genrevibes_starter_kit
 )
 
-vendor_pattern='permission_handler|device_info_plus|firebase_crashlytics|in_app_review|url_launcher|feedbacknest_core|onesignal_flutter|flutter_local_notifications|google_mobile_ads|firebase_analytics|firebase_remote_config|posthog_flutter|mixpanel_flutter|mixpanel_flutter_session_replay|purchases_flutter|purchases_ui_flutter|shared_preferences'
+vendor_pattern='app_tracking_transparency|share_plus|permission_handler|device_info_plus|firebase_crashlytics|in_app_review|url_launcher|feedbacknest_core|onesignal_flutter|flutter_local_notifications|google_mobile_ads|firebase_analytics|firebase_remote_config|posthog_flutter|mixpanel_flutter|mixpanel_flutter_session_replay|purchases_flutter|purchases_ui_flutter|shared_preferences'
 failed=0
 
 for package_name in "${neutral_packages[@]}"; do
@@ -53,7 +55,8 @@ while IFS= read -r dart_file; do
       in_app_review:packages/genrevibes_app_rating_in_app_review/*|url_launcher:packages/genrevibes_app_rating_in_app_review/*) ;;
       feedbacknest_core:packages/genrevibes_feedbacknest/*) ;;
       firebase_crashlytics:packages/genrevibes_crash_crashlytics/*) ;;
-      permission_handler:packages/genrevibes_permissions_handler/*|device_info_plus:packages/genrevibes_permissions_handler/*) ;;
+      permission_handler:packages/genrevibes_permissions_handler/*|device_info_plus:packages/genrevibes_permissions_handler/*|device_info_plus:packages/genrevibes_device_identity_platform/*|app_tracking_transparency:packages/genrevibes_device_identity_platform/*) ;;
+      url_launcher:packages/genrevibes_app_links_launcher/*|share_plus:packages/genrevibes_app_links_launcher/*) ;;
       shared_preferences:packages/genrevibes_remote_config_shared_preferences/*|shared_preferences:packages/genrevibes_storage_shared_preferences/*) ;;
       *)
         echo "ERROR: $imported_vendor is imported outside its isolated adapter: $dart_file"

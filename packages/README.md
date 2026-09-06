@@ -83,6 +83,13 @@ fast architecture check.
   platform, request throttling, the flow coordinator, and a rationale view.
 - `genrevibes_permissions_handler`: isolated permission_handler adapter with a
   device_info_plus platform facts source.
+- `genrevibes_device_identity`: stable install id with a pure-Dart secure UUID,
+  optional vendor and advertising ids, and legacy `device_uuid` adoption.
+- `genrevibes_device_identity_platform`: App Tracking Transparency and
+  device_info_plus identity sources.
+- `genrevibes_app_links`: validated store, support, privacy and terms config
+  and the share / rate / contact actions over a neutral `LinkOpener`.
+- `genrevibes_app_links_launcher`: isolated url_launcher and share_plus adapter.
 - `genrevibes_ads`: logical placements, formats, rewards, provider events, and
   premium/suppression/frequency policy without an ad SDK.
 - `genrevibes_ads_test`: reusable ad-provider lifecycle and inventory contract
