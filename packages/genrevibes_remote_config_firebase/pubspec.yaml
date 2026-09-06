@@ -1,0 +1,21 @@
+name: genrevibes_remote_config_firebase
+description: Firebase Remote Config adapter for the GenreVibes typed remote-config contract.
+version: 0.1.0-dev.1
+publish_to: none
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+  flutter: ">=3.3.0"
+
+dependencies:
+  firebase_core: ">=3.12.1 <4.0.0"
+  firebase_remote_config: ">=5.4.2 <6.0.0"
+  flutter:
+    sdk: flutter
+  genrevibes_core: ^0.1.0-dev.1
+  genrevibes_remote_config: ^0.1.0-dev.1
+
+dev_dependencies:
+  flutter_lints: ^5.0.0
+  flutter_test:
+    sdk: flutter

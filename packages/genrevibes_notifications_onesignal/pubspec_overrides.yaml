@@ -1,0 +1,6 @@
+dependency_overrides:
+  genrevibes_core:
+    path: ../genrevibes_core
+  genrevibes_notifications:
+    path: ../genrevibes_notifications
+  onesignal_flutter: 5.4.1

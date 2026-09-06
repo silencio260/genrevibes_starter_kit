@@ -17,21 +17,26 @@
 
 - [x] Create the provider-neutral analytics contract and consent-aware,
   failure-isolated multi-sink pipeline.
-- [ ] Extract the Firebase Analytics adapter.
-- [ ] Extract the PostHog adapter.
-- [ ] Extract the Mixpanel adapter.
-- [ ] Create remote-config contract and Firebase adapter.
-- [ ] Create ads contract, policy layer, and AdMob adapter.
-- [ ] Create notification contract and OneSignal adapter.
-- [ ] Create local-notification scheduling adapter.
-- [ ] Add the thin `genrevibes_starter_kit` coordinator.
+- [x] Add a shared analytics sink contract-test harness.
+- [x] Extract the Firebase Analytics adapter without coupling Crashlytics.
+- [x] Extract the PostHog adapter with privacy-first session replay defaults.
+- [x] Extract the Mixpanel events adapter.
+- [x] Isolate Mixpanel session replay behind a separately installable package.
+- [x] Create provider-neutral remote-config contracts and typed value handling.
+- [x] Add Firebase Remote Config and optional SharedPreferences cache adapters.
+- [x] Create provider-neutral ads contracts, shared provider tests, premium/
+  suppression/frequency policy, and the AdMob full-screen adapter.
+- [x] Extract lifecycle-safe AdMob banner and native presentation APIs.
+- [x] Create notification contract and OneSignal adapter.
+- [x] Create local-notification scheduling adapter.
+- [x] Add the thin `genrevibes_starter_kit` coordinator.
 
 ## Production-hardening milestone
 
 - [ ] Test the minimum supported and current stable Flutter versions.
 - [ ] Add Android and iOS release-build examples.
 - [ ] Add contract, unit, widget, integration, and lifecycle tests.
-- [ ] Add dependency-boundary and accidental-vendor-import checks.
+- [x] Add dependency-boundary and accidental-vendor-import checks.
 - [ ] Add changelogs, examples, API docs, repository metadata, and a license.
 - [ ] Decide and verify the final pub.dev package names.
 - [ ] Configure package-specific automated publishing.

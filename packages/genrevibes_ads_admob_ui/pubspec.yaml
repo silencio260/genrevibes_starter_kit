@@ -1,0 +1,21 @@
+name: genrevibes_ads_admob_ui
+description: Optional lifecycle-safe AdMob banner and native widgets for GenreVibes apps.
+version: 0.1.0-dev.1
+publish_to: none
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+  flutter: ">=3.19.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  genrevibes_ads: ^0.1.0-dev.1
+  genrevibes_ads_admob: ^0.1.0-dev.1
+  genrevibes_core: ^0.1.0-dev.1
+  google_mobile_ads: ">=5.3.1 <7.0.0"
+
+dev_dependencies:
+  flutter_lints: ^5.0.0
+  flutter_test:
+    sdk: flutter

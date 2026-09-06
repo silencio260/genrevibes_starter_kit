@@ -1,0 +1,21 @@
+name: genrevibes_analytics_mixpanel
+description: Mixpanel analytics sink adapter for the GenreVibes analytics pipeline.
+version: 0.1.0-dev.1
+publish_to: none
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+  flutter: ">=3.19.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  genrevibes_analytics: ^0.1.0-dev.1
+  genrevibes_core: ^0.1.0-dev.1
+  mixpanel_flutter: ">=2.8.0 <3.0.0"
+
+dev_dependencies:
+  flutter_lints: ^5.0.0
+  flutter_test:
+    sdk: flutter
+  genrevibes_analytics_test: ^0.1.0-dev.1

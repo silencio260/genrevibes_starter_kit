@@ -41,6 +41,9 @@ adapter. Vendor SDK types must not appear in a contract package's public API.
   depend on concrete providers.
 - UI packages: optional reusable presentation. Business contracts must remain
   usable without installing the UI package.
+- Storage packages: optional persistence implementations. A neutral capability
+  exposes a storage contract without forcing SharedPreferences, SQLite, or any
+  other plugin into every consuming app.
 
 ## Non-negotiable rules
 
@@ -82,10 +85,21 @@ Flutter, Dart, Gradle, Android SDK, Kotlin, CocoaPods, Xcode, or iOS deployment
 target requires a new adapter major version when existing consumers cannot
 upgrade safely.
 
+Provider extensions with a higher toolchain floor are separate packages. For
+example, Mixpanel events currently support the portfolio baseline while its
+session-replay SDK requires Dart 3.8 and Flutter 3.38. Keeping replay separate
+means an older app can install events without resolving or compiling replay.
+
+The same rule applies to notifications. The neutral notification package uses
+the Dart 3.3 baseline, the OneSignal adapter has its own Flutter/SDK range, and
+the local scheduler currently targets `flutter_local_notifications` 19.x with
+Dart 3.4 and Flutter 3.22. An app that cannot meet the local scheduler floor
+does not install it; it is not forced to upgrade the neutral contract or the
+OneSignal adapter.
+
 ## Migration rule
 
 The active Story Saver application and `deprecated_old_version_1` are behavior
 references, not dependencies. New packages must never import from either tree.
 Each feature migration has a parity checklist, a compatibility facade where
 needed, and a separate removal commit for the replaced app implementation.
-
