@@ -77,6 +77,8 @@ fast architecture check.
   framework and zone error hooks.
 - `genrevibes_engagement`: retention tracking, user segmentation, prompt
   targeting policy, and the analytics observer, with legacy-key adoption.
+- `genrevibes_remote_policy`: the shared remote-config schema for ad timing and
+  analytics event names, and the binder that applies it live.
 - `genrevibes_ads`: logical placements, formats, rewards, provider events, and
   premium/suppression/frequency policy without an ad SDK.
 - `genrevibes_ads_test`: reusable ad-provider lifecycle and inventory contract

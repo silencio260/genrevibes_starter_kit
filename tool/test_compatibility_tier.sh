@@ -45,6 +45,7 @@ case "$tier" in
       genrevibes_remote_config
       genrevibes_remote_config_firebase
       genrevibes_remote_config_shared_preferences
+      genrevibes_remote_policy
       genrevibes_storage
       genrevibes_storage_shared_preferences
       genrevibes_starter_kit
