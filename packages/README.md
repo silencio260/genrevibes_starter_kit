@@ -75,6 +75,8 @@ fast architecture check.
 - `genrevibes_crash_test`: reusable crash reporter contract tests.
 - `genrevibes_crash_crashlytics`: isolated Firebase Crashlytics adapter with
   framework and zone error hooks.
+- `genrevibes_engagement`: retention tracking, user segmentation, prompt
+  targeting policy, and the analytics observer, with legacy-key adoption.
 - `genrevibes_ads`: logical placements, formats, rewards, provider events, and
   premium/suppression/frequency policy without an ad SDK.
 - `genrevibes_ads_test`: reusable ad-provider lifecycle and inventory contract

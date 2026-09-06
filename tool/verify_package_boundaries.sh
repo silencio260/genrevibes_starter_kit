@@ -16,6 +16,7 @@ neutral_packages=(
   genrevibes_app_rating
   genrevibes_feedback
   genrevibes_crash
+  genrevibes_engagement
   genrevibes_starter_kit
 )
 

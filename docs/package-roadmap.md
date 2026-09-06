@@ -57,7 +57,7 @@
 
 - [x] Create `genrevibes_crash` with a neutral reporter contract, coordinator,
   contract harness, and the Crashlytics adapter with framework hooks.
-- [ ] Create `genrevibes_engagement` (retention + user targeting).
+- [x] Create `genrevibes_engagement` (retention + user targeting).
 - [ ] Create `genrevibes_remote_policy` (ads policy schema, analytics names).
 - [ ] Create `genrevibes_permissions` and the `permission_handler` adapter.
 - [ ] Create `genrevibes_device_identity`.

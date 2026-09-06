@@ -1,0 +1,16 @@
+name: genrevibes_engagement
+description: Provider-neutral retention tracking, user segmentation, and prompt-targeting policy.
+version: 0.1.0-dev.1
+publish_to: none
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+
+dependencies:
+  genrevibes_analytics: ^0.1.0-dev.1
+  genrevibes_core: ^0.1.0-dev.1
+  genrevibes_storage: ^0.1.0-dev.1
+
+dev_dependencies:
+  lints: ^4.0.0
+  test: ^1.25.0
