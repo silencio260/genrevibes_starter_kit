@@ -90,6 +90,14 @@ fast architecture check.
 - `genrevibes_app_links`: validated store, support, privacy and terms config
   and the share / rate / contact actions over a neutral `LinkOpener`.
 - `genrevibes_app_links_launcher`: isolated url_launcher and share_plus adapter.
+- `genrevibes_auth`: neutral identity model, sealed credential requests carrying
+  federated tokens, normalized failure reasons, and the provider contract.
+- `genrevibes_auth_test`: reusable authentication provider contract tests.
+- `genrevibes_auth_firebase`: isolated Firebase Authentication adapter.
+- `genrevibes_database`: document paths, snapshots, validated queries, and the
+  document store contract.
+- `genrevibes_database_test`: reusable document store contract tests.
+- `genrevibes_database_firestore`: isolated Cloud Firestore adapter.
 - `genrevibes_ads`: logical placements, formats, rewards, provider events, and
   premium/suppression/frequency policy without an ad SDK.
 - `genrevibes_ads_test`: reusable ad-provider lifecycle and inventory contract

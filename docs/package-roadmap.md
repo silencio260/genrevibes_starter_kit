@@ -62,7 +62,7 @@
 - [x] Create `genrevibes_permissions` and the `permission_handler` adapter.
 - [x] Create `genrevibes_device_identity` and its platform sources.
 - [x] Create `genrevibes_app_links` and the launcher adapter.
-- [ ] Create `genrevibes_auth` / `genrevibes_database` contracts and Firebase
+- [x] Create `genrevibes_auth` / `genrevibes_database` contracts and Firebase
   adapters (consumers: ai_chatbot, note_ai; never Story Saver).
 
 ## Production-hardening milestone

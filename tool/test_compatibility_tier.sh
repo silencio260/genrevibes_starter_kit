@@ -25,6 +25,9 @@ case "$tier" in
       genrevibes_analytics_test
       genrevibes_app_links
       genrevibes_app_links_launcher
+      genrevibes_auth
+      genrevibes_auth_firebase
+      genrevibes_auth_test
       genrevibes_app_rating
       genrevibes_app_rating_in_app_review
       genrevibes_app_rating_test
@@ -35,6 +38,9 @@ case "$tier" in
       genrevibes_crash
       genrevibes_crash_crashlytics
       genrevibes_crash_test
+      genrevibes_database
+      genrevibes_database_firestore
+      genrevibes_database_test
       genrevibes_device_identity
       genrevibes_device_identity_platform
       genrevibes_engagement

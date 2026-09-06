@@ -21,10 +21,12 @@ neutral_packages=(
   genrevibes_permissions
   genrevibes_device_identity
   genrevibes_app_links
+  genrevibes_auth
+  genrevibes_database
   genrevibes_starter_kit
 )
 
-vendor_pattern='app_tracking_transparency|share_plus|permission_handler|device_info_plus|firebase_crashlytics|in_app_review|url_launcher|feedbacknest_core|onesignal_flutter|flutter_local_notifications|google_mobile_ads|firebase_analytics|firebase_remote_config|posthog_flutter|mixpanel_flutter|mixpanel_flutter_session_replay|purchases_flutter|purchases_ui_flutter|shared_preferences'
+vendor_pattern='firebase_auth|cloud_firestore|app_tracking_transparency|share_plus|permission_handler|device_info_plus|firebase_crashlytics|in_app_review|url_launcher|feedbacknest_core|onesignal_flutter|flutter_local_notifications|google_mobile_ads|firebase_analytics|firebase_remote_config|posthog_flutter|mixpanel_flutter|mixpanel_flutter_session_replay|purchases_flutter|purchases_ui_flutter|shared_preferences'
 failed=0
 
 for package_name in "${neutral_packages[@]}"; do
@@ -57,6 +59,8 @@ while IFS= read -r dart_file; do
       firebase_crashlytics:packages/genrevibes_crash_crashlytics/*) ;;
       permission_handler:packages/genrevibes_permissions_handler/*|device_info_plus:packages/genrevibes_permissions_handler/*|device_info_plus:packages/genrevibes_device_identity_platform/*|app_tracking_transparency:packages/genrevibes_device_identity_platform/*) ;;
       url_launcher:packages/genrevibes_app_links_launcher/*|share_plus:packages/genrevibes_app_links_launcher/*) ;;
+      firebase_auth:packages/genrevibes_auth_firebase/*) ;;
+      cloud_firestore:packages/genrevibes_database_firestore/*) ;;
       shared_preferences:packages/genrevibes_remote_config_shared_preferences/*|shared_preferences:packages/genrevibes_storage_shared_preferences/*) ;;
       *)
         echo "ERROR: $imported_vendor is imported outside its isolated adapter: $dart_file"
