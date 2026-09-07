@@ -82,8 +82,10 @@ fi
 
 for directory in "${targets[@]}"; do
   if [[ "$directory" == "$central_dir"/* ]]; then
-    # Keep the directory so its symlink stays valid.
-    rm -rf "${directory:?}"/* "${directory:?}"/.[!.]* 2>/dev/null || true
+    # Keep the directory, and the committed .gitkeep that makes git carry it,
+    # so the symlink pointing here stays valid.
+    find "$directory" -mindepth 1 -maxdepth 1 ! -name .gitkeep \
+      -exec rm -rf {} + 2>/dev/null || true
   else
     rm -rf "$directory"
   fi

@@ -19,10 +19,14 @@ set -euo pipefail
 # Existing real directories are moved rather than deleted, so nothing is
 # recompiled that does not have to be.
 #
-# The links are not committed. A symlink whose target is missing makes
-# `pub get` fail outright ("Creation failed, path = '.dart_tool'"), so the
-# directories have to exist before the links do, and only this script
-# guarantees that ordering. Run it after cloning and after adding a package.
+# The links are committed, along with a .gitkeep in each target, so a fresh
+# clone already has this layout and needs no setup step. Git cannot store an
+# empty directory, and a symlink whose target is missing makes `pub get` fail
+# outright ("Creation failed, path = '.dart_tool'") rather than recreate it,
+# which is why the placeholder is tracked too.
+#
+# Run this after adding a package, or to repair links that a `flutter clean`
+# removed.
 #
 # Usage: tool/link_build_dirs.sh [--check]
 #
