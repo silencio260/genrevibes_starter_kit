@@ -52,6 +52,7 @@ abstract final class CrashHooks {
           ),
         ),
       );
+      _presentInDebug('platform', error, stack);
       return previousPlatform?.call(error, stack) ?? true;
     };
 
@@ -77,6 +78,24 @@ abstract final class CrashHooks {
           ),
         ),
       );
+      _presentInDebug('zone', error, stack);
     });
+  }
+
+  /// Prints an uncaught error during development.
+  ///
+  /// Crash collection is normally disabled in debug builds so local runs do not
+  /// pollute production crash-free rates. Without this, an error thrown while
+  /// `main` is still awaiting startup work reaches the reporter, is dropped
+  /// there, and leaves the application stopped at the launch screen with no
+  /// output at all. Unlike `FlutterError.onError`, neither the zone handler nor
+  /// `PlatformDispatcher.onError` has a framework default that presents it.
+  static void _presentInDebug(String source, Object error, StackTrace? stack) {
+    if (!kDebugMode) return;
+    debugPrint('[genrevibes] uncaught $source error: $error');
+    // Printed verbatim rather than through `debugPrintStack`, which parses
+    // frames and asserts on `package:stack_trace` chained traces. A diagnostic
+    // that throws while reporting a failure is worse than no diagnostic.
+    if (stack != null) debugPrint(stack.toString());
   }
 }

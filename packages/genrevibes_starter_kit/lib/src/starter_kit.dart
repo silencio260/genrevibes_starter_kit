@@ -7,13 +7,23 @@ import 'starter_module_registration.dart';
 /// Starts and observes only the modules explicitly selected by an application.
 final class GenRevibesStarterKit implements StarterModule {
   /// Creates a provider-agnostic starter-kit coordinator.
+  ///
+  /// [moduleTimeout] bounds how long a single module may spend in
+  /// `initialize()`. Vendor SDKs bridge callbacks to futures, and a callback
+  /// that never fires would otherwise suspend startup permanently with no
+  /// error, no log and an empty Dart stack. A module that overruns its budget
+  /// is recorded as a timeout failure and the remaining modules still start,
+  /// which is the whole point of a health model: a broken capability degrades,
+  /// it does not take the application down with it.
   GenRevibesStarterKit({
     required Iterable<StarterModuleRegistration> modules,
     KitClock clock = const SystemKitClock(),
     KitLogger logger = const NoopKitLogger(),
+    Duration moduleTimeout = const Duration(seconds: 10),
   })  : _registrations = List<StarterModuleRegistration>.unmodifiable(modules),
         _clock = clock,
         _logger = logger,
+        _moduleTimeout = moduleTimeout,
         _health = ModuleHealth(
           moduleId: 'starter_kit',
           state: ModuleState.idle,
@@ -23,6 +33,7 @@ final class GenRevibesStarterKit implements StarterModule {
   final List<StarterModuleRegistration> _registrations;
   final KitClock _clock;
   final KitLogger _logger;
+  final Duration _moduleTimeout;
   final Map<String, StarterModule> _modules = <String, StarterModule>{};
   final Map<String, StreamSubscription<ModuleHealth>> _subscriptions =
       <String, StreamSubscription<ModuleHealth>>{};
@@ -117,8 +128,30 @@ final class GenRevibesStarterKit implements StarterModule {
         (health) => _onModuleHealthChanged(registration.moduleId, health),
       );
       KitResult<void> result;
+      _logger.log(
+        KitLogLevel.debug,
+        'Starter-kit module initialization started.',
+        moduleId: registration.moduleId,
+      );
       try {
-        result = await module.initialize();
+        result = await module.initialize().timeout(
+              _moduleTimeout,
+              // The underlying work is not cancellable, so it may still settle
+              // later and update this module's health. What matters here is
+              // that startup is released.
+              onTimeout: () => KitFailure<void>(
+                KitError(
+                  code: KitErrorCode.timeout,
+                  message: 'Module ${registration.moduleId} did not finish '
+                      'initializing within '
+                      '${_moduleTimeout.inMilliseconds}ms.',
+                  metadata: <String, Object?>{
+                    'moduleId': registration.moduleId,
+                    'timeoutMs': _moduleTimeout.inMilliseconds,
+                  },
+                ),
+              ),
+            );
       } on Object catch (error, stackTrace) {
         result = KitFailure<void>(
           KitError(
@@ -131,7 +164,11 @@ final class GenRevibesStarterKit implements StarterModule {
         );
       }
       result.fold(
-        onSuccess: (_) {},
+        onSuccess: (_) => _logger.log(
+          KitLogLevel.info,
+          'Starter-kit module ready.',
+          moduleId: registration.moduleId,
+        ),
         onFailure: (error) {
           _recordInitializationError(registration, error);
           firstRequiredError ??= registration.isRequired ? error : null;

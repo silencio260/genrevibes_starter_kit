@@ -99,6 +99,55 @@ void main() {
     expect(order, <String>['second', 'first']);
   });
 
+  test('a module that never settles times out instead of hanging startup',
+      () async {
+    final healthy = _FakeModule('healthy');
+    final kit = GenRevibesStarterKit(
+      moduleTimeout: const Duration(milliseconds: 50),
+      modules: <StarterModuleRegistration>[
+        StarterModuleRegistration.enabled(
+          moduleId: 'stalled',
+          isRequired: false,
+          create: () => _FakeModule('stalled', stalls: true),
+        ),
+        StarterModuleRegistration.enabled(
+          moduleId: 'healthy',
+          create: () => healthy,
+        ),
+      ],
+    );
+
+    final result = await kit.initialize().timeout(const Duration(seconds: 5));
+
+    // The stalled module is optional, so startup succeeds without it and the
+    // module behind it still runs. Before the timeout existed, this call never
+    // returned and the application stopped at the launch screen with no error,
+    // no log and an empty Dart stack.
+    expect(result.isSuccess, isTrue);
+    expect(healthy.initializeCalls, 1);
+    expect(kit.health.state, ModuleState.degraded);
+  });
+
+  test('a required module that never settles fails the report', () async {
+    final kit = GenRevibesStarterKit(
+      moduleTimeout: const Duration(milliseconds: 50),
+      modules: <StarterModuleRegistration>[
+        StarterModuleRegistration.enabled(
+          moduleId: 'stalled',
+          create: () => _FakeModule('stalled', stalls: true),
+        ),
+      ],
+    );
+
+    final result = await kit.initialize().timeout(const Duration(seconds: 5));
+
+    expect(result.isFailure, isTrue);
+    expect(
+      result.fold(onSuccess: (_) => null, onFailure: (error) => error.code),
+      KitErrorCode.timeout,
+    );
+  });
+
   test('rejects duplicate module ids before creating providers', () async {
     var createCalls = 0;
     final kit = GenRevibesStarterKit(
@@ -123,6 +172,7 @@ final class _FakeModule implements StarterModule {
   _FakeModule(
     this.moduleId, {
     this.shouldFail = false,
+    this.stalls = false,
     this.disposalOrder,
   }) : _health = ModuleHealth(
           moduleId: moduleId,
@@ -133,6 +183,9 @@ final class _FakeModule implements StarterModule {
   @override
   final String moduleId;
   final bool shouldFail;
+
+  /// Never settles, the way a vendor SDK whose callback never fires behaves.
+  final bool stalls;
   final List<String>? disposalOrder;
   final StreamController<ModuleHealth> _healthChanges =
       StreamController<ModuleHealth>.broadcast();
@@ -148,6 +201,7 @@ final class _FakeModule implements StarterModule {
   @override
   Future<KitResult<void>> initialize() async {
     initializeCalls++;
+    if (stalls) return Completer<KitResult<void>>().future;
     if (shouldFail) {
       const error = KitError(
         code: KitErrorCode.provider,
