@@ -1,9 +1,16 @@
 .DS_Store
 .dart_tool/
+build/
+
+# Package tool caches, consolidated into one directory by
+# tool/link_build_dirs.sh. The rules above end in a slash and so do not match
+# the per-package symlinks, which git sees as files.
+submodule-build-dir/
+packages/*/build
+packages/*/.dart_tool
 .flutter-plugins
 .flutter-plugins-dependencies
 .packages
-build/
 coverage/
 doc/api/
 *.iml
