@@ -13,7 +13,15 @@ set -euo pipefail
 
 repository_root="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$repository_root"
-flutter_command="$(command -v flutter)"
+flutter_command_name="flutter"
+# `command -v` failing under `set -e` exits with no message at all, which
+# reads as a silent pass. Say what is wrong instead.
+if ! command -v "$flutter_command_name" >/dev/null 2>&1; then
+  echo "ERROR: '$flutter_command_name' is not on PATH." >&2
+  echo "Add the Flutter SDK's bin directory to PATH and run this again." >&2
+  exit 69
+fi
+flutter_command="$(command -v "$flutter_command_name")"
 dart_command="$(dirname "$flutter_command")/dart"
 
 bash tool/verify_package_boundaries.sh

@@ -19,6 +19,14 @@ fi
 tier="$1"
 flutter_command="${2:-flutter}"
 repository_root="$(cd "$(dirname "$0")/.." && pwd)"
+flutter_command_name="$flutter_command"
+# `command -v` failing under `set -e` exits with no message at all, which
+# reads as a silent pass. Say what is wrong instead.
+if ! command -v "$flutter_command_name" >/dev/null 2>&1; then
+  echo "ERROR: '$flutter_command_name' is not on PATH." >&2
+  echo "Add the Flutter SDK's bin directory to PATH and run this again." >&2
+  exit 69
+fi
 dart_command="$(dirname "$(command -v "$flutter_command")")/dart"
 
 case "$tier" in
