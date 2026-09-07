@@ -148,6 +148,46 @@ void main() {
     );
   });
 
+  test('an adapter may name itself under the capability it implements',
+      () async {
+    // AdMobAdProvider reports `ads.admob` for an `ads` registration, and
+    // OneSignalPushProvider `notifications.push.onesignal` for
+    // `notifications.push`. Requiring exact equality made registering any
+    // such adapter impossible, which silently disabled ads and push on
+    // device while every other module reported ready.
+    final kit = GenRevibesStarterKit(
+      modules: <StarterModuleRegistration>[
+        StarterModuleRegistration.enabled(
+          moduleId: 'ads',
+          create: () => _FakeModule('ads.admob'),
+        ),
+      ],
+    );
+
+    expect((await kit.initialize()).isSuccess, isTrue);
+    // Keyed by the registration, so lookups do not need to know the vendor.
+    expect(kit.modules.keys, <String>['ads']);
+    expect(kit.health.state, ModuleState.ready);
+  });
+
+  test('an unrelated module is still a configuration error', () async {
+    final kit = GenRevibesStarterKit(
+      modules: <StarterModuleRegistration>[
+        StarterModuleRegistration.enabled(
+          moduleId: 'ads',
+          create: () => _FakeModule('analytics'),
+        ),
+      ],
+    );
+
+    final result = await kit.initialize();
+    expect(result.isFailure, isTrue);
+    expect(
+      result.fold(onSuccess: (_) => null, onFailure: (error) => error.code),
+      KitErrorCode.invalidConfiguration,
+    );
+  });
+
   test('rejects duplicate module ids before creating providers', () async {
     var createCalls = 0;
     final kit = GenRevibesStarterKit(

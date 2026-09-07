@@ -111,11 +111,18 @@ final class GenRevibesStarterKit implements StarterModule {
         continue;
       }
 
-      if (module.moduleId != registration.moduleId) {
+      // An adapter names itself under the capability it implements:
+      // `ads.admob` for the `ads` registration, `notifications.push.onesignal`
+      // for `notifications.push`. Registering an adapter directly under its
+      // capability is the ordinary composition, so a namespaced child is
+      // accepted; only an unrelated module is a configuration error.
+      final moduleId = module.moduleId;
+      final registeredId = registration.moduleId;
+      if (moduleId != registeredId && !moduleId.startsWith('$registeredId.')) {
         final mapped = KitError(
           code: KitErrorCode.invalidConfiguration,
-          message: 'Registration ${registration.moduleId} created module '
-              '${module.moduleId}.',
+          message: 'Registration $registeredId created unrelated module '
+              '$moduleId.',
         );
         _recordInitializationError(registration, mapped);
         firstRequiredError ??= registration.isRequired ? mapped : null;
