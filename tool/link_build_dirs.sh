@@ -55,6 +55,15 @@ linked=0
 already=0
 unlinked=0
 
+# Creates a target directory and the .gitkeep that makes git carry it.
+#
+# The placeholder is tracked, so restoring the directory without it leaves the
+# working tree showing a deletion. Both have to come back together.
+ensure_target() {
+  mkdir -p "$1"
+  [[ -e "$1/.gitkeep" ]] || : > "$1/.gitkeep"
+}
+
 link_one() {
   local package_dir="$1"
   local cache_name="$2"
@@ -70,7 +79,7 @@ link_one() {
     if [[ "$(readlink "$source_path")" == "$relative_target" ]]; then
       already=$((already + 1))
       # A link can outlive its target, which breaks pub get. Restore it.
-      mkdir -p "$target_path"
+      ensure_target "$target_path"
       return
     fi
     if [[ "$check_only" == true ]]; then
@@ -91,7 +100,7 @@ link_one() {
     return
   fi
 
-  mkdir -p "$target_path"
+  ensure_target "$target_path"
 
   # Preserve anything already compiled instead of forcing a cold rebuild.
   if [[ -d "$source_path" && ! -L "$source_path" ]]; then
