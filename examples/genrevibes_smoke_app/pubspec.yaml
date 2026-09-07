@@ -11,54 +11,54 @@ dependencies:
   flutter:
     sdk: flutter
   genrevibes_ads:
-    path: ../../packages/genrevibes_ads
+    path: ../../modules/ads/genrevibes_ads
   genrevibes_app_links_launcher:
-    path: ../../packages/genrevibes_app_links_launcher
+    path: ../../modules/app_links/genrevibes_app_links_launcher
   genrevibes_auth_firebase:
-    path: ../../packages/genrevibes_auth_firebase
+    path: ../../modules/auth/genrevibes_auth_firebase
   genrevibes_database_firestore:
-    path: ../../packages/genrevibes_database_firestore
+    path: ../../modules/database/genrevibes_database_firestore
   genrevibes_crash_crashlytics:
-    path: ../../packages/genrevibes_crash_crashlytics
+    path: ../../modules/crash/genrevibes_crash_crashlytics
   genrevibes_device_identity_platform:
-    path: ../../packages/genrevibes_device_identity_platform
+    path: ../../modules/device_identity/genrevibes_device_identity_platform
   genrevibes_permissions_handler:
-    path: ../../packages/genrevibes_permissions_handler
+    path: ../../modules/permissions/genrevibes_permissions_handler
   genrevibes_ads_admob:
-    path: ../../packages/genrevibes_ads_admob
+    path: ../../modules/ads/genrevibes_ads_admob
   genrevibes_ads_admob_ui:
-    path: ../../packages/genrevibes_ads_admob_ui
+    path: ../../modules/ads/genrevibes_ads_admob_ui
   genrevibes_analytics_firebase:
-    path: ../../packages/genrevibes_analytics_firebase
+    path: ../../modules/analytics/genrevibes_analytics_firebase
   genrevibes_analytics_mixpanel:
-    path: ../../packages/genrevibes_analytics_mixpanel
+    path: ../../modules/analytics/genrevibes_analytics_mixpanel
   genrevibes_analytics_mixpanel_replay:
-    path: ../../packages/genrevibes_analytics_mixpanel_replay
+    path: ../../modules/analytics/genrevibes_analytics_mixpanel_replay
   genrevibes_analytics_posthog:
-    path: ../../packages/genrevibes_analytics_posthog
+    path: ../../modules/analytics/genrevibes_analytics_posthog
   genrevibes_iap_revenuecat:
-    path: ../../packages/genrevibes_iap_revenuecat
+    path: ../../modules/iap/genrevibes_iap_revenuecat
   genrevibes_iap_revenuecat_ui:
-    path: ../../packages/genrevibes_iap_revenuecat_ui
+    path: ../../modules/iap/genrevibes_iap_revenuecat_ui
   genrevibes_notifications_local:
-    path: ../../packages/genrevibes_notifications_local
+    path: ../../modules/notifications/genrevibes_notifications_local
   genrevibes_notifications_onesignal:
-    path: ../../packages/genrevibes_notifications_onesignal
+    path: ../../modules/notifications/genrevibes_notifications_onesignal
   genrevibes_remote_config_firebase:
-    path: ../../packages/genrevibes_remote_config_firebase
+    path: ../../modules/remote_config/genrevibes_remote_config_firebase
   genrevibes_remote_config_shared_preferences:
-    path: ../../packages/genrevibes_remote_config_shared_preferences
+    path: ../../modules/remote_config/genrevibes_remote_config_shared_preferences
   genrevibes_starter_kit:
-    path: ../../packages/genrevibes_starter_kit
+    path: ../../modules/foundation/genrevibes_starter_kit
 
   genrevibes_app_rating_in_app_review:
-    path: ../../packages/genrevibes_app_rating_in_app_review
+    path: ../../modules/app_rating/genrevibes_app_rating_in_app_review
   genrevibes_consent_ump:
-    path: ../../packages/genrevibes_consent_ump
+    path: ../../modules/consent/genrevibes_consent_ump
   genrevibes_feedbacknest:
-    path: ../../packages/genrevibes_feedbacknest
+    path: ../../modules/feedback/genrevibes_feedbacknest
   genrevibes_storage_shared_preferences:
-    path: ../../packages/genrevibes_storage_shared_preferences
+    path: ../../modules/storage/genrevibes_storage_shared_preferences
 
 dev_dependencies:
   flutter_lints: ^6.0.0
@@ -67,42 +67,42 @@ dev_dependencies:
 
 dependency_overrides:
   genrevibes_ads:
-    path: ../../packages/genrevibes_ads
+    path: ../../modules/ads/genrevibes_ads
   genrevibes_auth:
-    path: ../../packages/genrevibes_auth
+    path: ../../modules/auth/genrevibes_auth
   genrevibes_database:
-    path: ../../packages/genrevibes_database
+    path: ../../modules/database/genrevibes_database
   genrevibes_app_links:
-    path: ../../packages/genrevibes_app_links
+    path: ../../modules/app_links/genrevibes_app_links
   genrevibes_crash:
-    path: ../../packages/genrevibes_crash
+    path: ../../modules/crash/genrevibes_crash
   genrevibes_device_identity:
-    path: ../../packages/genrevibes_device_identity
+    path: ../../modules/device_identity/genrevibes_device_identity
   genrevibes_permissions:
-    path: ../../packages/genrevibes_permissions
+    path: ../../modules/permissions/genrevibes_permissions
   genrevibes_ads_admob:
-    path: ../../packages/genrevibes_ads_admob
+    path: ../../modules/ads/genrevibes_ads_admob
   genrevibes_analytics:
-    path: ../../packages/genrevibes_analytics
+    path: ../../modules/analytics/genrevibes_analytics
   genrevibes_core:
-    path: ../../packages/genrevibes_core
+    path: ../../modules/foundation/genrevibes_core
   genrevibes_iap:
-    path: ../../packages/genrevibes_iap
+    path: ../../modules/iap/genrevibes_iap
   genrevibes_iap_revenuecat:
-    path: ../../packages/genrevibes_iap_revenuecat
+    path: ../../modules/iap/genrevibes_iap_revenuecat
   genrevibes_notifications:
-    path: ../../packages/genrevibes_notifications
+    path: ../../modules/notifications/genrevibes_notifications
   genrevibes_remote_config:
-    path: ../../packages/genrevibes_remote_config
+    path: ../../modules/remote_config/genrevibes_remote_config
 
   genrevibes_app_rating:
-    path: ../../packages/genrevibes_app_rating
+    path: ../../modules/app_rating/genrevibes_app_rating
   genrevibes_consent:
-    path: ../../packages/genrevibes_consent
+    path: ../../modules/consent/genrevibes_consent
   genrevibes_feedback:
-    path: ../../packages/genrevibes_feedback
+    path: ../../modules/feedback/genrevibes_feedback
   genrevibes_storage:
-    path: ../../packages/genrevibes_storage
+    path: ../../modules/storage/genrevibes_storage
 
 flutter:
   uses-material-design: true

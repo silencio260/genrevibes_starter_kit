@@ -1,6 +1,0 @@
-dependency_overrides:
-  firebase_remote_config: 5.4.2
-  genrevibes_core:
-    path: ../genrevibes_core
-  genrevibes_remote_config:
-    path: ../genrevibes_remote_config

@@ -1,0 +1,9 @@
+dependency_overrides:
+  genrevibes_ads:
+    path: ../../ads/genrevibes_ads
+  genrevibes_analytics:
+    path: ../../analytics/genrevibes_analytics
+  genrevibes_core:
+    path: ../../foundation/genrevibes_core
+  genrevibes_remote_config:
+    path: ../../remote_config/genrevibes_remote_config

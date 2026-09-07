@@ -60,8 +60,8 @@ fi
 while IFS= read -r directory; do
   targets+=("$directory")
 done < <(
-  find "$repository_root/packages" "$repository_root/examples" \
-    -mindepth 2 -maxdepth 2 -type d \( -name build -o -name .dart_tool \) \
+  find "$repository_root/modules" "$repository_root/examples" \
+    -mindepth 2 -maxdepth 3 -type d \( -name build -o -name .dart_tool \) \
     2>/dev/null | sort
 )
 

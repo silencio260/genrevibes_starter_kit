@@ -40,7 +40,12 @@ vendor_pattern='firebase_auth|cloud_firestore|app_tracking_transparency|share_pl
 failed=0
 
 for package_name in "${neutral_packages[@]}"; do
-  package_path="packages/$package_name"
+  package_path="$(find modules -mindepth 2 -maxdepth 2 -type d -name "$package_name")"
+  if [[ -z "$package_path" ]]; then
+    echo "ERROR: neutral package $package_name is not under modules/"
+    failed=1
+    continue
+  fi
   if grep -REn "package:($vendor_pattern)" "$package_path/lib" >/dev/null; then
     echo "ERROR: neutral package $package_name imports a vendor SDK"
     grep -REn "package:($vendor_pattern)" "$package_path/lib"
@@ -53,37 +58,44 @@ for package_name in "${neutral_packages[@]}"; do
   fi
 done
 
-while IFS= read -r dart_file; do
+# A package may import only the vendor SDKs it declares itself.
+#
+# This replaces a hand-maintained allowlist of package/vendor pairs. The
+# allowlist had to be edited for every new adapter and silently went stale when
+# one was missed; deriving the rule from each pubspec cannot drift. It is also
+# stricter: it catches a package importing a vendor it picked up transitively
+# rather than declared, which the allowlist permitted.
+#
+# Neutral packages are covered by the loop above, which forbids them from
+# declaring a vendor at all, so "declares it" can never make one of them legal.
+while IFS= read -r pubspec; do
+  package_dir="$(dirname "$pubspec")"
+  package_name="$(basename "$package_dir")"
+  [[ -d "$package_dir/lib" ]] || continue
+
+  # No declared vendor is the normal case, and grep exits non-zero for it,
+  # which pipefail would otherwise treat as a script failure.
+  declared="$(
+    { grep -En "^[[:space:]]+($vendor_pattern):" "$pubspec" 2>/dev/null || true; } |
+      sed -E "s/^[0-9]+:[[:space:]]+($vendor_pattern):.*/\1/" | sort -u
+  )"
+
   while IFS= read -r imported_vendor; do
-    case "$imported_vendor:$dart_file" in
-      google_mobile_ads:packages/genrevibes_ads_admob/*|google_mobile_ads:packages/genrevibes_ads_admob_ui/*|google_mobile_ads:packages/genrevibes_consent_ump/*) ;;
-      onesignal_flutter:packages/genrevibes_notifications_onesignal/*) ;;
-      flutter_local_notifications:packages/genrevibes_notifications_local/*) ;;
-      firebase_analytics:packages/genrevibes_analytics_firebase/*) ;;
-      firebase_remote_config:packages/genrevibes_remote_config_firebase/*) ;;
-      posthog_flutter:packages/genrevibes_analytics_posthog/*) ;;
-      mixpanel_flutter:packages/genrevibes_analytics_mixpanel/*|mixpanel_flutter_session_replay:packages/genrevibes_analytics_mixpanel_replay/*) ;;
-      purchases_flutter:packages/genrevibes_iap_revenuecat/*|purchases_flutter:packages/genrevibes_iap_revenuecat_ui/*|purchases_ui_flutter:packages/genrevibes_iap_revenuecat_ui/*) ;;
-      in_app_review:packages/genrevibes_app_rating_in_app_review/*|url_launcher:packages/genrevibes_app_rating_in_app_review/*) ;;
-      feedbacknest_core:packages/genrevibes_feedbacknest/*) ;;
-      firebase_crashlytics:packages/genrevibes_crash_crashlytics/*) ;;
-      permission_handler:packages/genrevibes_permissions_handler/*|device_info_plus:packages/genrevibes_permissions_handler/*|device_info_plus:packages/genrevibes_device_identity_platform/*|app_tracking_transparency:packages/genrevibes_device_identity_platform/*) ;;
-      url_launcher:packages/genrevibes_app_links_launcher/*|share_plus:packages/genrevibes_app_links_launcher/*) ;;
-      firebase_auth:packages/genrevibes_auth_firebase/*) ;;
-      cloud_firestore:packages/genrevibes_database_firestore/*) ;;
-      shared_preferences:packages/genrevibes_remote_config_shared_preferences/*|shared_preferences:packages/genrevibes_storage_shared_preferences/*) ;;
-      *)
-        echo "ERROR: $imported_vendor is imported outside its isolated adapter: $dart_file"
-        failed=1
-        ;;
-    esac
-  done < <(sed -nE "s/.*package:($vendor_pattern)\/.*/\1/p" "$dart_file" | sort -u)
-done < <(find packages -path '*/lib/*.dart' -type f | sort)
+    [[ -n "$imported_vendor" ]] || continue
+    if ! printf '%s\n' "$declared" | grep -qx "$imported_vendor"; then
+      echo "ERROR: $package_name imports $imported_vendor without declaring it"
+      failed=1
+    fi
+  done < <(
+    { find "$package_dir/lib" -name '*.dart' -type f -exec \
+      sed -nE "s/.*package:($vendor_pattern)\/.*/\1/p" {} + 2>/dev/null || true; } | sort -u
+  )
+done < <(find modules -mindepth 3 -maxdepth 3 -name pubspec.yaml | sort)
 
 # The archived monolith is a behavior reference, never a dependency.
-if grep -RIlE "deprecated_old_version_1|package:genrevibes_starter_kit_legacy" packages examples --include='*.dart' --include='pubspec.yaml' 2>/dev/null | grep -q .; then
+if grep -RIlE "deprecated_old_version_1|package:genrevibes_starter_kit_legacy" modules examples --include='*.dart' --include='pubspec.yaml' 2>/dev/null | grep -q .; then
   echo "ERROR: something imports the archived legacy kit"
-  grep -RIlE "deprecated_old_version_1|package:genrevibes_starter_kit_legacy" packages examples --include='*.dart' --include='pubspec.yaml'
+  grep -RIlE "deprecated_old_version_1|package:genrevibes_starter_kit_legacy" modules examples --include='*.dart' --include='pubspec.yaml'
   failed=1
 fi
 
@@ -96,7 +108,7 @@ coordinator_dependencies="$(
       sub(/:$/, "", dependency)
       print dependency
     }
-  ' packages/genrevibes_starter_kit/pubspec.yaml
+  ' modules/foundation/genrevibes_starter_kit/pubspec.yaml
 )"
 if [[ "$coordinator_dependencies" != "genrevibes_core" ]]; then
   echo "ERROR: coordinator runtime dependencies must contain only genrevibes_core"

@@ -10,8 +10,8 @@ set -euo pipefail
 # `getBuildDirectory()` rejects absolute paths. A symlink per package is the
 # only way to move them, so that is what this does:
 #
-#   packages/<name>/build       ->  submodule-build-dir/<name>/build
-#   packages/<name>/.dart_tool  ->  submodule-build-dir/<name>/.dart_tool
+#   modules/<category>/<name>/build       ->  submodule-build-dir/<name>/build
+#   modules/<category>/<name>/.dart_tool  ->  submodule-build-dir/<name>/.dart_tool
 #
 # This consolidates, it does not shrink. The bytes are identical; they are just
 # all under one directory that `tool/clean.sh` can empty in one step.
@@ -72,8 +72,17 @@ link_one() {
 
   local source_path="$package_dir/$cache_name"
   local target_path="$central_dir/$package_name/$cache_name"
-  # Both packages/<name> and examples/<name> sit two levels below the root.
-  local relative_target="../../$central_dir_name/$package_name/$cache_name"
+  # Depth is computed rather than assumed: a package under
+  # modules/<category>/<name> is three levels below the root, and the
+  # categories are free to nest further later without touching this.
+  local relative_root="${package_dir#"$repository_root"/}"
+  local hops="${relative_root//[!\/]/}"
+  local prefix=""
+  local i
+  for ((i = 0; i <= ${#hops}; i++)); do
+    prefix="../$prefix"
+  done
+  local relative_target="$prefix$central_dir_name/$package_name/$cache_name"
 
   if [[ -L "$source_path" ]]; then
     if [[ "$(readlink "$source_path")" == "$relative_target" ]]; then
@@ -114,7 +123,7 @@ link_one() {
   linked=$((linked + 1))
 }
 
-for package_dir in "$repository_root"/packages/*/; do
+for package_dir in "$repository_root"/modules/*/*/; do
   package_dir="${package_dir%/}"
   [[ -f "$package_dir/pubspec.yaml" ]] || continue
   link_one "$package_dir" build

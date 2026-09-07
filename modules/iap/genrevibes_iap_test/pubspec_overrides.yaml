@@ -1,0 +1,6 @@
+dependency_overrides:
+  genrevibes_core:
+    path: ../../foundation/genrevibes_core
+  genrevibes_iap:
+    path: ../../iap/genrevibes_iap
+

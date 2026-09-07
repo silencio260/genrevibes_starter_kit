@@ -1,9 +1,0 @@
-dependency_overrides:
-  genrevibes_app_rating:
-    path: ../genrevibes_app_rating
-  genrevibes_core:
-    path: ../genrevibes_core
-  genrevibes_feedback:
-    path: ../genrevibes_feedback
-  genrevibes_storage:
-    path: ../genrevibes_storage

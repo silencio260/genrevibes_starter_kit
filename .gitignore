@@ -22,7 +22,7 @@ submodule-build-dir/**
 coverage/
 doc/api/
 *.iml
-packages/*/pubspec.lock
+modules/*/*/pubspec.lock
 
 # IDE state
 .idea/

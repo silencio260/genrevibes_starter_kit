@@ -18,7 +18,7 @@ dart_command="$(dirname "$flutter_command")/dart"
 
 bash tool/verify_package_boundaries.sh
 
-for package_path in packages/*; do
+for package_path in modules/*/*; do
   if [[ ! -f "$package_path/pubspec.yaml" ]]; then
     continue
   fi

@@ -1,0 +1,7 @@
+dependency_overrides:
+  flutter_local_notifications: 19.5.0
+  genrevibes_core:
+    path: ../../foundation/genrevibes_core
+  genrevibes_notifications:
+    path: ../../notifications/genrevibes_notifications
+  timezone: 0.10.1

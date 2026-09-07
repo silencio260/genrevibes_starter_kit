@@ -1,0 +1,7 @@
+dependency_overrides:
+  genrevibes_core:
+    path: ../../foundation/genrevibes_core
+  genrevibes_device_identity:
+    path: ../../device_identity/genrevibes_device_identity
+  genrevibes_storage:
+    path: ../../storage/genrevibes_storage

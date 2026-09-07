@@ -86,7 +86,7 @@ case "$tier" in
     packages=()
     while IFS= read -r package_path; do
       packages+=("$(basename "$package_path")")
-    done < <(find "$repository_root/packages" -mindepth 1 -maxdepth 1 -type d | sort)
+    done < <(find "$repository_root/modules" -mindepth 2 -maxdepth 2 -type d | sort)
     ;;
   *)
     echo "Unknown compatibility tier: $tier"
@@ -98,7 +98,16 @@ esac
 bash "$repository_root/tool/verify_package_boundaries.sh"
 
 for package_name in "${packages[@]}"; do
-  package_path="$repository_root/packages/$package_name"
+  # Packages are grouped by capability under modules/, so the category is
+  # resolved rather than written into every tier list.
+  package_path="$(
+    find "$repository_root/modules" -mindepth 2 -maxdepth 2 -type d \
+      -name "$package_name"
+  )"
+  if [[ -z "$package_path" ]]; then
+    echo "ERROR: package $package_name is not under modules/"
+    exit 1
+  fi
   printf '\n[%s]\n' "$package_name"
   (
     cd "$package_path"

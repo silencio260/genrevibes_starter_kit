@@ -1,5 +1,0 @@
-dependency_overrides:
-  genrevibes_ads:
-    path: ../genrevibes_ads
-  genrevibes_core:
-    path: ../genrevibes_core

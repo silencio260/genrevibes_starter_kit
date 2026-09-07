@@ -1,0 +1,7 @@
+dependency_overrides:
+  genrevibes_analytics:
+    path: ../../analytics/genrevibes_analytics
+  genrevibes_analytics_test:
+    path: ../../analytics/genrevibes_analytics_test
+  genrevibes_core:
+    path: ../../foundation/genrevibes_core

@@ -1,8 +1,0 @@
-dependency_overrides:
-  genrevibes_ads:
-    path: ../genrevibes_ads
-  genrevibes_ads_test:
-    path: ../genrevibes_ads_test
-  genrevibes_core:
-    path: ../genrevibes_core
-  google_mobile_ads: 5.3.1

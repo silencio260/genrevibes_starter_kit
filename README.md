@@ -8,6 +8,46 @@ The production package family lives in `packages/`. The pre-modular monolith is 
 as a behavior and migration reference; nothing depends on it and the boundary
 script fails if anything tries.
 
+## Repository layout
+
+Packages are grouped by capability under `modules/`. A capability's neutral
+contract, its vendor adapters and its contract-test harness sit together,
+because they are read and changed together.
+
+```text
+modules/<capability>/genrevibes_<package>
+```
+
+| folder | packages | contents |
+|---|---|---|
+| `ads/` | 4 | ads, ads_admob, ads_admob_ui, ads_test |
+| `analytics/` | 6 | analytics, analytics_firebase, analytics_mixpanel, analytics_mixpanel_replay, analytics_posthog, analytics_test |
+| `app_links/` | 2 | app_links, app_links_launcher |
+| `app_rating/` | 3 | app_rating, app_rating_in_app_review, app_rating_test |
+| `auth/` | 3 | auth, auth_firebase, auth_test |
+| `consent/` | 3 | consent, consent_test, consent_ump |
+| `crash/` | 3 | crash, crash_crashlytics, crash_test |
+| `database/` | 3 | database, database_firestore, database_test |
+| `device_identity/` | 2 | device_identity, device_identity_platform |
+| `engagement/` | 1 | engagement |
+| `feedback/` | 2 | feedback, feedbacknest |
+| `foundation/` | 2 | core, starter_kit |
+| `iap/` | 4 | iap, iap_revenuecat, iap_revenuecat_ui, iap_test |
+| `notifications/` | 3 | notifications, notifications_local, notifications_onesignal |
+| `onboarding/` | 1 | onboarding |
+| `permissions/` | 2 | permissions, permissions_handler |
+| `remote_config/` | 4 | remote_config, remote_config_firebase, remote_config_shared_preferences, remote_policy |
+| `settings/` | 1 | settings |
+| `storage/` | 2 | storage, storage_shared_preferences |
+
+Package names are unchanged and independent of the folder: `genrevibes_ads_admob`
+is imported as `package:genrevibes_ads_admob/...` wherever it lives. The folder
+is navigation, not identity.
+
+`foundation/` holds what capabilities are built on rather than a capability of
+its own, and `remote_policy` sits with `remote_config/` because it is the schema
+binding remote configuration to ads and analytics.
+
 ## Package model
 
 ```text
@@ -41,11 +81,11 @@ Add only the packages the app uses. For example:
 ```yaml
 dependencies:
   genrevibes_starter_kit:
-    path: ../genrevibes_starter_kit/packages/genrevibes_starter_kit
+    path: ../genrevibes_starter_kit/modules/foundation/genrevibes_starter_kit
   genrevibes_iap_revenuecat:
-    path: ../genrevibes_starter_kit/packages/genrevibes_iap_revenuecat
+    path: ../genrevibes_starter_kit/modules/iap/genrevibes_iap_revenuecat
   genrevibes_notifications_onesignal:
-    path: ../genrevibes_starter_kit/packages/genrevibes_notifications_onesignal
+    path: ../genrevibes_starter_kit/modules/notifications/genrevibes_notifications_onesignal
 ```
 
 Until packages are published, local development also needs path overrides for
