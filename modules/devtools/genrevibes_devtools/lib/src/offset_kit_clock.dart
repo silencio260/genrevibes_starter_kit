@@ -19,28 +19,24 @@ final class OffsetKitClock implements KitClock {
   /// Creates a clock over [delegate], offset by [offset].
   OffsetKitClock({
     KitClock delegate = const SystemKitClock(),
-    Duration offset = Duration.zero,
-  })  : _delegate = delegate,
-        _offset = offset;
+    this.offset = Duration.zero,
+  }) : _delegate = delegate;
 
   final KitClock _delegate;
-  Duration _offset;
 
-  /// How far ahead of the real clock this one reads.
-  Duration get offset => _offset;
-
-  /// Sets the offset. Negative values read into the past.
-  set offset(Duration value) => _offset = value;
+  /// How far ahead of the real clock this one reads. Negative reads into the
+  /// past.
+  Duration offset;
 
   /// Moves the clock forward by [amount].
-  void advance(Duration amount) => _offset += amount;
+  void advance(Duration amount) => offset += amount;
 
   /// Returns to real time.
-  void reset() => _offset = Duration.zero;
+  void reset() => offset = Duration.zero;
 
   /// Whether this clock currently disagrees with the device.
-  bool get isShifted => _offset != Duration.zero;
+  bool get isShifted => offset != Duration.zero;
 
   @override
-  DateTime now() => _delegate.now().add(_offset);
+  DateTime now() => _delegate.now().add(offset);
 }
