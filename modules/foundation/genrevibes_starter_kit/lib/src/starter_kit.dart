@@ -44,6 +44,7 @@ final class GenRevibesStarterKit implements StarterModule {
   Future<KitResult<void>>? _initialization;
   KitResult<void>? _lastInitializationResult;
   bool _initializationInProgress = false;
+  Future<void>? _deferredStartup;
   bool _initialized = false;
   bool _disposed = false;
 
@@ -59,6 +60,18 @@ final class GenRevibesStarterKit implements StarterModule {
   /// Instantiated enabled modules, keyed by stable module ID.
   Map<String, StarterModule> get modules =>
       Map<String, StarterModule>.unmodifiable(_modules);
+
+  /// Completes when every deferred module has finished starting.
+  ///
+  /// Startup does not wait for these, but a caller that actually depends on one
+  /// must. An ad request, for example, may not be made before consent has been
+  /// gathered, so the ad path awaits this rather than the application doing so.
+  ///
+  /// Completes normally whatever the outcome; a deferred failure is reported on
+  /// that module's health, not here. Returns immediately when there are no
+  /// deferred modules or initialization has not run.
+  Future<void> get deferredStartupComplete =>
+      _deferredStartup ?? Future<void>.value();
 
   /// Returns an initialized module without introducing a service locator.
   T? module<T extends StarterModule>(String moduleId) {
@@ -187,8 +200,11 @@ final class GenRevibesStarterKit implements StarterModule {
     _initializationInProgress = false;
     _initialized = true;
     // Not awaited: that is the whole point. They run in registration order so
-    // one can still depend on the one before it.
-    unawaited(_startDeferred());
+    // one can still depend on the one before it. The future is kept so callers
+    // that genuinely depend on a deferred capability can wait for it without
+    // the whole application having to.
+    _deferredStartup = _startDeferred();
+    unawaited(_deferredStartup);
     final requiredError = firstRequiredError;
     _lastInitializationResult = requiredError == null
         ? const KitSuccess<void>(null)
