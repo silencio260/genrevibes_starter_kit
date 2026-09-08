@@ -83,6 +83,87 @@ void main() {
     expect(names.resolve('x'), 'x');
     expect(const CanonicalAnalyticsEventNames().resolve('x'), 'x');
   });
+
+  group('delivery observer', () {
+    test('reports each delivered event with its per-sink outcome', () async {
+      final good = _FakeAnalyticsSink('good');
+      final bad = _FakeAnalyticsSink('bad', failTracking: true);
+      final observer = _RecordingObserver();
+      final pipeline = AnalyticsPipeline(
+        sinks: <AnalyticsSink>[good, bad],
+        observer: observer,
+      );
+      await pipeline.initialize();
+      await pipeline.setConsent(AnalyticsConsent.granted);
+
+      await pipeline.track(const AnalyticsEvent(name: 'checkout'));
+
+      expect(observer.events, hasLength(1));
+      final (event, report) = observer.events.single;
+      expect(event.name, 'checkout');
+      // The point of the observer: which sink took it, and which did not.
+      expect(report.successfulSinks, contains('good'));
+      expect(report.failures.keys, contains('bad'));
+    });
+
+    test('reports an event suppressed by consent rather than staying silent',
+        () async {
+      final observer = _RecordingObserver();
+      final pipeline = AnalyticsPipeline(
+        sinks: <AnalyticsSink>[_FakeAnalyticsSink('sink')],
+        observer: observer,
+      );
+      await pipeline.initialize();
+
+      // Consent never granted, so nothing reaches a sink. A diagnostics screen
+      // still has to be able to say why.
+      await pipeline.track(const AnalyticsEvent(name: 'blocked'));
+
+      expect(observer.events, hasLength(1));
+      expect(observer.events.single.$2.suppressedByConsent, isTrue);
+      expect(observer.events.single.$2.successfulSinks, isEmpty);
+    });
+
+    test('an observer that throws cannot break delivery', () async {
+      final sink = _FakeAnalyticsSink('sink');
+      final pipeline = AnalyticsPipeline(
+        sinks: <AnalyticsSink>[sink],
+        observer: _ThrowingObserver(),
+      );
+      await pipeline.initialize();
+      await pipeline.setConsent(AnalyticsConsent.granted);
+
+      final result = await pipeline.track(const AnalyticsEvent(name: 'safe'));
+
+      expect(result.isSuccess, isTrue);
+      expect(sink.events, hasLength(1));
+    });
+  });
+}
+
+final class _RecordingObserver implements AnalyticsDeliveryObserver {
+  final List<(AnalyticsEvent, AnalyticsDeliveryReport)> events =
+      <(AnalyticsEvent, AnalyticsDeliveryReport)>[];
+
+  @override
+  void onEventDelivered(AnalyticsEvent event, AnalyticsDeliveryReport report) {
+    events.add((event, report));
+  }
+
+  @override
+  void onOperationDelivered(AnalyticsDeliveryReport report) {}
+}
+
+final class _ThrowingObserver implements AnalyticsDeliveryObserver {
+  @override
+  void onEventDelivered(AnalyticsEvent event, AnalyticsDeliveryReport report) {
+    throw StateError('observer is broken');
+  }
+
+  @override
+  void onOperationDelivered(AnalyticsDeliveryReport report) {
+    throw StateError('observer is broken');
+  }
 }
 
 T _value<T>(KitResult<T> result) {

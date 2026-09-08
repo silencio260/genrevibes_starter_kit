@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:genrevibes_core/genrevibes_core.dart';
 
+import 'analytics_delivery_observer.dart';
 import 'analytics_event_names.dart';
 import 'analytics_sink.dart';
 import 'model/analytics_consent.dart';
@@ -16,9 +17,11 @@ final class AnalyticsPipeline implements StarterModule {
     required Iterable<AnalyticsSink> sinks,
     AnalyticsConsent initialConsent = AnalyticsConsent.unknown,
     AnalyticsEventNames names = const CanonicalAnalyticsEventNames(),
+    AnalyticsDeliveryObserver? observer,
     KitClock clock = const SystemKitClock(),
     KitLogger logger = const NoopKitLogger(),
   })  : _sinks = List<AnalyticsSink>.unmodifiable(sinks),
+        _observer = observer,
         _consent = initialConsent,
         _names = names,
         _clock = clock,
@@ -31,6 +34,9 @@ final class AnalyticsPipeline implements StarterModule {
 
   final List<AnalyticsSink> _sinks;
   final AnalyticsEventNames _names;
+
+  /// Watches deliveries. Null in production; a diagnostics build supplies one.
+  final AnalyticsDeliveryObserver? _observer;
   final KitClock _clock;
   final KitLogger _logger;
   final StreamController<ModuleHealth> _healthChanges =
@@ -123,11 +129,33 @@ final class AnalyticsPipeline implements StarterModule {
   Future<KitResult<AnalyticsDeliveryReport>> track(AnalyticsEvent event) {
     final outgoing = _resolveName(event);
     if (_consent != AnalyticsConsent.granted) {
+      // Reported too: a suppressed event is exactly what a diagnostics screen
+      // needs to see when someone asks why nothing reached the dashboard.
+      final suppressed = _suppressedReport(outgoing.name);
+      _notifyEvent(outgoing, suppressed);
       return Future<KitResult<AnalyticsDeliveryReport>>.value(
-        KitSuccess<AnalyticsDeliveryReport>(_suppressedReport(outgoing.name)),
+        KitSuccess<AnalyticsDeliveryReport>(suppressed),
       );
     }
-    return _dispatch(outgoing.name, (sink) => sink.track(outgoing));
+    return _dispatch(outgoing.name, (sink) => sink.track(outgoing))
+        .then((result) {
+      result.fold(
+        onSuccess: (report) => _notifyEvent(outgoing, report),
+        onFailure: (_) {},
+      );
+      return result;
+    });
+  }
+
+  void _notifyEvent(AnalyticsEvent event, AnalyticsDeliveryReport report) {
+    final observer = _observer;
+    if (observer == null) return;
+    // An observer is a development aid and must never affect delivery.
+    try {
+      observer.onEventDelivered(event, report);
+    } on Object {
+      // Intentionally ignored.
+    }
   }
 
   AnalyticsEvent _resolveName(AnalyticsEvent event) {

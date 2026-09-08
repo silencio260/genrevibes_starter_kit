@@ -1,6 +1,7 @@
 /// Provider-neutral analytics APIs for GenRevibes applications.
 library;
 
+export 'src/analytics_delivery_observer.dart';
 export 'src/analytics_event_names.dart';
 export 'src/analytics_pipeline.dart';
 export 'src/analytics_sink.dart';

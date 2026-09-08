@@ -1,0 +1,39 @@
+dependency_overrides:
+  genrevibes_ads:
+    path: ../../ads/genrevibes_ads
+  genrevibes_analytics:
+    path: ../../analytics/genrevibes_analytics
+  genrevibes_app_links:
+    path: ../../app_links/genrevibes_app_links
+  genrevibes_app_rating:
+    path: ../../app_rating/genrevibes_app_rating
+  genrevibes_consent:
+    path: ../../consent/genrevibes_consent
+  genrevibes_core:
+    path: ../../foundation/genrevibes_core
+  genrevibes_crash:
+    path: ../../crash/genrevibes_crash
+  genrevibes_device_identity:
+    path: ../../device_identity/genrevibes_device_identity
+  genrevibes_engagement:
+    path: ../../engagement/genrevibes_engagement
+  genrevibes_feedback:
+    path: ../../feedback/genrevibes_feedback
+  genrevibes_iap:
+    path: ../../iap/genrevibes_iap
+  genrevibes_notifications:
+    path: ../../notifications/genrevibes_notifications
+  genrevibes_onboarding:
+    path: ../../onboarding/genrevibes_onboarding
+  genrevibes_permissions:
+    path: ../../permissions/genrevibes_permissions
+  genrevibes_remote_config:
+    path: ../../remote_config/genrevibes_remote_config
+  genrevibes_remote_policy:
+    path: ../../remote_config/genrevibes_remote_policy
+  genrevibes_settings:
+    path: ../../settings/genrevibes_settings
+  genrevibes_starter_kit:
+    path: ../../foundation/genrevibes_starter_kit
+  genrevibes_storage:
+    path: ../../storage/genrevibes_storage
