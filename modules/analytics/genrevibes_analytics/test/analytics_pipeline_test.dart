@@ -5,9 +5,14 @@ import 'package:genrevibes_core/genrevibes_core.dart';
 import 'package:test/test.dart';
 
 void main() {
-  test('does not initialize or track sinks before consent', () async {
+  test('an app that opts into consent gating is silenced until it grants',
+      () async {
+    // Opt-in: only a pipeline constructed with an ungranted consent waits.
     final sink = _FakeAnalyticsSink('firebase');
-    final pipeline = AnalyticsPipeline(sinks: <AnalyticsSink>[sink]);
+    final pipeline = AnalyticsPipeline(
+      sinks: <AnalyticsSink>[sink],
+      initialConsent: AnalyticsConsent.unknown,
+    );
 
     expect((await pipeline.initialize()).isSuccess, isTrue);
     final report = _value(
@@ -17,6 +22,22 @@ void main() {
     expect(sink.initializeCount, 0);
     expect(sink.events, isEmpty);
     expect(report.suppressedByConsent, isTrue);
+    await pipeline.dispose();
+  });
+
+  test('delivers without anyone granting consent first', () async {
+    // The default. Forgetting to call setConsent used to mean no analytics at
+    // all, silently, which is a worse default than the one it protected.
+    final sink = _FakeAnalyticsSink('firebase');
+    final pipeline = AnalyticsPipeline(sinks: <AnalyticsSink>[sink]);
+
+    expect((await pipeline.initialize()).isSuccess, isTrue);
+    final report = _value(
+      await pipeline.track(const AnalyticsEvent(name: 'app_open')),
+    );
+
+    expect(sink.events.single.name, 'app_open');
+    expect(report.suppressedByConsent, isFalse);
     await pipeline.dispose();
   });
 
@@ -43,7 +64,10 @@ void main() {
   test('granted consent starts sinks after a disabled initialization',
       () async {
     final sink = _FakeAnalyticsSink('firebase');
-    final pipeline = AnalyticsPipeline(sinks: <AnalyticsSink>[sink]);
+    final pipeline = AnalyticsPipeline(
+      sinks: <AnalyticsSink>[sink],
+      initialConsent: AnalyticsConsent.unknown,
+    );
     await pipeline.initialize();
 
     final report = _value(
@@ -111,6 +135,7 @@ void main() {
       final observer = _RecordingObserver();
       final pipeline = AnalyticsPipeline(
         sinks: <AnalyticsSink>[_FakeAnalyticsSink('sink')],
+        initialConsent: AnalyticsConsent.unknown,
         observer: observer,
       );
       await pipeline.initialize();

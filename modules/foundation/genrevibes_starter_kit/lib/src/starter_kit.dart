@@ -95,7 +95,8 @@ final class GenRevibesStarterKit implements StarterModule {
     _initializationInProgress = true;
     _setHealth(ModuleState.initializing);
     KitError? firstRequiredError;
-    for (final registration in _registrations.where((item) => item.enabled)) {
+    for (final registration in _registrations
+        .where((item) => item.enabled && !item.isDeferred)) {
       StarterModule module;
       try {
         module = registration.create!();
@@ -185,6 +186,9 @@ final class GenRevibesStarterKit implements StarterModule {
 
     _initializationInProgress = false;
     _initialized = true;
+    // Not awaited: that is the whole point. They run in registration order so
+    // one can still depend on the one before it.
+    unawaited(_startDeferred());
     final requiredError = firstRequiredError;
     _lastInitializationResult = requiredError == null
         ? const KitSuccess<void>(null)
@@ -218,6 +222,81 @@ final class GenRevibesStarterKit implements StarterModule {
     return firstError == null
         ? const KitSuccess<void>(null)
         : KitFailure<void>(firstError!);
+  }
+
+  /// Starts deferred modules sequentially, after startup has been reported.
+  Future<void> _startDeferred() async {
+    for (final registration
+        in _registrations.where((item) => item.enabled && item.isDeferred)) {
+      if (_disposed) return;
+      StarterModule module;
+      try {
+        module = registration.create!();
+      } on Object catch (error, stackTrace) {
+        _recordInitializationError(
+          registration,
+          KitError(
+            code: KitErrorCode.unknown,
+            message: 'Deferred module ${registration.moduleId} could not be '
+                'created: $error',
+            cause: error,
+            stackTrace: stackTrace,
+          ),
+        );
+        continue;
+      }
+
+      final moduleId = module.moduleId;
+      if (moduleId != registration.moduleId &&
+          !moduleId.startsWith('${registration.moduleId}.')) {
+        _recordInitializationError(
+          registration,
+          KitError(
+            code: KitErrorCode.invalidConfiguration,
+            message: 'Registration ${registration.moduleId} created unrelated '
+                'module $moduleId.',
+          ),
+        );
+        await module.dispose();
+        continue;
+      }
+
+      _modules[registration.moduleId] = module;
+      _subscriptions[registration.moduleId] = module.healthChanges.listen(
+        (health) => _onModuleHealthChanged(registration.moduleId, health),
+      );
+      _logger.log(
+        KitLogLevel.debug,
+        'Deferred module initialization started.',
+        moduleId: registration.moduleId,
+      );
+
+      // No timeout. A deferred module may legitimately wait on a person — a
+      // consent form stays open until it is dismissed — and nothing is held up
+      // behind it.
+      KitResult<void> result;
+      try {
+        result = await module.initialize();
+      } on Object catch (error, stackTrace) {
+        result = KitFailure<void>(
+          KitError(
+            code: KitErrorCode.unknown,
+            message: 'Deferred module ${registration.moduleId} threw: $error',
+            cause: error,
+            stackTrace: stackTrace,
+          ),
+        );
+      }
+      result.fold(
+        onSuccess: (_) => _logger.log(
+          KitLogLevel.info,
+          'Deferred module ready.',
+          moduleId: registration.moduleId,
+        ),
+        onFailure: (error) => _recordInitializationError(registration, error),
+      );
+      if (!_disposed) _recomputeHealth();
+    }
   }
 
   KitError? _validateRegistrations() {

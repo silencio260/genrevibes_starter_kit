@@ -15,7 +15,16 @@ final class AnalyticsPipeline implements StarterModule {
   /// Creates an analytics pipeline.
   AnalyticsPipeline({
     required Iterable<AnalyticsSink> sinks,
-    AnalyticsConsent initialConsent = AnalyticsConsent.unknown,
+    // Granted unless an application says otherwise.
+    //
+    // Consent gating is opt-in. Defaulting to `unknown` meant every pipeline
+    // started silenced and stayed silenced until somebody remembered to call
+    // setConsent, so the failure mode of forgetting was "no analytics at all,
+    // with no error anywhere" — which is exactly what happened in production.
+    // Product analytics is a core function for most applications; the ones
+    // that genuinely gate it on a consent decision pass `unknown` here and
+    // drive it themselves.
+    AnalyticsConsent initialConsent = AnalyticsConsent.granted,
     AnalyticsEventNames names = const CanonicalAnalyticsEventNames(),
     AnalyticsDeliveryObserver? observer,
     KitClock clock = const SystemKitClock(),

@@ -43,41 +43,24 @@ class _DevAnalyticsPageState extends State<DevAnalyticsPage> {
   @override
   Widget build(BuildContext context) {
     final events = _visible;
-    final consent = widget.pipeline.consent;
     final sinks = widget.pipeline.sinks.map((sink) => sink.sinkId).toList();
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Analytics'),
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(96),
+          preferredSize: const Size.fromHeight(60),
           child: Padding(
             padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-            child: Column(
-              children: <Widget>[
-                _ConsentBanner(
-                  consent: consent,
-                  sinks: sinks,
-                  // Grants consent on the pipeline directly, for testing only.
-                  // It does not touch the UMP decision, so the next launch
-                  // reverts to whatever the user actually chose.
-                  onGrant: () async {
-                    await widget.pipeline
-                        .setConsent(AnalyticsConsent.granted);
-                    if (mounted) setState(() {});
-                  },
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  decoration: InputDecoration(
-                    isDense: true,
-                    prefixIcon: const Icon(Icons.search, size: 18),
-                    hintText: 'Filter ${widget.catalogue.events.length} events',
-                    border: const OutlineInputBorder(),
-                  ),
-                  onChanged: (value) => setState(() => _filter = value),
-                ),
-              ],
+            child: TextField(
+              decoration: InputDecoration(
+                isDense: true,
+                prefixIcon: const Icon(Icons.search, size: 18),
+                hintText: 'Filter ${widget.catalogue.events.length} events '
+                    '· ${sinks.join(", ")}',
+                border: const OutlineInputBorder(),
+              ),
+              onChanged: (value) => setState(() => _filter = value),
             ),
           ),
         ),
@@ -94,51 +77,6 @@ class _DevAnalyticsPageState extends State<DevAnalyticsPage> {
                 alwaysAttached: widget.catalogue.alwaysAttached,
               ),
             ),
-    );
-  }
-}
-
-class _ConsentBanner extends StatelessWidget {
-  const _ConsentBanner({
-    required this.consent,
-    required this.sinks,
-    required this.onGrant,
-  });
-
-  final AnalyticsConsent consent;
-  final List<String> sinks;
-  final Future<void> Function() onGrant;
-
-  @override
-  Widget build(BuildContext context) {
-    final granted = consent == AnalyticsConsent.granted;
-    final colour = granted ? Colors.green.shade700 : Colors.orange.shade800;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: colour.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Row(
-        children: <Widget>[
-          Expanded(
-            child: Text(
-              granted
-                  ? 'Consent granted · delivering to ${sinks.join(", ")}'
-                  : 'Consent is ${consent.name} — every event is suppressed '
-                      'before it reaches a sink. Nothing you fire here will '
-                      'appear in any dashboard.',
-              style: TextStyle(fontSize: 11, color: colour),
-            ),
-          ),
-          if (!granted)
-            TextButton(
-              onPressed: onGrant,
-              child: const Text('Grant', style: TextStyle(fontSize: 11)),
-            ),
-        ],
-      ),
     );
   }
 }
@@ -378,12 +316,13 @@ class _DeliveryPanel extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
 
     if (report.suppressedByConsent) {
+      // Only reachable if an application deliberately opts into consent
+      // gating. This one does not.
       return _panel(
         colour: Colors.orange.shade800,
         children: const <Widget>[
           Text(
-            'Suppressed by consent. It never reached a sink, so nothing will '
-            'appear in any dashboard.',
+            'Suppressed by consent gating, which this app does not use.',
             style: TextStyle(fontSize: 12),
           ),
         ],
