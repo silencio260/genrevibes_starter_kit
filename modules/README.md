@@ -113,3 +113,7 @@ fast architecture check.
   to the separately tested `flutter_local_notifications` 19.x toolchain.
 - `genrevibes_starter_kit`: thin lazy lifecycle coordinator that depends only
   on core and never selects providers or a dependency-injection framework.
+
+- `devtools/genrevibes_devtools` — on-device diagnostics bench: fires every
+  analytics event individually with per-sink results, lists every remote-config
+  key with its origin, and exercises each capability with per-action state.

@@ -60,6 +60,7 @@ case "$tier" in
       genrevibes_database_firestore
       genrevibes_database_test
       genrevibes_device_identity
+      genrevibes_devtools
       genrevibes_device_identity_platform
       genrevibes_engagement
       genrevibes_feedback
