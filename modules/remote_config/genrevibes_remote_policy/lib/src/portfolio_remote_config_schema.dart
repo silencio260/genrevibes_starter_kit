@@ -14,13 +14,21 @@ abstract final class PortfolioRemoteConfigSettings {
 
 /// Builds the schema every portfolio app shares, plus its own keys.
 abstract final class PortfolioRemoteConfigSchema {
-  /// Combines ads policy, analytics names and [appKeys] into one schema.
+  /// Combines ads policy, optionally analytics names, and [appKeys].
+  ///
+  /// [includeAnalyticsNames] adds forty-two keys that exist only to rename
+  /// analytics events remotely. That is worth having when a portfolio needs to
+  /// realign event names across apps without a release, and is pure noise
+  /// otherwise: an application that never renames its events would see forty-two
+  /// keys it did not define, all sitting at their defaults, drowning the handful
+  /// it actually configured. It is opt-in for that reason.
   static RemoteConfigSchema build({
     Iterable<RemoteConfigKey<Object?>> appKeys = const [],
+    bool includeAnalyticsNames = false,
   }) {
     return RemoteConfigSchema(<RemoteConfigKey<Object?>>[
       ...AdsPolicyKeys.all,
-      ...AnalyticsNamesSchema.all,
+      if (includeAnalyticsNames) ...AnalyticsNamesSchema.all,
       ...appKeys,
     ]);
   }

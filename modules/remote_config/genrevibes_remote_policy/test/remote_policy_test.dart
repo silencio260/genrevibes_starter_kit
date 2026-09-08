@@ -131,6 +131,7 @@ void main() {
     test('the portfolio schema has no duplicate keys', () {
       // RemoteConfigSchema throws on duplicates; building it is the test.
       final schema = PortfolioRemoteConfigSchema.build(
+        includeAnalyticsNames: true,
         appKeys: <RemoteConfigKey<Object?>>[
           remoteConfigKey(
             const RemoteConfigKey<bool>(
@@ -144,6 +145,18 @@ void main() {
 
       expect(schema.keys.length,
           AdsPolicyKeys.all.length + AnalyticsNamesSchema.all.length + 1);
+    });
+
+    test('analytics name overrides are left out unless asked for', () {
+      // Forty-two keys that only matter to an app renaming events remotely.
+      // Including them by default buried the handful an app really configures.
+      final schema = PortfolioRemoteConfigSchema.build();
+
+      expect(schema.keys.length, AdsPolicyKeys.all.length);
+      expect(
+        schema.byName.keys.any((name) => name.startsWith('event_')),
+        isFalse,
+      );
     });
   });
 

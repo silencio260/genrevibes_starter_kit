@@ -55,7 +55,18 @@ class _DevAnalyticsPageState extends State<DevAnalyticsPage> {
             padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
             child: Column(
               children: <Widget>[
-                _ConsentBanner(consent: consent, sinks: sinks),
+                _ConsentBanner(
+                  consent: consent,
+                  sinks: sinks,
+                  // Grants consent on the pipeline directly, for testing only.
+                  // It does not touch the UMP decision, so the next launch
+                  // reverts to whatever the user actually chose.
+                  onGrant: () async {
+                    await widget.pipeline
+                        .setConsent(AnalyticsConsent.granted);
+                    if (mounted) setState(() {});
+                  },
+                ),
                 const SizedBox(height: 8),
                 TextField(
                   decoration: InputDecoration(
@@ -88,10 +99,15 @@ class _DevAnalyticsPageState extends State<DevAnalyticsPage> {
 }
 
 class _ConsentBanner extends StatelessWidget {
-  const _ConsentBanner({required this.consent, required this.sinks});
+  const _ConsentBanner({
+    required this.consent,
+    required this.sinks,
+    required this.onGrant,
+  });
 
   final AnalyticsConsent consent;
   final List<String> sinks;
+  final Future<void> Function() onGrant;
 
   @override
   Widget build(BuildContext context) {
@@ -104,12 +120,24 @@ class _ConsentBanner extends StatelessWidget {
         color: colour.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(6),
       ),
-      child: Text(
-        granted
-            ? 'Consent granted · delivering to ${sinks.join(", ")}'
-            : 'Consent is ${consent.name} — every event will be suppressed '
-                'before it reaches a sink.',
-        style: TextStyle(fontSize: 11, color: colour),
+      child: Row(
+        children: <Widget>[
+          Expanded(
+            child: Text(
+              granted
+                  ? 'Consent granted · delivering to ${sinks.join(", ")}'
+                  : 'Consent is ${consent.name} — every event is suppressed '
+                      'before it reaches a sink. Nothing you fire here will '
+                      'appear in any dashboard.',
+              style: TextStyle(fontSize: 11, color: colour),
+            ),
+          ),
+          if (!granted)
+            TextButton(
+              onPressed: onGrant,
+              child: const Text('Grant', style: TextStyle(fontSize: 11)),
+            ),
+        ],
       ),
     );
   }
