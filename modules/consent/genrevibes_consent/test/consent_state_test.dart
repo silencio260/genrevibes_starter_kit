@@ -3,21 +3,6 @@ import 'package:test/test.dart';
 
 void main() {
   group('ConsentState permissions', () {
-    test('obtained permits personalized work', () {
-      expect(ConsentState.obtained.allowsPersonalizedWork, isTrue);
-    });
-
-    test('notRequired permits personalized work', () {
-      // Regression guard. Defining permission as "obtained only" silently
-      // disables ads and analytics for every user outside a regulated region.
-      expect(ConsentState.notRequired.allowsPersonalizedWork, isTrue);
-    });
-
-    test('unknown and consentRequired withhold personalized work', () {
-      expect(ConsentState.unknown.allowsPersonalizedWork, isFalse);
-      expect(ConsentState.consentRequired.allowsPersonalizedWork, isFalse);
-    });
-
     test('only consentRequired asks for a form', () {
       expect(ConsentState.consentRequired.requiresForm, isTrue);
       expect(ConsentState.obtained.requiresForm, isFalse);
@@ -46,13 +31,27 @@ void main() {
   });
 
   group('ConsentSnapshot', () {
-    test('delegates permission to its state', () {
-      final snapshot = ConsentSnapshot(
-        state: ConsentState.notRequired,
+    test('does not infer ad permission from a completed form', () {
+      // Regression guard for the bug this API replaced. `obtained` means the
+      // user answered the form; a user who rejected every purpose reaches this
+      // state exactly like one who accepted. Reading agreement out of the
+      // state claims consent from people who refused it.
+      final refused = ConsentSnapshot(
+        state: ConsentState.obtained,
         observedAt: DateTime.utc(2026),
       );
 
-      expect(snapshot.allowsPersonalizedWork, isTrue);
+      expect(refused.canRequestAds, isFalse);
+    });
+
+    test('carries the platform answer when the platform gives one', () {
+      final allowed = ConsentSnapshot(
+        state: ConsentState.obtained,
+        observedAt: DateTime.utc(2026),
+        canRequestAds: true,
+      );
+
+      expect(allowed.canRequestAds, isTrue);
     });
 
     test('defaults to no form and no privacy-options requirement', () {
@@ -63,6 +62,7 @@ void main() {
 
       expect(snapshot.formAvailable, isFalse);
       expect(snapshot.privacyOptionsRequired, isFalse);
+      expect(snapshot.canRequestAds, isFalse);
     });
   });
 }

@@ -12,13 +12,13 @@ void main() {
   );
 
   group('UMP consent status mapping', () {
-    test('notRequired maps to a state that permits personalized work', () {
-      // Regression guard for the classic bug: treating "no consent needed"
-      // as a denial disables ads for every user outside a regulated region.
-      final mapped = mapUmpConsentStatus(ConsentStatus.notRequired);
-
-      expect(mapped, ConsentState.notRequired);
-      expect(mapped.allowsPersonalizedWork, isTrue);
+    test('notRequired maps to notRequired', () {
+      // Regression guard for the classic bug: collapsing "no consent needed"
+      // into a denial disables ads for every user outside a regulated region.
+      expect(
+        mapUmpConsentStatus(ConsentStatus.notRequired),
+        ConsentState.notRequired,
+      );
     });
 
     test('obtained maps to obtained', () {
@@ -31,12 +31,15 @@ void main() {
 
       expect(mapped, ConsentState.consentRequired);
       expect(mapped.requiresForm, isTrue);
-      expect(mapped.allowsPersonalizedWork, isFalse);
     });
 
-    test('unknown withholds personalized work', () {
-      expect(mapUmpConsentStatus(ConsentStatus.unknown).allowsPersonalizedWork,
-          isFalse);
+    test('no mapped state claims to answer whether ads may be requested', () {
+      // The mapping describes the flow only. Deriving permission from it is
+      // what previously served personalized ads to users who refused them.
+      for (final status in ConsentStatus.values) {
+        expect(mapUmpConsentStatus(status).requiresForm,
+            status == ConsentStatus.required);
+      }
     });
 
     test('privacy options are required only when the SDK says so', () {
@@ -149,6 +152,27 @@ void main() {
       expect(emitted, <ConsentState>[ConsentState.obtained]);
     });
 
+    test('reads ad permission from the SDK, not from the consent status',
+        () async {
+      // A user who opened the form and refused every purpose is `obtained`
+      // just like one who accepted. Only the SDK knows the difference.
+      final client = _FakeUmpClient()
+        ..status = ConsentStatus.obtained
+        ..adsAllowed = false;
+      final provider = UmpConsentProvider(client: client);
+
+      await provider.initialize();
+      await provider.requestConsent();
+
+      expect(provider.snapshot.state, ConsentState.obtained);
+      expect(provider.snapshot.canRequestAds, isFalse);
+
+      client.adsAllowed = true;
+      await provider.requestConsent();
+
+      expect(provider.snapshot.canRequestAds, isTrue);
+    });
+
     test('composes with ConsentGate to release dependent modules', () async {
       final gate = ConsentGate(
         provider: UmpConsentProvider(client: _FakeUmpClient()),
@@ -156,7 +180,7 @@ void main() {
 
       await gate.initialize();
 
-      expect((await gate.ready).allowsPersonalizedWork, isTrue);
+      expect((await gate.ready).canRequestAds, isTrue);
     });
   });
 }
@@ -166,6 +190,7 @@ final class _FakeUmpClient implements UmpClient {
   PrivacyOptionsRequirementStatus privacyOptions =
       PrivacyOptionsRequirementStatus.notRequired;
   bool formAvailable = false;
+  bool adsAllowed = true;
   Object? failWith;
   int loadAndShowCount = 0;
 
@@ -199,6 +224,12 @@ final class _FakeUmpClient implements UmpClient {
 
   @override
   Future<bool> isConsentFormAvailable() async => formAvailable;
+
+  @override
+  Future<bool> canRequestAds() async {
+    _maybeThrow();
+    return adsAllowed;
+  }
 
   @override
   Future<void> reset() async => _maybeThrow();

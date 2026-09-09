@@ -8,6 +8,7 @@ final class ConsentSnapshot {
     required this.observedAt,
     this.formAvailable = false,
     this.privacyOptionsRequired = false,
+    this.canRequestAds = false,
   });
 
   /// Normalized consent state.
@@ -25,13 +26,23 @@ final class ConsentSnapshot {
   /// choices later, normally from a settings screen.
   final bool privacyOptionsRequired;
 
-  /// Whether ads and analytics may initialize.
-  bool get allowsPersonalizedWork => state.allowsPersonalizedWork;
+  /// Whether the consent platform permits requesting ads at all.
+  ///
+  /// This is the platform's own answer, not something inferred from [state]:
+  /// UMP reports it directly, and it is false until consent has been resolved.
+  /// It says nothing about *personalization* — the ad network decides that from
+  /// the consent string, and an application that branches on personalization
+  /// itself is reimplementing the network's job and will get it wrong.
+  ///
+  /// Nothing but ad loading should consult this. Analytics is a first-party
+  /// function of the application and is not gated on it.
+  final bool canRequestAds;
 
   @override
   String toString() {
     return 'ConsentSnapshot(state: ${state.name}, '
         'formAvailable: $formAvailable, '
-        'privacyOptionsRequired: $privacyOptionsRequired)';
+        'privacyOptionsRequired: $privacyOptionsRequired, '
+        'canRequestAds: $canRequestAds)';
   }
 }

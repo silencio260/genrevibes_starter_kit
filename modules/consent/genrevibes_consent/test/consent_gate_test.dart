@@ -22,16 +22,30 @@ void main() {
 
       await gate.initialize();
 
-      expect((await waiter).allowsPersonalizedWork, isTrue);
+      expect((await waiter).canRequestAds, isTrue);
     });
 
-    test('notRequired permits personalized work', () async {
+    test('notRequired permits ads', () async {
       final provider = _FakeProvider()..state = ConsentState.notRequired;
       final gate = ConsentGate(provider: provider);
 
       await gate.initialize();
 
-      expect(gate.allowsPersonalizedWork, isTrue);
+      expect(gate.canRequestAds, isTrue);
+    });
+
+    test('a completed form the user refused does not permit ads', () async {
+      // The bug this API replaced: `obtained` was read as agreement, so a user
+      // who rejected every purpose was served personalized ads anyway.
+      final provider = _FakeProvider()
+        ..state = ConsentState.obtained
+        ..canRequestAds = false;
+      final gate = ConsentGate(provider: provider);
+
+      await gate.initialize();
+
+      expect(gate.snapshot.state, ConsentState.obtained);
+      expect(gate.canRequestAds, isFalse);
     });
 
     test('a provider failure still releases waiters when failing open',
@@ -42,7 +56,8 @@ void main() {
       final result = await gate.initialize();
 
       expect(result.isSuccess, isTrue);
-      expect((await gate.ready).allowsPersonalizedWork, isTrue);
+      expect((await gate.ready).canRequestAds, isTrue,
+          reason: 'failing open must cost personalization, not all ads');
       expect(gate.health.state, ModuleState.degraded);
     });
 
@@ -92,11 +107,11 @@ void main() {
       final gate = ConsentGate(provider: provider);
       await gate.initialize();
 
-      provider.emit(ConsentState.consentRequired);
+      provider.emit(ConsentState.consentRequired, canRequestAds: false);
       await Future<void>.delayed(Duration.zero);
 
       expect(gate.snapshot.state, ConsentState.consentRequired);
-      expect(gate.allowsPersonalizedWork, isFalse);
+      expect(gate.canRequestAds, isFalse);
     });
 
     test('privacy options and reset require initialization', () async {
@@ -138,6 +153,7 @@ const _error = KitError(
 
 final class _FakeProvider implements ConsentProvider {
   ConsentState state = ConsentState.obtained;
+  bool canRequestAds = true;
   KitError? initializeError;
   KitError? requestError;
   int requestCount = 0;
@@ -152,8 +168,12 @@ final class _FakeProvider implements ConsentProvider {
   );
   ModuleState _state = ModuleState.idle;
 
-  void emit(ConsentState next) {
-    _snapshot = ConsentSnapshot(state: next, observedAt: DateTime.utc(2026));
+  void emit(ConsentState next, {bool? canRequestAds}) {
+    _snapshot = ConsentSnapshot(
+      state: next,
+      observedAt: DateTime.utc(2026),
+      canRequestAds: canRequestAds ?? this.canRequestAds,
+    );
     _changes.add(_snapshot);
   }
 
@@ -192,7 +212,11 @@ final class _FakeProvider implements ConsentProvider {
     requestCount++;
     final error = requestError;
     if (error != null) return KitFailure<ConsentSnapshot>(error);
-    _snapshot = ConsentSnapshot(state: state, observedAt: DateTime.utc(2026));
+    _snapshot = ConsentSnapshot(
+      state: state,
+      observedAt: DateTime.utc(2026),
+      canRequestAds: canRequestAds,
+    );
     return KitSuccess<ConsentSnapshot>(_snapshot);
   }
 

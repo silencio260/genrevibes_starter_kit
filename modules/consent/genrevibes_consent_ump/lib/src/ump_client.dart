@@ -24,6 +24,13 @@ abstract interface class UmpClient {
   /// Returns whether a consent form is currently available.
   Future<bool> isConsentFormAvailable();
 
+  /// Returns whether ads may be requested under the recorded consent.
+  ///
+  /// UMP's own answer, and the only honest one. The consent *status* cannot
+  /// stand in for it: `obtained` means the form was answered, not that the
+  /// user agreed to anything.
+  Future<bool> canRequestAds();
+
   /// Clears stored consent. Intended for development and QA only.
   Future<void> reset();
 }
@@ -103,6 +110,9 @@ final class DefaultUmpClient implements UmpClient {
   @override
   Future<bool> isConsentFormAvailable() =>
       _information.isConsentFormAvailable();
+
+  @override
+  Future<bool> canRequestAds() => _information.canRequestAds();
 
   @override
   Future<void> reset() => _information.reset();

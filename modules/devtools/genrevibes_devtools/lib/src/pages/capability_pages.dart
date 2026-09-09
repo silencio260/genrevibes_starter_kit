@@ -126,8 +126,7 @@ class DevConsentPage extends StatelessWidget {
         final snapshot = gate.snapshot;
         return <Widget>[
           DevFact('State', snapshot.state.name),
-          DevFact('Allows personalized work',
-              '${snapshot.allowsPersonalizedWork}'),
+          DevFact('Can request ads', '${snapshot.canRequestAds}'),
           DevFact('Form available', '${snapshot.formAvailable}'),
           DevFact('Privacy options required',
               '${snapshot.privacyOptionsRequired}'),

@@ -138,11 +138,15 @@ final class UmpConsentProvider implements ConsentProvider {
     final status = await _client.getConsentStatus();
     final privacyOptions = await _client.getPrivacyOptionsRequirementStatus();
     final formAvailable = await _client.isConsentFormAvailable();
+    // Asked of the SDK rather than derived from `status`, because the two are
+    // not the same question and the SDK is the only thing that knows.
+    final canRequestAds = await _client.canRequestAds();
     return ConsentSnapshot(
       state: mapUmpConsentStatus(status),
       observedAt: _clock.now(),
       formAvailable: formAvailable,
       privacyOptionsRequired: mapUmpPrivacyOptionsRequired(privacyOptions),
+      canRequestAds: canRequestAds,
     );
   }
 
@@ -192,7 +196,7 @@ final class UmpConsentProvider implements ConsentProvider {
       error: error,
       details: <String, Object?>{
         'consentState': _snapshot.state.name,
-        'allowsPersonalizedWork': _snapshot.allowsPersonalizedWork,
+        'canRequestAds': _snapshot.canRequestAds,
         'privacyOptionsRequired': _snapshot.privacyOptionsRequired,
       },
     );

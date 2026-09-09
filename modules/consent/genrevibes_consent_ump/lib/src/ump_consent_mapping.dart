@@ -3,9 +3,11 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 /// Translates a UMP consent status into the neutral [ConsentState].
 ///
-/// [ConsentStatus.notRequired] maps to [ConsentState.notRequired], which permits
-/// personalized work. Collapsing it into a denial disables ads and analytics for
-/// every user outside a regulated region.
+/// This describes the consent *flow* only. In particular
+/// [ConsentStatus.obtained] means the user answered the form, not that they
+/// agreed: whether ads may be requested comes from `UmpClient.canRequestAds`,
+/// and personalization is the ad network's decision, taken from the consent
+/// string without the application's involvement.
 ConsentState mapUmpConsentStatus(ConsentStatus status) {
   return switch (status) {
     ConsentStatus.obtained => ConsentState.obtained,

@@ -71,10 +71,18 @@ void runConsentProviderContractTests({
       expect(provider.snapshot.state, resolved!.state);
     });
 
-    test('treats notRequired as permitting personalized work', () {
-      const snapshot = ConsentState.notRequired;
+    test('never infers ad permission from the consent state', () {
+      // Any provider joining the kit must report `canRequestAds` from its own
+      // platform. Deriving it from the state serves personalized ads to users
+      // who refused them: `obtained` says the form was answered, nothing more.
+      for (final state in ConsentState.values) {
+        final snapshot = ConsentSnapshot(
+          state: state,
+          observedAt: DateTime.utc(2026),
+        );
 
-      expect(snapshot.allowsPersonalizedWork, isTrue);
+        expect(snapshot.canRequestAds, isFalse);
+      }
     });
 
     test('disposal is idempotent and reports disposed health', () async {

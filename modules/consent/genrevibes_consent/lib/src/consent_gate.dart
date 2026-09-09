@@ -70,12 +70,17 @@ final class ConsentGate implements StarterModule {
   /// Completes once consent has been resolved.
   ///
   /// Never completes with an error, so a caller cannot deadlock on a consent
-  /// platform fault. Inspect [ConsentSnapshot.allowsPersonalizedWork] on the
-  /// result to decide what may start.
+  /// platform fault. Inspect [ConsentSnapshot.canRequestAds] on the result to
+  /// decide whether ad loading may start.
   Future<ConsentSnapshot> get ready => _ready.future;
 
-  /// Whether dependent modules may initialize.
-  bool get allowsPersonalizedWork => _snapshot.allowsPersonalizedWork;
+  /// Whether the consent platform permits requesting ads.
+  ///
+  /// Only ad loading should wait on this. Consent answers a question the ad
+  /// network asks; it is not a general gate on the application, and modules
+  /// that are first-party functions — analytics above all — must not be
+  /// blocked behind it.
+  bool get canRequestAds => _snapshot.canRequestAds;
 
   @override
   Future<KitResult<void>> initialize() {
@@ -128,9 +133,15 @@ final class ConsentGate implements StarterModule {
     if (_failOpen) {
       // Release waiters as "not required" so dependent modules start in a
       // limited, non-personalized mode instead of hanging forever.
+      //
+      // `canRequestAds` is set explicitly here because that is the whole point
+      // of failing open: a broken consent SDK should cost personalization, not
+      // revenue. Leaving it at its default false would silently turn a consent
+      // platform outage into a total ad outage.
       _snapshot = ConsentSnapshot(
         state: ConsentState.notRequired,
         observedAt: _clock.now(),
+        canRequestAds: true,
       );
       _release(_snapshot);
       _setHealth(ModuleState.degraded, error: error);
@@ -195,7 +206,7 @@ final class ConsentGate implements StarterModule {
       error: error,
       details: <String, Object?>{
         'consentState': _snapshot.state.name,
-        'allowsPersonalizedWork': _snapshot.allowsPersonalizedWork,
+        'canRequestAds': _snapshot.canRequestAds,
         'privacyOptionsRequired': _snapshot.privacyOptionsRequired,
       },
     );
