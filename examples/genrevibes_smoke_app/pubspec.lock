@@ -489,7 +489,7 @@ packages:
     source: path
     version: "0.1.0-dev.1"
   genrevibes_core:
-    dependency: "direct overridden"
+    dependency: "direct main"
     description:
       path: "../../modules/foundation/genrevibes_core"
       relative: true
@@ -593,6 +593,13 @@ packages:
       relative: true
     source: path
     version: "0.1.0-dev.1"
+  genrevibes_onboarding:
+    dependency: "direct main"
+    description:
+      path: "../../modules/onboarding/genrevibes_onboarding"
+      relative: true
+    source: path
+    version: "0.1.0-dev.1"
   genrevibes_permissions:
     dependency: "direct overridden"
     description:
@@ -636,7 +643,7 @@ packages:
     source: path
     version: "0.1.0-dev.1"
   genrevibes_storage:
-    dependency: "direct overridden"
+    dependency: "direct main"
     description:
       path: "../../modules/storage/genrevibes_storage"
       relative: true

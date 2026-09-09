@@ -17,12 +17,14 @@ import 'package:genrevibes_analytics_posthog/genrevibes_analytics_posthog.dart';
 import 'package:genrevibes_iap_revenuecat/genrevibes_iap_revenuecat.dart';
 import 'package:genrevibes_iap_revenuecat_ui/genrevibes_iap_revenuecat_ui.dart';
 import 'package:genrevibes_notifications_local/genrevibes_notifications_local.dart';
+import 'package:genrevibes_onboarding/genrevibes_onboarding.dart';
 import 'package:genrevibes_notifications_onesignal/genrevibes_notifications_onesignal.dart';
 import 'package:genrevibes_remote_config_firebase/genrevibes_remote_config_firebase.dart';
 import 'package:genrevibes_remote_config_shared_preferences/genrevibes_remote_config_shared_preferences.dart';
 import 'package:genrevibes_starter_kit/genrevibes_starter_kit.dart';
 import 'package:genrevibes_storage_shared_preferences/genrevibes_storage_shared_preferences.dart';
 
+import 'onboarding_bench.dart';
 import 'smoke_env.dart';
 
 void main() => runApp(const SmokeApp());
@@ -52,6 +54,7 @@ const adapterTypes = <Type>[
   InAppReviewStoreProvider,
   FeedbackNestFeedbackProvider,
   SharedPreferencesKeyValueStore,
+  OnboardingController,
 ];
 
 class SmokeApp extends StatelessWidget {
@@ -96,6 +99,34 @@ class SmokeApp extends StatelessWidget {
                 title: Text(entry.key),
                 subtitle: Text(entry.value ? 'configured' : 'not configured'),
               ),
+            const Divider(height: 32),
+            Text(
+              'Behaviour',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              'Everything else on this screen proves a module compiles and '
+              'registers. These run one for real, including the parts that '
+              'only fail across a restart.',
+              style: TextStyle(fontSize: 12),
+            ),
+            const SizedBox(height: 8),
+            ListTile(
+              dense: true,
+              leading: const Icon(Icons.flag_outlined),
+              title: const Text('Onboarding'),
+              subtitle: const Text(
+                'Completion flag, legacy-key adoption, restart persistence',
+                style: TextStyle(fontSize: 11),
+              ),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const OnboardingBench(),
+                ),
+              ),
+            ),
             const Divider(height: 32),
             Text(
               'Compiled adapters',

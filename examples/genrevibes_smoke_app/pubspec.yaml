@@ -48,6 +48,12 @@ dependencies:
     path: ../../modules/remote_config/genrevibes_remote_config_firebase
   genrevibes_remote_config_shared_preferences:
     path: ../../modules/remote_config/genrevibes_remote_config_shared_preferences
+  genrevibes_core:
+    path: ../../modules/foundation/genrevibes_core
+  genrevibes_storage:
+    path: ../../modules/storage/genrevibes_storage
+  genrevibes_onboarding:
+    path: ../../modules/onboarding/genrevibes_onboarding
   genrevibes_starter_kit:
     path: ../../modules/foundation/genrevibes_starter_kit
 
