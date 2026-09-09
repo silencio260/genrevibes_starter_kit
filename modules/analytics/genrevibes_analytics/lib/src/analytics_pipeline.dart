@@ -235,6 +235,25 @@ final class AnalyticsPipeline implements StarterModule {
     _setHealth(
       delivery.isCompleteSuccess ? ModuleState.ready : ModuleState.degraded,
     );
+
+    // Assert this pipeline's consent onto every sink that just came up.
+    //
+    // Provider-side collection flags are durable in a way consent is not.
+    // Firebase writes `setAnalyticsCollectionEnabled` to its own preferences
+    // (`measurement_enabled_from_api`) and honours it on every later launch,
+    // logging `Event not sent since app measurement is disabled` and dropping
+    // everything. Setting collection only on a consent *transition* therefore
+    // inherits whatever the last run — or a previous version of the
+    // application — left behind. A pipeline that starts already granted makes
+    // no transition, so nothing ever turns collection back on and analytics
+    // stays silently dark with every sink reporting healthy.
+    //
+    // In-memory consent is the authority here; the provider's memory is not.
+    await _dispatch(
+      'set_collection_enabled',
+      (sink) => sink.setCollectionEnabled(_consent == AnalyticsConsent.granted),
+    );
+
     return const KitSuccess<void>(null);
   }
 

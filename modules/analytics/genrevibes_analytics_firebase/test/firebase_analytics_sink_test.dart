@@ -10,6 +10,36 @@ void main() {
     ),
   );
 
+  test('collects by default without anyone enabling it', () async {
+    final client = _FakeFirebaseAnalyticsClient();
+    final sink = FirebaseAnalyticsSink(client: client);
+
+    await sink.initialize();
+    await sink.setCollectionEnabled(true);
+
+    // Analytics is a core function: nothing about a default construction may
+    // turn it off, and initialization must not need a caller to switch it on.
+    expect(client.collectionCalls, isNot(contains(false)));
+    expect(client.collectionCalls.last, isTrue);
+  });
+
+  test('a sink configured not to collect stays off when asked to collect',
+      () async {
+    final client = _FakeFirebaseAnalyticsClient();
+    final sink = FirebaseAnalyticsSink(
+      client: client,
+      collectionEnabled: false,
+    );
+
+    await sink.initialize();
+    // The pipeline asserts consent on every launch; configuration outranks it.
+    await sink.setCollectionEnabled(true);
+
+    expect(client.collectionCalls, everyElement(isFalse));
+    expect(client.collectionCalls.first, isFalse,
+        reason: 'must state its position at init, not inherit the disk flag');
+  });
+
   test('normalizes Firebase event parameter values', () {
     final result = sanitizeFirebaseParameters(<String, Object?>{
       'name': 'starter kit',
@@ -38,8 +68,13 @@ final class _FakeFirebaseAnalyticsClient implements FirebaseAnalyticsClient {
   @override
   Future<void> resetAnalyticsData() async {}
 
+  /// Every value the sink pushed, in order.
+  final List<bool> collectionCalls = <bool>[];
+
   @override
-  Future<void> setCollectionEnabled(bool enabled) async {}
+  Future<void> setCollectionEnabled(bool enabled) async {
+    collectionCalls.add(enabled);
+  }
 
   @override
   Future<void> setUserId(String? userId) async {}

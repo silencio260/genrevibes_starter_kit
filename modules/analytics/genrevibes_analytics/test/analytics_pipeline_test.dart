@@ -81,6 +81,25 @@ void main() {
     await pipeline.dispose();
   });
 
+  test('initialization turns provider collection back on when granted',
+      () async {
+    // Regression: a provider that persists its collection flag across launches
+    // — Firebase writes `measurement_enabled_from_api` to its own preferences —
+    // used to keep a stale `false` forever, because collection was only ever
+    // set on a consent transition and a pipeline that starts granted makes no
+    // transition. Every sink reported healthy while Firebase dropped the lot.
+    final sink = _FakeAnalyticsSink('firebase')..collectionEnabled = false;
+    final pipeline = AnalyticsPipeline(
+      sinks: <AnalyticsSink>[sink],
+      initialConsent: AnalyticsConsent.granted,
+    );
+
+    await pipeline.initialize();
+
+    expect(sink.collectionEnabled, isTrue);
+    await pipeline.dispose();
+  });
+
   test('event names are resolved before reaching any sink', () async {
     final sink = _FakeAnalyticsSink('firebase');
     final pipeline = AnalyticsPipeline(
