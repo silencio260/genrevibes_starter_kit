@@ -15,6 +15,7 @@ import 'package:genrevibes_starter_kit/genrevibes_starter_kit.dart';
 import 'package:genrevibes_storage/genrevibes_storage.dart';
 
 import 'dev_analytics_catalogue.dart';
+import 'recording_delivery_observer.dart';
 import 'recording_kit_logger.dart';
 
 /// Everything the bench is allowed to touch.
@@ -32,6 +33,7 @@ final class DevToolsHost {
     required this.kit,
     required this.catalogue,
     this.logger,
+    this.eventLog,
     this.analytics,
     this.ads,
     this.adPolicy,
@@ -61,6 +63,10 @@ final class DevToolsHost {
 
   /// Captured kit logs, when the application installed a recording logger.
   final RecordingKitLogger? logger;
+
+  /// Captured analytics deliveries, when the application installed a recording
+  /// observer. This is what DebugView cannot be made to do from app code.
+  final RecordingDeliveryObserver? eventLog;
 
   /// Analytics pipeline.
   final AnalyticsPipeline? analytics;

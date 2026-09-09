@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'dev_tools_host.dart';
 import 'pages/analytics_page.dart';
 import 'pages/capability_pages.dart';
+import 'pages/event_log_page.dart';
 import 'pages/log_page.dart';
 import 'pages/modules_page.dart';
 import 'pages/remote_config_page.dart';
@@ -42,11 +43,19 @@ class StarterKitLabScreen extends StatelessWidget {
       ),
       _Entry(
         title: 'Event log',
-        subtitle: 'Every event the app emits, live',
+        subtitle: 'Every analytics event the app emits, live',
         icon: Icons.receipt_long,
-        build: host.logger == null
+        build: host.eventLog == null
             ? null
-            : () => DevLogPage(logger: host.logger!),
+            : () => DevEventLogPage(observer: host.eventLog!),
+        missing: 'a RecordingDeliveryObserver passed from bootstrap',
+      ),
+      _Entry(
+        title: 'Kit log',
+        subtitle: 'What every module reported',
+        icon: Icons.article,
+        build:
+            host.logger == null ? null : () => DevLogPage(logger: host.logger!),
         missing: 'a RecordingKitLogger passed from bootstrap',
       ),
       _Entry(
