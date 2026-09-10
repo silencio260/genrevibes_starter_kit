@@ -35,6 +35,7 @@ final class DevToolsHost {
     this.logger,
     this.eventLog,
     this.analytics,
+    this.sessionReplay,
     this.ads,
     this.adPolicy,
     this.adPlacements = const <AdPlacement>[],
@@ -70,6 +71,9 @@ final class DevToolsHost {
 
   /// Analytics pipeline.
   final AnalyticsPipeline? analytics;
+
+  /// Session replay rollout and its manual override.
+  final SessionReplayController? sessionReplay;
 
   /// Full-screen ad provider.
   final AdProvider? ads;

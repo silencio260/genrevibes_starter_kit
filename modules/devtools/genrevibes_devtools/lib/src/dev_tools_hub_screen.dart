@@ -7,6 +7,7 @@ import 'pages/event_log_page.dart';
 import 'pages/log_page.dart';
 import 'pages/modules_page.dart';
 import 'pages/remote_config_page.dart';
+import 'pages/session_replay_page.dart';
 
 /// The Starter Kit Lab.
 ///
@@ -40,6 +41,20 @@ class StarterKitLabScreen extends StatelessWidget {
                   catalogue: host.catalogue,
                 ),
         missing: 'genrevibes_analytics',
+      ),
+      _Entry(
+        title: 'Session replay',
+        subtitle: host.sessionReplay == null
+            ? 'not wired'
+            : host.sessionReplay!.plan.recording
+                ? 'recording · ${host.sessionReplay!.plan.percentOfUsers}% rollout'
+                : 'not recording · '
+                    '${host.sessionReplay!.plan.percentOfUsers}% rollout',
+        icon: Icons.videocam,
+        build: host.sessionReplay == null
+            ? null
+            : () => DevSessionReplayPage(controller: host.sessionReplay!),
+        missing: 'a SessionReplayController passed from bootstrap',
       ),
       _Entry(
         title: 'Event log',

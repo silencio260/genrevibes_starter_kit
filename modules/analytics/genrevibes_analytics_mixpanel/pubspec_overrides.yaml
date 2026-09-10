@@ -5,3 +5,5 @@ dependency_overrides:
     path: ../../analytics/genrevibes_analytics_test
   genrevibes_core:
     path: ../../foundation/genrevibes_core
+  genrevibes_storage:
+    path: ../../storage/genrevibes_storage

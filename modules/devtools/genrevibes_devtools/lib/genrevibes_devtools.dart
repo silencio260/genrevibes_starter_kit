@@ -11,6 +11,7 @@ export 'src/pages/capability_pages.dart';
 export 'src/pages/log_page.dart';
 export 'src/pages/modules_page.dart';
 export 'src/pages/remote_config_page.dart';
+export 'src/pages/session_replay_page.dart';
 export 'src/recording_delivery_observer.dart';
 export 'src/recording_kit_logger.dart';
 export 'src/widgets/action_row.dart';

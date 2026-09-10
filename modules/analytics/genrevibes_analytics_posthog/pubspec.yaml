@@ -1,18 +1,23 @@
 name: genrevibes_analytics_posthog
 description: PostHog analytics and optional session-replay sink for GenRevibes analytics.
-version: 0.1.0-dev.1
+version: 0.1.0-dev.2
 publish_to: none
 
 environment:
-  sdk: ">=3.3.0 <4.0.0"
-  flutter: ">=3.19.0"
+  # posthog_flutter 5.39 requires these; stating them here makes a wrong
+  # toolchain a resolution error instead of a compile error in vendor code.
+  sdk: ">=3.6.0 <4.0.0"
+  flutter: ">=3.27.0"
 
 dependencies:
   flutter:
     sdk: flutter
   genrevibes_analytics: ^0.1.0-dev.1
   genrevibes_core: ^0.1.0-dev.1
-  posthog_flutter: ">=5.5.0 <6.0.0"
+  # 5.39 is the floor, not 5.14 where startSessionRecording() first appeared:
+  # before 5.38 that call recorded nothing on Android, which is exactly the
+  # path SessionReplayController drives. See posthog_flutter CHANGELOG 5.38.0.
+  posthog_flutter: ">=5.39.0 <6.0.0"
 
 dev_dependencies:
   flutter_lints: ^4.0.0

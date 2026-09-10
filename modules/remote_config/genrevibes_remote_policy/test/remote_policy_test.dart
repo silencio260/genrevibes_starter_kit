@@ -143,8 +143,13 @@ void main() {
         ],
       );
 
-      expect(schema.keys.length,
-          AdsPolicyKeys.all.length + AnalyticsNamesSchema.all.length + 1);
+      expect(
+        schema.keys.length,
+        AdsPolicyKeys.all.length +
+            SessionReplayPolicyKeys.all.length +
+            AnalyticsNamesSchema.all.length +
+            1,
+      );
     });
 
     test('analytics name overrides are left out unless asked for', () {
@@ -152,7 +157,10 @@ void main() {
       // Including them by default buried the handful an app really configures.
       final schema = PortfolioRemoteConfigSchema.build();
 
-      expect(schema.keys.length, AdsPolicyKeys.all.length);
+      expect(
+        schema.keys.length,
+        AdsPolicyKeys.all.length + SessionReplayPolicyKeys.all.length,
+      );
       expect(
         schema.byName.keys.any((name) => name.startsWith('event_')),
         isFalse,

@@ -7,3 +7,5 @@ dependency_overrides:
     path: ../../foundation/genrevibes_core
   genrevibes_remote_config:
     path: ../../remote_config/genrevibes_remote_config
+  genrevibes_storage:
+    path: ../../storage/genrevibes_storage
