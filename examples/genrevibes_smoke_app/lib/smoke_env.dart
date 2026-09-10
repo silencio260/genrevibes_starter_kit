@@ -62,23 +62,7 @@ abstract final class SmokeEnv {
 
   /// Google's public sample ad units for the current platform.
   static Map<AdFormat, String> get testAdUnits =>
-      Platform.isIOS ? _iosTestUnits : _androidTestUnits;
-
-  static const _androidTestUnits = <AdFormat, String>{
-    AdFormat.banner: 'ca-app-pub-3940256099942544/6300978111',
-    AdFormat.interstitial: 'ca-app-pub-3940256099942544/1033173712',
-    AdFormat.rewarded: 'ca-app-pub-3940256099942544/5224354917',
-    AdFormat.appOpen: 'ca-app-pub-3940256099942544/9257395921',
-    AdFormat.native: 'ca-app-pub-3940256099942544/2247696110',
-  };
-
-  static const _iosTestUnits = <AdFormat, String>{
-    AdFormat.banner: 'ca-app-pub-3940256099942544/2934735716',
-    AdFormat.interstitial: 'ca-app-pub-3940256099942544/4411468910',
-    AdFormat.rewarded: 'ca-app-pub-3940256099942544/1712485313',
-    AdFormat.appOpen: 'ca-app-pub-3940256099942544/5575463023',
-    AdFormat.native: 'ca-app-pub-3940256099942544/3986624511',
-  };
+      Platform.isIOS ? AdMobTestAds.iosUnitIds : AdMobTestAds.androidUnitIds;
 
   // --- Configuration builders -------------------------------------------
 

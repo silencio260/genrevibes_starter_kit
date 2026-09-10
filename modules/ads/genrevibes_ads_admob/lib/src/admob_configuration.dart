@@ -1,4 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:genrevibes_ads/genrevibes_ads.dart';
+
+import 'admob_test_ads.dart';
 
 /// AdMob unit mapped to a provider-neutral logical placement.
 final class AdMobAdUnit {
@@ -10,6 +13,14 @@ final class AdMobAdUnit {
 
   /// Platform-specific AdMob unit identifier selected by the application.
   final String adUnitId;
+
+  /// The same placement, served by Google's sample unit for its format.
+  ///
+  /// See [AdMobTestAds] for why every non-store build should use this.
+  AdMobAdUnit withTestUnitId({TargetPlatform? platform}) => AdMobAdUnit(
+        placement: placement,
+        adUnitId: AdMobTestAds.unitIdFor(placement.format, platform: platform),
+      );
 }
 
 /// Application-owned AdMob configuration.
@@ -30,6 +41,18 @@ final class GenRevibesAdMobConfiguration {
 
   /// Maximum wait for a full-screen dismissal or failure callback.
   final Duration fullScreenShowTimeout;
+
+  /// This configuration with every unit swapped for Google's sample unit.
+  ///
+  /// Placements, test devices and timeouts are unchanged, so everything above
+  /// the provider behaves exactly as it would in production.
+  GenRevibesAdMobConfiguration withTestAdUnits({TargetPlatform? platform}) =>
+      GenRevibesAdMobConfiguration(
+        adUnits: adUnits.values
+            .map((unit) => unit.withTestUnitId(platform: platform)),
+        testDeviceIds: testDeviceIds,
+        fullScreenShowTimeout: fullScreenShowTimeout,
+      );
 
   /// Looks up the AdMob unit for [placement].
   AdMobAdUnit? unitFor(AdPlacement placement) {

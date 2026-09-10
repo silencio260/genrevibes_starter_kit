@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.0-dev.2
+
+- Add `AdMobTestAds`: Google's sample app IDs and ad units for Android and iOS.
+- Add `AdMobAdUnit.withTestUnitId` and
+  `GenRevibesAdMobConfiguration.withTestAdUnits`, so a development build can
+  serve sample ads through the same placements without touching call sites.
+
 ## 0.1.0-dev.1
 
 - Add AdMob interstitial, rewarded, and app-open provider support.
