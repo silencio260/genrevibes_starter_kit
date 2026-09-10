@@ -7,17 +7,26 @@ import 'admob_client.dart';
 import 'admob_configuration.dart';
 
 /// Google Mobile Ads implementation of the GenRevibes ad-provider contract.
-final class AdMobAdProvider implements AdProvider {
+///
+/// In test mode every request goes to Google's sample unit for its format
+/// instead of the configured one. Sample units serve Google test ads only and
+/// never mediate, so nothing a tester taps counts against any account.
+final class AdMobAdProvider implements AdProvider, AdTestModeProvider {
   /// Creates an AdMob provider.
+  ///
+  /// [testMode] is the mode to start in. It can change later through
+  /// [setTestMode], before or after initialization.
   AdMobAdProvider({
     required GenRevibesAdMobConfiguration configuration,
     AdMobClient? client,
     KitClock clock = const SystemKitClock(),
     KitLogger logger = const NoopKitLogger(),
+    bool testMode = false,
   })  : _configuration = configuration,
         _client = client ?? DefaultAdMobClient(clock: clock),
         _clock = clock,
         _logger = logger,
+        _testMode = testMode,
         _health = ModuleHealth(
           moduleId: 'ads.admob',
           provider: 'admob',
@@ -38,8 +47,15 @@ final class AdMobAdProvider implements AdProvider {
   final StreamController<ModuleHealth> _healthChanges =
       StreamController<ModuleHealth>.broadcast();
   late ModuleHealth _health;
+  late final GenRevibesAdMobConfiguration _testConfiguration =
+      _configuration.withTestAdUnits();
+  bool _testMode;
   bool _initialized = false;
   bool _disposed = false;
+
+  /// The configuration requests are made against right now.
+  GenRevibesAdMobConfiguration get _served =>
+      _testMode ? _testConfiguration : _configuration;
 
   @override
   String get moduleId => 'ads.admob';
@@ -70,7 +86,7 @@ final class AdMobAdProvider implements AdProvider {
     }
     _setHealth(ModuleState.initializing);
     final result = await _guard(
-      () => _client.initialize(_configuration),
+      () => _client.initialize(_served),
       requireInitialized: false,
     );
     if (result.isFailure) {
@@ -85,10 +101,46 @@ final class AdMobAdProvider implements AdProvider {
 
   @override
   Future<KitResult<void>> load(AdPlacement placement) {
-    final unit = _configuration.unitFor(placement);
+    final unit = _served.unitFor(placement);
     if (unit == null) return _unknownPlacement<void>(placement);
     return _guard(() => _client.load(unit));
   }
+
+  @override
+  bool get isTestMode => _testMode;
+
+  /// Switches between the configured units and Google's sample units.
+  ///
+  /// Discards every loaded ad, because inventory loaded in one mode must not be
+  /// shown in the other: a live creative loaded moments before a developer
+  /// device was recognised is exactly the ad that must not be tapped.
+  @override
+  Future<KitResult<void>> setTestMode(bool enabled) async {
+    if (enabled == _testMode) return const KitSuccess<void>(null);
+    _testMode = enabled;
+    _logger.log(
+      KitLogLevel.info,
+      'AdMob switched to ${enabled ? 'test' : 'live'} inventory.',
+      moduleId: moduleId,
+    );
+    if (!_initialized || _disposed) return const KitSuccess<void>(null);
+    KitError? firstFailure;
+    for (final unit in _configuration.adUnits.values) {
+      final result = await _guard(() => _client.discard(unit.placement));
+      result.fold(
+        onSuccess: (_) {},
+        onFailure: (error) => firstFailure ??= error,
+      );
+    }
+    _setHealth(ModuleState.ready);
+    return firstFailure == null
+        ? const KitSuccess<void>(null)
+        : KitFailure<void>(firstFailure!);
+  }
+
+  /// The unit a request for [placement] goes to right now, for reporting.
+  AdMobAdUnit? servedUnitFor(AdPlacement placement) =>
+      _served.unitFor(placement);
 
   @override
   bool isReady(AdPlacement placement) {
@@ -137,7 +189,9 @@ final class AdMobAdProvider implements AdProvider {
       );
     }
     for (final unit in _configuration.adUnits.values) {
-      if (unit.placement.id.trim().isEmpty || unit.adUnitId.trim().isEmpty) {
+      // A blank unit is acceptable in test mode, which never requests it.
+      if (unit.placement.id.trim().isEmpty ||
+          (!_testMode && unit.adUnitId.trim().isEmpty)) {
         return const KitError(
           code: KitErrorCode.invalidConfiguration,
           message: 'AdMob placement and ad-unit IDs must not be empty.',
@@ -209,6 +263,7 @@ final class AdMobAdProvider implements AdProvider {
       state: state,
       observedAt: _clock.now(),
       error: error,
+      details: <String, Object?>{'testMode': _testMode},
     );
     if (!_healthChanges.isClosed) _healthChanges.add(_health);
   }

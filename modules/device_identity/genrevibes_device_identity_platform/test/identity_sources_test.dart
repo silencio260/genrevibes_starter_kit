@@ -41,14 +41,14 @@ void main() {
   });
 
   group('DeviceInfoVendorIdSource', () {
-    test('reads the Android id on Android and the vendor id on iOS', () async {
+    test('reads the app set id on Android and the vendor id on iOS', () async {
       final client = _FakeVendor();
 
       expect(
         await DeviceInfoVendorIdSource(
                 client: client, isAndroid: true, isIos: false)
             .vendorId(),
-        'android-id',
+        'android-app-set-id',
       );
       expect(
         await DeviceInfoVendorIdSource(
@@ -90,7 +90,7 @@ final class _FakeTracking implements TrackingClient {
 
 final class _FakeVendor implements VendorIdClient {
   @override
-  Future<String?> androidId() async => 'android-id';
+  Future<String?> androidAppSetId() async => 'android-app-set-id';
   @override
   Future<String?> iosVendorId() async => 'ios-vendor';
 }

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'dev_tools_host.dart';
 import 'pages/analytics_page.dart';
 import 'pages/capability_pages.dart';
+import 'pages/developer_access_page.dart';
 import 'pages/event_log_page.dart';
 import 'pages/log_page.dart';
 import 'pages/modules_page.dart';
@@ -154,6 +155,17 @@ class StarterKitLabScreen extends StatelessWidget {
                   retention: host.retention,
                 ),
         missing: 'genrevibes_device_identity / genrevibes_engagement',
+      ),
+      _Entry(
+        title: 'Developer access',
+        subtitle: host.developerAccess == null
+            ? 'not wired'
+            : describeDeveloperAccess(host.developerAccess!.current.reason),
+        icon: Icons.admin_panel_settings,
+        build: host.developerAccess == null
+            ? null
+            : () => DevDeveloperAccessPage(controller: host.developerAccess!),
+        missing: 'genrevibes_developer_access',
       ),
       _Entry(
         title: 'Storage',

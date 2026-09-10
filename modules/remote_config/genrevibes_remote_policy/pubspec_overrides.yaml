@@ -5,6 +5,8 @@ dependency_overrides:
     path: ../../analytics/genrevibes_analytics
   genrevibes_core:
     path: ../../foundation/genrevibes_core
+  genrevibes_developer_access:
+    path: ../../devtools/genrevibes_developer_access
   genrevibes_remote_config:
     path: ../../remote_config/genrevibes_remote_config
   genrevibes_storage:

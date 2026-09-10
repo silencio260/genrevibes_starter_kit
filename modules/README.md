@@ -85,8 +85,11 @@ fast architecture check.
   device_info_plus platform facts source.
 - `genrevibes_device_identity`: stable install id with a pure-Dart secure UUID,
   optional vendor and advertising ids, and legacy `device_uuid` adoption.
-- `genrevibes_device_identity_platform`: App Tracking Transparency and
-  device_info_plus identity sources.
+- `genrevibes_device_identity_platform`: App Tracking Transparency, Android
+  app set ID, and iOS identifierForVendor identity sources.
+- `genrevibes_developer_access`: developer tools and test ads in store builds
+  for hashed developer devices (hardcoded, env, or remote list) or a
+  session-only passcode with a reinstall-aware lockout.
 - `genrevibes_app_links`: validated store, support, privacy and terms config
   and the share / rate / contact actions over a neutral `LinkOpener`.
 - `genrevibes_app_links_launcher`: isolated url_launcher and share_plus adapter.

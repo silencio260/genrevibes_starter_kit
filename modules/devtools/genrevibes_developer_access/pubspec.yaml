@@ -1,0 +1,16 @@
+name: genrevibes_developer_access
+description: Provider-neutral developer access for production builds — hashed developer device lists, a lockout-guarded passcode, and the test-ads decision that follows from both.
+version: 0.1.0-dev.1
+publish_to: none
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+
+dependencies:
+  crypto: ^3.0.3
+  genrevibes_core: ^0.1.0-dev.1
+  genrevibes_storage: ^0.1.0-dev.1
+
+dev_dependencies:
+  lints: ^4.0.0
+  test: ^1.25.0

@@ -3,6 +3,7 @@ library;
 
 export 'src/ad_coordinator.dart';
 export 'src/ad_provider.dart';
+export 'src/ad_test_mode.dart';
 export 'src/model/ad_event.dart';
 export 'src/model/ad_format.dart';
 export 'src/model/ad_placement.dart';

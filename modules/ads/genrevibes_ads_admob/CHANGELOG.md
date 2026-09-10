@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.0-dev.3
+
+- `AdMobAdProvider` implements `AdTestModeProvider`: `testMode` at construction
+  and `setTestMode` at runtime move requests between the configured units and
+  Google's sample units, discarding inventory loaded in the other mode.
+- Add `AdMobAdProvider.servedUnitFor`, the unit a request goes to right now.
+
 ## 0.1.0-dev.2
 
 - Add `AdMobTestAds`: Google's sample app IDs and ad units for Android and iOS.

@@ -8,3 +8,4 @@ export 'src/remote_config_key.dart';
 export 'src/remote_config_provider.dart';
 export 'src/remote_config_schema.dart';
 export 'src/remote_config_snapshot.dart';
+export 'src/remote_config_string_list_codec.dart';

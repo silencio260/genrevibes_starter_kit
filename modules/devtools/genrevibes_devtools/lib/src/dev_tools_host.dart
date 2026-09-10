@@ -3,6 +3,7 @@ import 'package:genrevibes_analytics/genrevibes_analytics.dart';
 import 'package:genrevibes_app_rating/genrevibes_app_rating.dart';
 import 'package:genrevibes_consent/genrevibes_consent.dart';
 import 'package:genrevibes_crash/genrevibes_crash.dart';
+import 'package:genrevibes_developer_access/genrevibes_developer_access.dart';
 import 'package:genrevibes_device_identity/genrevibes_device_identity.dart';
 import 'package:genrevibes_engagement/genrevibes_engagement.dart';
 import 'package:genrevibes_feedback/genrevibes_feedback.dart';
@@ -46,6 +47,7 @@ final class DevToolsHost {
     this.remoteConfig,
     this.remoteConfigSchema,
     this.identity,
+    this.developerAccess,
     this.retention,
     this.crash,
     this.feedback,
@@ -104,6 +106,9 @@ final class DevToolsHost {
 
   /// Device identity.
   final DeviceIdentityResolver? identity;
+
+  /// Developer access, and this device's hash for the developer device lists.
+  final DeveloperAccessController? developerAccess;
 
   /// Retention and targeting.
   final RetentionTracker? retention;

@@ -34,6 +34,12 @@ those values. Recording starts and stops in place; masking reaches the plan
 immediately but the SDK only on the next launch, because providers fix masking
 when they are configured.
 
+`DeveloperAccessPolicyKeys.deviceHashes` (`developer_device_hashes`) is a JSON
+array of developer device hashes, and `DeveloperAccessRemotePolicyBinder` keeps a
+`DeveloperAccessController` on it. A phone listed here gets the developer tools
+and test ads in the store build on its next fetch, and loses them when removed.
+It holds hashes, never device identifiers, because every install downloads it.
+
 `AnalyticsNamesSchema` gives each of the portfolio's canonical event names a
 remote key (`event_<field>`, the historical convention) defaulting to the
 canonical literal. `RemoteAnalyticsEventNames` implements the pipeline's

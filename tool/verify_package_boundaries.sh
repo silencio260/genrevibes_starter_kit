@@ -30,6 +30,7 @@ neutral_packages=(
   genrevibes_remote_policy
   genrevibes_permissions
   genrevibes_device_identity
+  genrevibes_developer_access
   genrevibes_app_links
   genrevibes_auth
   genrevibes_database

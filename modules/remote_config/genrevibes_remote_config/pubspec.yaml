@@ -1,6 +1,6 @@
 name: genrevibes_remote_config
 description: Typed, provider-neutral remote configuration with safe defaults and last-known-good caching.
-version: 0.1.0-dev.1
+version: 0.1.0-dev.2
 publish_to: none
 
 environment:

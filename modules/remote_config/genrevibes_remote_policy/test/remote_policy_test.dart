@@ -147,6 +147,7 @@ void main() {
         schema.keys.length,
         AdsPolicyKeys.all.length +
             SessionReplayPolicyKeys.all.length +
+            DeveloperAccessPolicyKeys.all.length +
             AnalyticsNamesSchema.all.length +
             1,
       );
@@ -159,7 +160,9 @@ void main() {
 
       expect(
         schema.keys.length,
-        AdsPolicyKeys.all.length + SessionReplayPolicyKeys.all.length,
+        AdsPolicyKeys.all.length +
+            SessionReplayPolicyKeys.all.length +
+            DeveloperAccessPolicyKeys.all.length,
       );
       expect(
         schema.byName.keys.any((name) => name.startsWith('event_')),

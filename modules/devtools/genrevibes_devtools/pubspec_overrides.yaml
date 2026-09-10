@@ -13,6 +13,8 @@ dependency_overrides:
     path: ../../foundation/genrevibes_core
   genrevibes_crash:
     path: ../../crash/genrevibes_crash
+  genrevibes_developer_access:
+    path: ../../devtools/genrevibes_developer_access
   genrevibes_device_identity:
     path: ../../device_identity/genrevibes_device_identity
   genrevibes_engagement:

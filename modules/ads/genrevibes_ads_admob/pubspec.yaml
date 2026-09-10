@@ -1,6 +1,6 @@
 name: genrevibes_ads_admob
 description: Google Mobile Ads full-screen adapter for the GenRevibes ads contract.
-version: 0.1.0-dev.2
+version: 0.1.0-dev.3
 publish_to: none
 
 environment:

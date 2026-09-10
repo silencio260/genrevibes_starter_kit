@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.0-dev.3
+
+- Add `AdTestModeProvider`, an optional capability for moving a running install
+  between live and test inventory.
+
 ## 0.1.0-dev.2
 
 - Add `AdPolicyController.updatePlacements` / `setDefaultPolicy` and

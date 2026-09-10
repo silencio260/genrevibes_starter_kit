@@ -1,6 +1,6 @@
 name: genrevibes_device_identity_platform
-description: App Tracking Transparency and device_info_plus sources for GenRevibes device identity.
-version: 0.1.0-dev.1
+description: App Tracking Transparency, app set ID, and identifierForVendor sources for GenRevibes device identity.
+version: 0.1.0-dev.2
 publish_to: none
 
 environment:
@@ -19,3 +19,10 @@ dev_dependencies:
   flutter_lints: ^4.0.0
   flutter_test:
     sdk: flutter
+
+flutter:
+  plugin:
+    platforms:
+      android:
+        package: com.genrevibes.device_identity_platform
+        pluginClass: GenRevibesDeviceIdentityPlugin

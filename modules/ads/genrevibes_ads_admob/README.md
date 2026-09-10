@@ -18,12 +18,20 @@ serves nothing to real units — sample units are not tied to any account and
 fill regardless.
 
 ```dart
-final configuration = GenRevibesAdMobConfiguration(adUnits: units);
-final served = isDevelopment ? configuration.withTestAdUnits() : configuration;
+// Full-screen: the provider switches itself, at startup and at runtime.
+final ads = AdMobAdProvider(
+  configuration: GenRevibesAdMobConfiguration(adUnits: units),
+  testMode: developerAccess.current.servesTestAds,
+);
+developerAccess.changes.listen((a) => ads.setTestMode(a.servesTestAds));
 
-// Inline units, for genrevibes_ads_admob_ui:
-final banner = isDevelopment ? bannerUnit.withTestUnitId() : bannerUnit;
+// Inline units, for genrevibes_ads_admob_ui, rebuilt on the same changes:
+final banner = access.servesTestAds ? bannerUnit.withTestUnitId() : bannerUnit;
 ```
+
+Test mode is decided at runtime, not at composition, because a developer device
+in a store build can be recognised after startup — when remote config arrives
+or the passcode is entered. See `genrevibes_developer_access`.
 
 Pair sample units with Google's sample app ID in the native config for the same
 builds (`AdMobTestAds.androidAppId` / `AdMobTestAds.iosAppId`). Banners map to
