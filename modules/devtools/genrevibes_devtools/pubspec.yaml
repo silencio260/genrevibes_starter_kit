@@ -14,7 +14,7 @@ dependencies:
   genrevibes_analytics: ^0.1.0-dev.1
   genrevibes_app_links: ^0.1.0-dev.1
   genrevibes_app_rating: ^0.1.0-dev.1
-  genrevibes_consent: ^0.1.0-dev.1
+  genrevibes_consent: ^0.1.0-dev.2
   genrevibes_core: ^0.1.0-dev.1
   genrevibes_crash: ^0.1.0-dev.1
   genrevibes_developer_access: ^0.1.0-dev.1

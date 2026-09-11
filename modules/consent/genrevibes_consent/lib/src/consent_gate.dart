@@ -2,7 +2,11 @@ import 'dart:async';
 
 import 'package:genrevibes_core/genrevibes_core.dart';
 
+import 'consent_form_preview.dart';
 import 'consent_provider.dart';
+import 'consent_signals_reader.dart';
+import 'model/consent_debug_config.dart';
+import 'model/consent_signals.dart';
 import 'model/consent_snapshot.dart';
 import 'model/consent_state.dart';
 
@@ -162,6 +166,45 @@ final class ConsentGate implements StarterModule {
   Future<KitResult<void>> reset() async {
     if (!_initialized || _disposed) return _notReady();
     return _provider.reset();
+  }
+
+  /// Whether the provider can show its form for a simulated region.
+  bool get supportsFormPreview => _provider is ConsentFormPreviewProvider;
+
+  /// Shows the consent form as [debug]'s region would see it.
+  ///
+  /// Development only; see [ConsentFormPreviewProvider]. Fails with
+  /// [KitErrorCode.unsupported] when the provider cannot.
+  Future<KitResult<void>> previewConsentForm(ConsentDebugConfig debug) async {
+    if (!_initialized || _disposed) return _notReady();
+    if (_provider case final ConsentFormPreviewProvider preview) {
+      return preview.previewConsentForm(debug);
+    }
+    return const KitFailure<void>(
+      KitError(
+        code: KitErrorCode.unsupported,
+        message: 'This consent provider cannot preview its form.',
+      ),
+    );
+  }
+
+  /// Whether the provider can read the consent signals its platform stored.
+  bool get supportsConsentSignals => _provider is ConsentSignalsReader;
+
+  /// Reads the IAB consent signals the platform stored for ad SDKs.
+  ///
+  /// Works before the gate initializes: it reads storage, not the platform.
+  /// Fails with [KitErrorCode.unsupported] when the provider cannot.
+  Future<KitResult<ConsentSignals>> readConsentSignals() async {
+    if (_provider case final ConsentSignalsReader reader) {
+      return reader.readConsentSignals();
+    }
+    return const KitFailure<ConsentSignals>(
+      KitError(
+        code: KitErrorCode.unsupported,
+        message: 'This consent provider cannot read stored consent signals.',
+      ),
+    );
   }
 
   @override

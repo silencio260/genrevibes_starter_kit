@@ -16,7 +16,11 @@ import 'appodeal_consent_client.dart';
 /// here first, through `ConsentGate`, puts the form ahead of the first ad
 /// request and gives the application a snapshot and a privacy-options entry
 /// point.
-final class AppodealConsentProvider implements ConsentProvider {
+final class AppodealConsentProvider
+    implements
+        ConsentProvider,
+        ConsentFormPreviewProvider,
+        ConsentSignalsReader {
   /// Creates an Appodeal consent provider.
   ///
   /// [timeout] bounds the network steps only. Presenting a form waits for the
@@ -198,6 +202,58 @@ final class AppodealConsentProvider implements ConsentProvider {
         return const KitSuccess<void>(null);
       } on Object catch (error, stackTrace) {
         return _failure<void>(error, stackTrace, 'reset');
+      }
+    });
+  }
+
+  /// Reads the IAB consent signals Google's User Messaging Platform stored,
+  /// which Appodeal and every network it mediates read. Android only.
+  ///
+  /// A failure here is a development-tool failure, not a consent one, so it
+  /// leaves the module's health alone.
+  @override
+  Future<KitResult<ConsentSignals>> readConsentSignals() async {
+    if (_disposed) return _notReady<ConsentSignals>();
+    try {
+      return KitSuccess<ConsentSignals>(
+        ConsentSignals(await _client.readSignals()),
+      );
+    } on Object catch (error, stackTrace) {
+      return KitFailure<ConsentSignals>(
+        KitError(
+          code: KitErrorCode.provider,
+          message: 'Stored consent signals could not be read: $error',
+          providerCode: 'appodeal_consent_read_signals',
+          cause: error,
+          stackTrace: stackTrace,
+        ),
+      );
+    }
+  }
+
+  /// Shows the form as [debug]'s region would see it.
+  ///
+  /// Appodeal's consent manager never passes debug settings to Google's User
+  /// Messaging Platform, and Appodeal and Google each place the device by its
+  /// own lookup, so neither a debug setting nor a VPN reliably shows the form
+  /// outside a regulated region. This calls the platform directly, with
+  /// testing forced so no device identifier is needed. A failure to load a
+  /// form while the EEA is simulated means no consent message is published in
+  /// AdMob for the app.
+  @override
+  Future<KitResult<void>> previewConsentForm(ConsentDebugConfig debug) {
+    if (!_initialized || _disposed) {
+      return Future<KitResult<void>>.value(_notReady<void>());
+    }
+    return _serialized(() async {
+      try {
+        await _client.previewForm(
+          geography: debug.geography.name,
+          testDeviceIds: debug.testDeviceIds,
+        );
+        return const KitSuccess<void>(null);
+      } on Object catch (error, stackTrace) {
+        return _failure<void>(error, stackTrace, 'preview_form');
       }
     });
   }

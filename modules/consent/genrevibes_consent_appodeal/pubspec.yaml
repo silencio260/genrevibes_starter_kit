@@ -1,6 +1,6 @@
 name: genrevibes_consent_appodeal
 description: Appodeal Consent Manager adapter for GenRevibes applications.
-version: 0.1.0-dev.1
+version: 0.1.0-dev.2
 publish_to: none
 
 environment:
@@ -10,7 +10,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  genrevibes_consent: ^0.1.0-dev.1
+  genrevibes_consent: ^0.1.0-dev.2
   genrevibes_core: ^0.1.0-dev.1
   stack_appodeal_flutter: ">=4.2.0 <5.0.0"
 
@@ -18,3 +18,12 @@ dev_dependencies:
   flutter_lints: ^4.0.0
   flutter_test:
     sdk: flutter
+
+# Android only: the consent form preview reaches Google's User Messaging
+# Platform directly. Everything else goes through stack_appodeal_flutter.
+flutter:
+  plugin:
+    platforms:
+      android:
+        package: com.genrevibes.consent_appodeal
+        pluginClass: GenRevibesConsentAppodealPlugin

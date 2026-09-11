@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/services.dart';
 import 'package:stack_appodeal_flutter/stack_appodeal_flutter.dart';
 
 /// Consent status as Appodeal's consent manager reports it.
@@ -51,6 +52,21 @@ abstract interface class AppodealConsentClient {
 
   /// Resets stored consent to unknown.
   Future<void> revoke();
+
+  /// Shows Google's consent form as [geography] would see it, calling the
+  /// User Messaging Platform directly. Completes when it is dismissed.
+  ///
+  /// [geography] is a `ConsentDebugGeography` name. Development only: the
+  /// platform side refuses in a build that is not debuggable.
+  Future<void> previewForm({
+    required String geography,
+    required List<String> testDeviceIds,
+  });
+
+  /// Every `IABTCF_` and `IABGPP_` value in the app's default shared
+  /// preferences, where the platform writes them and ad SDKs read them.
+  /// Android only.
+  Future<Map<String, Object?>> readSignals();
 }
 
 /// Production client over `Appodeal.ConsentForm`.
@@ -112,6 +128,31 @@ final class DefaultAppodealConsentClient implements AppodealConsentClient {
 
   @override
   Future<void> revoke() async => Appodeal.ConsentForm.revoke();
+
+  // This package's own Android plugin, for what Appodeal's plugin does not
+  // expose.
+  static const MethodChannel _debugChannel =
+      MethodChannel('com.genrevibes/consent_appodeal');
+
+  @override
+  Future<void> previewForm({
+    required String geography,
+    required List<String> testDeviceIds,
+  }) =>
+      _debugChannel.invokeMethod<void>(
+        'previewConsentForm',
+        <String, Object?>{
+          'geography': geography,
+          'testDeviceIds': testDeviceIds,
+        },
+      );
+
+  @override
+  Future<Map<String, Object?>> readSignals() async {
+    final values = await _debugChannel
+        .invokeMapMethod<String, Object?>('readConsentSignals');
+    return values ?? const <String, Object?>{};
+  }
 
   static void _dismissed(Completer<void> completer, ConsentError? error) {
     if (completer.isCompleted) return;

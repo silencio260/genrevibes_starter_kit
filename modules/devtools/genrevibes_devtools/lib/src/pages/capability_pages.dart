@@ -1,6 +1,9 @@
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:genrevibes_ads/genrevibes_ads.dart';
 import 'package:genrevibes_consent/genrevibes_consent.dart';
+import 'package:genrevibes_core/genrevibes_core.dart';
 import 'package:genrevibes_crash/genrevibes_crash.dart';
 import 'package:genrevibes_device_identity/genrevibes_device_identity.dart';
 import 'package:genrevibes_engagement/genrevibes_engagement.dart';
@@ -142,6 +145,26 @@ class DevConsentPage extends StatelessWidget {
               return result;
             },
           ),
+          // The form shows only where regulation requires it, so a developer
+          // elsewhere never sees it without simulating a region.
+          if (kDebugMode && gate.supportsFormPreview)
+            ActionRow(
+              label: 'Preview consent form (EEA)',
+              subtitle: 'Debug builds only. Simulates the EEA for this device '
+                  'and stores the answer like a real one; Reset consent '
+                  'clears it.',
+              icon: Icons.preview,
+              timeout: const Duration(minutes: 5),
+              run: () async {
+                final result = await gate.previewConsentForm(
+                  const ConsentDebugConfig(
+                    geography: ConsentDebugGeography.europeanEconomicArea,
+                  ),
+                );
+                refresh();
+                return result;
+              },
+            ),
           ActionRow(
             label: 'Reset consent',
             subtitle: 'Clears the stored decision. QA only.',
@@ -153,6 +176,79 @@ class DevConsentPage extends StatelessWidget {
               return result;
             },
           ),
+          // What the ad networks actually receive: they read these strings from
+          // storage themselves, so the snapshot above cannot show them.
+          const DevHeading('Stored consent signals'),
+          if (!gate.supportsConsentSignals)
+            const DevNote('This consent provider cannot read stored signals.')
+          else ...<Widget>[
+            FutureBuilder<KitResult<ConsentSignals>>(
+              // Re-read on every refresh.
+              future: gate.readConsentSignals(),
+              builder: (context, reading) {
+                final result = reading.data;
+                if (result == null) return const DevFact('Signals', 'reading…');
+                return result.fold(
+                  onSuccess: (signals) => Column(
+                    children: <Widget>[
+                      DevFact(
+                        'GDPR applies',
+                        switch (signals.gdprApplies) {
+                          true => 'yes',
+                          false => 'no',
+                          null => 'not set',
+                        },
+                      ),
+                      DevFact('TC string', signals.tcString ?? 'none stored'),
+                      DevFact(
+                        'Purpose consents',
+                        signals.purposeConsents ?? 'none stored',
+                      ),
+                      DevFact(
+                        'Additional consent',
+                        signals.additionalConsent ?? 'none stored',
+                      ),
+                      DevFact('GPP string', signals.gppString ?? 'none stored'),
+                      DevFact(
+                        'GPP sections',
+                        signals.gppSectionIds ?? 'none stored',
+                      ),
+                      DevFact(
+                        'Consent platform ID',
+                        signals.cmpSdkId?.toString() ?? 'not set',
+                      ),
+                      DevFact('Stored keys', '${signals.values.length}'),
+                    ],
+                  ),
+                  onFailure: (error) => DevFact('Signals', error.message),
+                );
+              },
+            ),
+            ActionRow(
+              label: 'Copy TC string',
+              icon: Icons.copy,
+              run: () async {
+                final result = await gate.readConsentSignals();
+                final tcString = result.fold(
+                  onSuccess: (signals) => signals.tcString,
+                  onFailure: (_) => null,
+                );
+                if (tcString == null) {
+                  return result.isFailure ? result : 'No TC string is stored.';
+                }
+                await Clipboard.setData(ClipboardData(text: tcString));
+                return 'Copied (${tcString.length} characters)';
+              },
+            ),
+            const DevNote(
+              'Written by the consent platform (Google UMP) into the default '
+              'shared preferences of the app, under the IAB keys. Appodeal and '
+              'every network it mediates read them from there; nothing in the '
+              'app passes them along. Outside a regulated region the consent '
+              'update at the next launch overwrites them, so a TC string from '
+              'the EEA preview is gone after a relaunch.',
+            ),
+          ],
         ];
       },
     );
