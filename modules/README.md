@@ -58,6 +58,8 @@ fast architecture check.
   configuration, and the gate that sequences consent ahead of ads and analytics.
 - `genrevibes_consent_test`: reusable consent provider contract tests.
 - `genrevibes_consent_ump`: isolated Google User Messaging Platform adapter.
+- `genrevibes_consent_appodeal`: isolated Appodeal consent manager adapter
+  (UMP-based, IAB TCF v2) for apps that mediate through Appodeal.
 - `genrevibes_app_rating`: clock-driven rating eligibility, cooldown, snooze,
   opt-out policy, and store-versus-feedback outcome routing.
 - `genrevibes_app_rating_test`: reusable store review provider contract tests.
@@ -109,6 +111,9 @@ fast architecture check.
   rewarded, and app-open placements.
 - `genrevibes_ads_admob_ui`: optional lifecycle-safe banner and native-template
   widgets with explicit host-controlled eligibility.
+- `genrevibes_ads_appodeal`: isolated Appodeal mediation adapter for
+  interstitial, rewarded, and banner placements, with a banner view and test
+  mode chosen at SDK initialization.
 - `genrevibes_notifications`: provider-neutral push state, safe delivery
   diagnostics, local schedules, and hardcoded/remote campaign coordination.
 - `genrevibes_notifications_onesignal`: isolated OneSignal 5.x push adapter.

@@ -27,6 +27,8 @@ final class AdRevenue {
     required this.currencyCode,
     required this.provider,
     this.mediationNetwork,
+    this.adUnitName,
+    this.precision,
   });
 
   /// Revenue in one-millionths of [currencyCode].
@@ -40,6 +42,12 @@ final class AdRevenue {
 
   /// Winning mediation network when available.
   final String? mediationNetwork;
+
+  /// Ad unit within [mediationNetwork] when the provider reports one.
+  final String? adUnitName;
+
+  /// How exact the value is, in the provider's own terms, when reported.
+  final String? precision;
 
   /// Revenue in whole currency units.
   double get value => valueMicros.toDouble() / 1000000;

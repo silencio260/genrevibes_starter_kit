@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.0-dev.4
+
+- Add optional `AdRevenue.adUnitName` and `AdRevenue.precision`, for mediation
+  SDKs that report them.
+
 ## 0.1.0-dev.3
 
 - Add `AdTestModeProvider`, an optional capability for moving a running install
