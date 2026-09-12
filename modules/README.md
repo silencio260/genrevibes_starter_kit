@@ -73,6 +73,9 @@ fast architecture check.
   an optional theme-driven presentation template, and `OnboardingFlow` — any
   number of pages, an ad-agnostic ad slot, and finish and skip action sequences.
 - `genrevibes_settings`: sealed settings row models and embeddable settings UI.
+- `genrevibes_system_ui`: the Android system navigation bar — hidden by
+  default, shown on the screens that ask for it, and on every screen for
+  developers while their switch is on.
 - `genrevibes_crash`: neutral crash report model, reporter contract, observer, and
   the coordinator that applies the collection decision once.
 - `genrevibes_crash_test`: reusable crash reporter contract tests.

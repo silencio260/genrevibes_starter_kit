@@ -7,6 +7,7 @@ import 'pages/developer_access_page.dart';
 import 'pages/event_log_page.dart';
 import 'pages/log_page.dart';
 import 'pages/modules_page.dart';
+import 'pages/navigation_bar_page.dart';
 import 'pages/remote_config_page.dart';
 import 'pages/session_replay_page.dart';
 
@@ -170,6 +171,19 @@ class StarterKitLabScreen extends StatelessWidget {
                   advertisingId: host.advertisingId,
                 ),
         missing: 'genrevibes_developer_access',
+      ),
+      _Entry(
+        title: 'Navigation bar',
+        subtitle: host.navigationBar == null
+            ? 'not wired'
+            : host.navigationBar!.developerShowsEverywhere
+                ? 'shown on every screen for developers'
+                : 'as users see it',
+        icon: Icons.smartphone,
+        build: host.navigationBar == null
+            ? null
+            : () => DevNavigationBarPage(controller: host.navigationBar!),
+        missing: 'genrevibes_system_ui',
       ),
       _Entry(
         title: 'Storage',

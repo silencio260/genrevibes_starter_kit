@@ -14,6 +14,7 @@ import 'package:genrevibes_permissions/genrevibes_permissions.dart';
 import 'package:genrevibes_remote_config/genrevibes_remote_config.dart';
 import 'package:genrevibes_starter_kit/genrevibes_starter_kit.dart';
 import 'package:genrevibes_storage/genrevibes_storage.dart';
+import 'package:genrevibes_system_ui/genrevibes_system_ui.dart';
 
 import 'dev_analytics_catalogue.dart';
 import 'recording_delivery_observer.dart';
@@ -57,6 +58,7 @@ final class DevToolsHost {
     this.rating,
     this.onboarding,
     this.localNotifications,
+    this.navigationBar,
   });
 
   /// The coordinator, for the module overview.
@@ -141,6 +143,10 @@ final class DevToolsHost {
 
   /// Local notification scheduler.
   final LocalNotificationScheduler? localNotifications;
+
+  /// The system navigation bar, and the developer switch that shows it on
+  /// every screen.
+  final NavigationBarController? navigationBar;
 }
 
 /// One capability's keys, for the storage inspector.

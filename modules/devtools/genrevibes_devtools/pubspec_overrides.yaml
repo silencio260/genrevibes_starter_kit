@@ -39,3 +39,5 @@ dependency_overrides:
     path: ../../foundation/genrevibes_starter_kit
   genrevibes_storage:
     path: ../../storage/genrevibes_storage
+  genrevibes_system_ui:
+    path: ../../system_ui/genrevibes_system_ui

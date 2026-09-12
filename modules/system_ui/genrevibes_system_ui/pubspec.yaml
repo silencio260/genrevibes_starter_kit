@@ -1,0 +1,29 @@
+name: genrevibes_system_ui
+description: The phone's system navigation bar for GenRevibes apps — hidden by default, shown on the screens that ask for it, and on every screen for developers.
+version: 0.1.0-dev.1
+publish_to: none
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+  flutter: ">=3.19.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  genrevibes_core: ^0.1.0-dev.1
+  genrevibes_storage: ^0.1.0-dev.1
+
+dev_dependencies:
+  flutter_lints: ^4.0.0
+  flutter_test:
+    sdk: flutter
+
+# Android only. Flutter's SystemChrome can hide the navigation bar only in a way
+# the first touch undoes; this plugin hides it the way Android intends, until a
+# swipe brings it back for a moment.
+flutter:
+  plugin:
+    platforms:
+      android:
+        package: com.genrevibes.system_ui
+        pluginClass: GenRevibesSystemUiPlugin

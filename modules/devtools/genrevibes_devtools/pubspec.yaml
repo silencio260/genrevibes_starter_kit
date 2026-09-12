@@ -30,6 +30,7 @@ dependencies:
   genrevibes_settings: ^0.1.0-dev.1
   genrevibes_starter_kit: ^0.1.0-dev.1
   genrevibes_storage: ^0.1.0-dev.1
+  genrevibes_system_ui: ^0.1.0-dev.1
 
 dev_dependencies:
   flutter_lints: ^4.0.0
