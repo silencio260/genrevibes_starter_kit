@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:genrevibes_notifications/genrevibes_notifications.dart';
@@ -42,9 +44,13 @@ final class DefaultFlutterLocalNotificationsClient
   /// Creates a default platform client.
   DefaultFlutterLocalNotificationsClient({
     FlutterLocalNotificationsPlugin? plugin,
+    this.captureLaunchInteraction = true,
   }) : _plugin = plugin ?? FlutterLocalNotificationsPlugin();
 
   final FlutterLocalNotificationsPlugin _plugin;
+
+  /// Disable in headless workers: launch intent belongs to the UI isolate.
+  final bool captureLaunchInteraction;
   late GenRevibesLocalNotificationsConfiguration _configuration;
   late tz.Location _location;
 
@@ -72,18 +78,55 @@ final class DefaultFlutterLocalNotificationsClient
         ),
       ),
       onDidReceiveNotificationResponse: (response) {
-        onResponse(
-          LocalNotificationInteraction(
-            notificationId: response.id,
-            actionId: response.actionId,
-            payload: response.payload,
-          ),
-        );
+        onResponse(_interaction(response));
       },
     );
     if (initialized == false) {
       throw StateError('Local notifications plugin did not initialize.');
     }
+    if (!captureLaunchInteraction) return;
+    final launch = await _plugin.getNotificationAppLaunchDetails();
+    final response = launch?.notificationResponse;
+    if (launch?.didNotificationLaunchApp == true && response != null) {
+      onResponse(_interaction(response));
+    }
+  }
+
+  // The OS returns only the payload on a tap, including cold launches. Carry
+  // the content in a versioned envelope and restore the original opaque payload
+  // before publishing the interaction to application navigation listeners.
+  String _contentPayload(LocalNotificationContent content) => jsonEncode({
+        '_genrevibes_notification': 1,
+        'title': content.title,
+        'body': content.body,
+        'payload': content.payload,
+      });
+
+  LocalNotificationInteraction _interaction(NotificationResponse response) {
+    String? title;
+    String? body;
+    var payload = response.payload;
+    try {
+      final decoded = jsonDecode(payload ?? '');
+      if (decoded is Map<String, dynamic> &&
+          decoded['_genrevibes_notification'] == 1 &&
+          decoded['title'] is String &&
+          decoded['body'] is String &&
+          (decoded['payload'] == null || decoded['payload'] is String)) {
+        title = decoded['title'] as String;
+        body = decoded['body'] as String;
+        payload = decoded['payload'] as String?;
+      }
+    } on FormatException {
+      // Notifications posted before this version retain their original payload.
+    }
+    return LocalNotificationInteraction(
+      notificationId: response.id,
+      actionId: response.actionId,
+      payload: payload,
+      title: title,
+      body: body,
+    );
   }
 
   @override
@@ -121,7 +164,7 @@ final class DefaultFlutterLocalNotificationsClient
         content.title,
         content.body,
         _details(content),
-        payload: content.payload,
+        payload: _contentPayload(content),
       );
 
   @override
@@ -136,7 +179,7 @@ final class DefaultFlutterLocalNotificationsClient
         tz.TZDateTime.from(at, _location),
         _details(request.content),
         androidScheduleMode: _androidScheduleMode,
-        payload: request.content.payload,
+        payload: _contentPayload(request.content),
       );
 
   @override
@@ -151,7 +194,7 @@ final class DefaultFlutterLocalNotificationsClient
         interval,
         _details(request.content),
         androidScheduleMode: _androidScheduleMode,
-        payload: request.content.payload,
+        payload: _contentPayload(request.content),
       );
 
   @override
@@ -177,7 +220,7 @@ final class DefaultFlutterLocalNotificationsClient
       next,
       _details(request.content),
       androidScheduleMode: _androidScheduleMode,
-      payload: request.content.payload,
+      payload: _contentPayload(request.content),
       matchDateTimeComponents: DateTimeComponents.time,
     );
   }

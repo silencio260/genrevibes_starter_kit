@@ -126,9 +126,23 @@ abstract interface class AppodealClient {
 ///
 /// Appodeal's callbacks are process-wide, one handler per format, so a process
 /// should have exactly one client.
-final class DefaultAppodealClient implements AppodealClient {
+abstract interface class AppodealBannerControl {
+  Future<void> stopBanner();
+}
+
+final class DefaultAppodealClient
+    implements AppodealClient, AppodealBannerControl {
+  @override
+  Future<void> stopBanner() async {
+    Appodeal.hide(AppodealAdType.Banner);
+    Appodeal.destroy(AppodealAdType.Banner);
+  }
+
   /// Creates the production client.
-  DefaultAppodealClient();
+  DefaultAppodealClient({this.manualBannerCaching = false});
+
+  /// Host requests banner inventory explicitly after checking access.
+  final bool manualBannerCaching;
 
   final StreamController<AppodealCallback> _callbacks =
       StreamController<AppodealCallback>.broadcast();
@@ -159,8 +173,12 @@ final class DefaultAppodealClient implements AppodealClient {
     Appodeal.setChildDirectedTreatment(childDirectedTreatment);
     // Full-screen inventory is requested by the provider, never by the SDK on
     // its own: a premium user must not load an ad, and the application decides
-    // how long to wait before the first one. Banners keep auto-caching, which
-    // the banner view relies on.
+    // how long to wait before the first one. Banners are explicitly cached
+    // only after the application confirms ad eligibility.
+    if (manualBannerCaching) {
+      Appodeal.setAdViewAutoResume(false);
+      Appodeal.setAutoCache(AppodealAdType.Banner, false);
+    }
     Appodeal.setAutoCache(AppodealAdType.Interstitial, false);
     Appodeal.setAutoCache(AppodealAdType.RewardedVideo, false);
 
@@ -267,11 +285,13 @@ final class DefaultAppodealClient implements AppodealClient {
           _report(AppodealCallbackType.expired, rewarded),
     );
     Appodeal.setBannerCallbacks(
-      onBannerLoaded: (Object? _) => _report(AppodealCallbackType.loaded, banner),
+      onBannerLoaded: (Object? _) =>
+          _report(AppodealCallbackType.loaded, banner),
       onBannerFailedToLoad: () =>
           _report(AppodealCallbackType.failedToLoad, banner),
       onBannerShown: () => _report(AppodealCallbackType.shown, banner),
-      onBannerShowFailed: () => _report(AppodealCallbackType.showFailed, banner),
+      onBannerShowFailed: () =>
+          _report(AppodealCallbackType.showFailed, banner),
       onBannerClicked: () => _report(AppodealCallbackType.clicked, banner),
       onBannerExpired: () => _report(AppodealCallbackType.expired, banner),
     );

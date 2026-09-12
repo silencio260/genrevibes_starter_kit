@@ -112,6 +112,8 @@ final class LocalNotificationInteraction {
     required this.notificationId,
     this.actionId,
     this.payload,
+    this.title,
+    this.body,
   });
 
   /// Notification identifier, when reported by the platform.
@@ -119,6 +121,10 @@ final class LocalNotificationInteraction {
 
   /// Selected action identifier.
   final String? actionId;
+
+  /// Original visible content, when carried by the scheduler.
+  final String? title;
+  final String? body;
 
   /// Opaque application payload supplied when the notification was created.
   final String? payload;

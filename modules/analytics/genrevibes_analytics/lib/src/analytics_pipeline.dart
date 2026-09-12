@@ -150,7 +150,14 @@ final class AnalyticsPipeline implements StarterModule {
         .then((result) {
       result.fold(
         onSuccess: (report) => _notifyEvent(outgoing, report),
-        onFailure: (_) {},
+        onFailure: (error) => _notifyEvent(
+            outgoing,
+            AnalyticsDeliveryReport(
+              operation: outgoing.name,
+              attemptedSinks: const <String>{},
+              successfulSinks: const <String>{},
+              failures: {'pipeline': error},
+            )),
       );
       return result;
     });

@@ -33,11 +33,13 @@ final class AppodealAdProvider implements AdProvider, AdTestModeProvider {
     KitClock clock = const SystemKitClock(),
     KitLogger logger = const NoopKitLogger(),
     bool testMode = false,
+    bool Function()? canRequestAds,
   })  : _configuration = configuration,
         _client = client ?? DefaultAppodealClient(),
         _clock = clock,
         _logger = logger,
         _testMode = testMode,
+        _canRequestAds = canRequestAds,
         _health = ModuleHealth(
           moduleId: 'ads.appodeal',
           provider: 'appodeal',
@@ -58,6 +60,7 @@ final class AppodealAdProvider implements AdProvider, AdTestModeProvider {
 
   final GenRevibesAppodealConfiguration _configuration;
   final AppodealClient _client;
+  final bool Function()? _canRequestAds;
   final KitClock _clock;
   final KitLogger _logger;
   final StreamController<AdEvent> _events =
@@ -114,7 +117,10 @@ final class AppodealAdProvider implements AdProvider, AdTestModeProvider {
   /// False before initialization, after disposal, and after a test-mode change
   /// that waits for a relaunch.
   bool get servesInventory =>
-      _initialized && !_disposed && _sdkTestMode == _testMode;
+      _initialized &&
+      !_disposed &&
+      _sdkTestMode == _testMode &&
+      (_canRequestAds?.call() ?? true);
 
   /// Whether an inline banner for [placement] may be rendered now.
   bool canShowInline(AdPlacement placement) =>
@@ -214,9 +220,7 @@ final class AppodealAdProvider implements AdProvider, AdTestModeProvider {
     if (_configuration.placementFor(placement) == null) {
       return _unknownPlacement<void>(placement);
     }
-    if (!_fullScreen.contains(placement.format)) {
-      return _inlineOnly<void>(placement);
-    }
+
     if (!_initialized || _disposed) return _notReady<void>();
     // Nothing is requested in a mode the SDK is not running in.
     if (!servesInventory) return const KitSuccess<void>(null);
@@ -245,7 +249,12 @@ final class AppodealAdProvider implements AdProvider, AdTestModeProvider {
   Future<void> _requestLoad(AdFormat format, Completer<void> completer) async {
     // Inventory the SDK already holds — from a load whose result was discarded,
     // for instance — is usable without another request.
-    if (await _client.isLoaded(format)) {
+    final loaded = await _client.isLoaded(format);
+    if (!servesInventory) {
+      if (!completer.isCompleted) completer.complete();
+      return;
+    }
+    if (loaded) {
       _ready[format] = true;
       if (!completer.isCompleted) completer.complete();
     } else {
@@ -284,6 +293,9 @@ final class AppodealAdProvider implements AdProvider, AdTestModeProvider {
     if (!await _client.canShow(format, name)) {
       return const AdShowResult(status: AdShowStatus.notReady);
     }
+    if (!servesInventory) {
+      return const AdShowResult(status: AdShowStatus.notReady);
+    }
     final completer = Completer<AdShowResult>();
     _showCompleters[format] = completer;
     _showing[format] = placement;
@@ -314,9 +326,12 @@ final class AppodealAdProvider implements AdProvider, AdTestModeProvider {
       return _unknownPlacement<void>(placement);
     }
     final format = placement.format;
-    if (_fullScreen.contains(format)) {
-      _ready[format] = false;
-      if (_pendingLoads.containsKey(format)) _discardedDuringLoad.add(format);
+    _ready[format] = false;
+    if (_pendingLoads.containsKey(format)) _discardedDuringLoad.add(format);
+    if (format == AdFormat.banner && _initialized) {
+      if (_client case final AppodealBannerControl banners) {
+        return _guard(banners.stopBanner);
+      }
     }
     return const KitSuccess<void>(null);
   }
@@ -395,10 +410,6 @@ final class AppodealAdProvider implements AdProvider, AdTestModeProvider {
     final format = callback.format;
     switch (callback.type) {
       case AppodealCallbackType.loaded:
-        if (!_fullScreen.contains(format)) {
-          _emit(AdEventType.loaded, format);
-          return;
-        }
         final completer = _loadCompleters.remove(format);
         final discarded = _discardedDuringLoad.remove(format);
         if (!discarded && servesInventory) {
@@ -577,7 +588,9 @@ final class AppodealAdProvider implements AdProvider, AdTestModeProvider {
     final timedOut = error is TimeoutException;
     _logger.log(
       KitLogLevel.warning,
-      timedOut ? 'Appodeal did not respond in time.' : 'Appodeal operation failed.',
+      timedOut
+          ? 'Appodeal did not respond in time.'
+          : 'Appodeal operation failed.',
       moduleId: moduleId,
       error: error,
       stackTrace: stackTrace,
