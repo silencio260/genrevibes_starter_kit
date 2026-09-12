@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.0-dev.2
+
+- Log every revenue report: amount, currency, network, format, placement and
+  precision, or a warning when no configured placement matches it. Appodeal
+  reports revenue only when the winning network's adapter does, and never for
+  test ads, so the log is how a release build confirms revenue is arriving.
+
 ## 0.1.0-dev.1
 
 - Add `AppodealAdProvider` for interstitial and rewarded placements over

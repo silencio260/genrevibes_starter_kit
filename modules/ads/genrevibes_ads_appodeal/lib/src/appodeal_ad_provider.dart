@@ -445,12 +445,35 @@ final class AppodealAdProvider implements AdProvider, AdTestModeProvider {
   void _onRevenue(AppodealRevenueReport report) {
     if (_disposed) return;
     final format = report.format;
-    if (format == null) return;
-    final placement = _showing[format] ??
-        _configuration
-            .placementReportedAs(format, report.placementName)
-            ?.placement;
-    if (placement == null) return;
+    final placement = format == null
+        ? null
+        : _showing[format] ??
+            _configuration
+                .placementReportedAs(format, report.placementName)
+                ?.placement;
+    // Logged either way. Only the winning network's adapter reports revenue,
+    // and test ads never do, so these lines are how a release build confirms
+    // revenue is arriving at all.
+    final network =
+        report.networkName.isEmpty ? 'an unnamed network' : report.networkName;
+    final described = '${report.revenue} ${report.currency} from $network '
+        '(${format?.name ?? 'an ad type this adapter does not serve'}, '
+        'placement "${report.placementName}", '
+        'precision ${report.precision.isEmpty ? 'unknown' : report.precision})';
+    if (format == null || placement == null) {
+      _logger.log(
+        KitLogLevel.warning,
+        'Appodeal revenue report not tracked, no configured placement '
+        'matches it: $described.',
+        moduleId: moduleId,
+      );
+      return;
+    }
+    _logger.log(
+      KitLogLevel.info,
+      'Appodeal revenue report received: $described.',
+      moduleId: moduleId,
+    );
     _add(
       AdEvent(
         type: AdEventType.paid,
