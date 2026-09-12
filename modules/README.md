@@ -69,8 +69,9 @@ fast architecture check.
   contracts.
 - `genrevibes_feedbacknest`: isolated FeedbackNest adapters for feedback
   submission and rating capture.
-- `genrevibes_onboarding`: onboarding completion state with legacy-key adoption
-  and an optional theme-driven presentation template.
+- `genrevibes_onboarding`: onboarding completion state with legacy-key adoption,
+  an optional theme-driven presentation template, and `OnboardingFlow` — any
+  number of pages, an ad-agnostic ad slot, and finish and skip action sequences.
 - `genrevibes_settings`: sealed settings row models and embeddable settings UI.
 - `genrevibes_crash`: neutral crash report model, reporter contract, observer, and
   the coordinator that applies the collection decision once.
@@ -114,6 +115,9 @@ fast architecture check.
 - `genrevibes_ads_appodeal`: isolated Appodeal mediation adapter for
   interstitial, rewarded, and banner placements, with a banner view and test
   mode chosen at SDK initialization.
+- `genrevibes_ads_appodeal_native`: Appodeal native ads on Android, rendered in
+  the SDK's native ad view by this package's own plugin, with a styleable
+  layout and native callbacks as neutral ad events.
 - `genrevibes_notifications`: provider-neutral push state, safe delivery
   diagnostics, local schedules, and hardcoded/remote campaign coordination.
 - `genrevibes_notifications_onesignal`: isolated OneSignal 5.x push adapter.

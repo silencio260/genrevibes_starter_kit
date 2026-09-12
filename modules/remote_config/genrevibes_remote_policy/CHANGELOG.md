@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.0-dev.5
+
+- Add `OnboardingPolicyKeys.adsEnabled` (`onboarding_ads_enabled`, default
+  true), a remote switch that permits ads in onboarding, and include it in
+  `PortfolioRemoteConfigSchema.build`.
+
 ## 0.1.0-dev.4
 
 - The canonical ad click event is `custom_ad_click`, not `ad_click`, which

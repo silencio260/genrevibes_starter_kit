@@ -2,7 +2,9 @@
 
 Appodeal mediation implementation of the `AdProvider` contract declared by
 `genrevibes_ads`. Interstitial and rewarded placements go through `load` and
-`show`; banner placements are rendered by `AppodealBannerView`. Callbacks and
+`show`; banner placements are rendered by `AppodealBannerView`, and native
+placements by `AppodealNativeAdView` from `genrevibes_ads_appodeal_native`,
+which also reports native callbacks. Callbacks and
 impression-level revenue from every mediated network arrive on the provider's
 neutral `AdEvent` stream under the logical placement, with the network that
 served as `AdRevenue.mediationNetwork`.

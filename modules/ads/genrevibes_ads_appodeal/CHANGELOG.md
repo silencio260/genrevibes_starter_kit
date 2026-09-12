@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.0-dev.3
+
+- Native placements. The SDK initializes the native ad type with the rest and
+  auto-cache is off for it; `load` requests native inventory without waiting
+  for a callback, `canShowInline` covers native, and native revenue reports are
+  attributed to the native placement. Render them with
+  `genrevibes_ads_appodeal_native`.
+
 ## 0.1.0-dev.2
 
 - Log every revenue report: amount, currency, network, format, placement and

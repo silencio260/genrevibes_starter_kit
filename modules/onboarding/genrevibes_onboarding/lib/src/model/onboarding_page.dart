@@ -24,6 +24,7 @@ final class OnboardingPage {
     required this.description,
     this.artwork,
     this.template = OnboardingTemplate.standard,
+    this.showAd = true,
   });
 
   /// Headline text.
@@ -42,4 +43,8 @@ final class OnboardingPage {
 
   /// Layout for this page.
   final OnboardingTemplate template;
+
+  /// Whether `OnboardingFlow` shows its ad slot on this page. Ignored when the
+  /// flow has no ad slot, and by `OnboardingView`.
+  final bool showAd;
 }

@@ -1,0 +1,7 @@
+dependency_overrides:
+  genrevibes_ads:
+    path: ../../ads/genrevibes_ads
+  genrevibes_ads_appodeal:
+    path: ../../ads/genrevibes_ads_appodeal
+  genrevibes_core:
+    path: ../../foundation/genrevibes_core

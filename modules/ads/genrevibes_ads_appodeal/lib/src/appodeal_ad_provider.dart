@@ -51,6 +51,7 @@ final class AppodealAdProvider implements AdProvider, AdTestModeProvider {
     AdFormat.interstitial,
     AdFormat.rewarded,
     AdFormat.banner,
+    AdFormat.native,
   };
 
   static const Set<AdFormat> _fullScreen = <AdFormat>{
@@ -122,9 +123,10 @@ final class AppodealAdProvider implements AdProvider, AdTestModeProvider {
       _sdkTestMode == _testMode &&
       (_canRequestAds?.call() ?? true);
 
-  /// Whether an inline banner for [placement] may be rendered now.
+  /// Whether an inline banner or native ad for [placement] may be rendered now.
   bool canShowInline(AdPlacement placement) =>
-      placement.format == AdFormat.banner &&
+      (placement.format == AdFormat.banner ||
+          placement.format == AdFormat.native) &&
       _configuration.placementFor(placement) != null &&
       servesInventory;
 
@@ -251,6 +253,13 @@ final class AppodealAdProvider implements AdProvider, AdTestModeProvider {
     // for instance — is usable without another request.
     final loaded = await _client.isLoaded(format);
     if (!servesInventory) {
+      if (!completer.isCompleted) completer.complete();
+      return;
+    }
+    // Native callbacks reach genrevibes_ads_appodeal_native, not this client,
+    // so no loaded callback will arrive here: request inventory and return.
+    if (format == AdFormat.native) {
+      if (!loaded) await _client.cache(format);
       if (!completer.isCompleted) completer.complete();
       return;
     }
@@ -622,7 +631,7 @@ final class AppodealAdProvider implements AdProvider, AdTestModeProvider {
         KitError(
           code: KitErrorCode.unsupported,
           message: '${placement.id} is a ${placement.format.name} placement; '
-              'render it with AppodealBannerView.',
+              'render it with AppodealBannerView or AppodealNativeAdView.',
         ),
       ),
     );

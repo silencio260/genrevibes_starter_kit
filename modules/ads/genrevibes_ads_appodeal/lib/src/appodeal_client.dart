@@ -181,6 +181,9 @@ final class DefaultAppodealClient
     }
     Appodeal.setAutoCache(AppodealAdType.Interstitial, false);
     Appodeal.setAutoCache(AppodealAdType.RewardedVideo, false);
+    // Native inventory is requested by the view that will show it, so a user
+    // who never reaches a native placement never loads one.
+    Appodeal.setAutoCache(AppodealAdType.NativeAd, false);
 
     final completer = Completer<List<String>>();
     Appodeal.initialize(
@@ -324,7 +327,8 @@ final class DefaultAppodealClient
         AdFormat.banner => AppodealAdType.Banner,
         AdFormat.interstitial => AppodealAdType.Interstitial,
         AdFormat.rewarded => AppodealAdType.RewardedVideo,
-        AdFormat.native || AdFormat.appOpen => null,
+        AdFormat.native => AppodealAdType.NativeAd,
+        AdFormat.appOpen => null,
       };
 
   static AppodealAdType _requireAdType(AdFormat format) =>
@@ -340,6 +344,7 @@ final class DefaultAppodealClient
           AdFormat.banner,
         AppodealAdType.Interstitial => AdFormat.interstitial,
         AppodealAdType.RewardedVideo => AdFormat.rewarded,
+        AppodealAdType.NativeAd => AdFormat.native,
         _ => null,
       };
 }
