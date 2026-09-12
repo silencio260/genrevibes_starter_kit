@@ -46,7 +46,8 @@ abstract final class AnalyticsNamesSchema {
     'auto_save_enabled': 'event_auto_save_enabled',
     'auto_save_disabled': 'event_auto_save_disabled',
     'ad_show': 'event_ad_show',
-    'ad_click': 'event_ad_click',
+    // Not ad_click, which Firebase reserves and refuses.
+    'custom_ad_click': 'event_ad_click',
     'ad_error': 'event_ad_error',
     'request_notification_permission': 'event_request_notification',
     'grant_notification_permission': 'event_grant_notification',

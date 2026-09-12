@@ -21,5 +21,13 @@ reports `notSupported` without touching the plugin. Apple returns an all-zero
 identifier when tracking is not authorized; that is reported as absent rather
 than passed along as if it were an id.
 
+`PlatformAdvertisingIdSource` covers both platforms: the IDFA through App
+Tracking Transparency on iOS, and Google's advertising ID on Android, read from
+Google Play services over this package's plugin. Android has no prompt; an ID
+the user deleted (all zeros) or opted out of personalisation with is reported
+as `denied`, with no ID. It is meant for developer tools, where the Starter Kit
+Lab shows the ID to register a phone as an ad test device. Resolving it into
+`DeviceIdentity` would make it part of what an app reports.
+
 Both plugins sit behind injectable clients, so the sources are tested without
 a device. The neutral package never imports either plugin.

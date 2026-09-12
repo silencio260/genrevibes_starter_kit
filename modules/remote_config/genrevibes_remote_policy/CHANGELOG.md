@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.0-dev.4
+
+- The canonical ad click event is `custom_ad_click`, not `ad_click`, which
+  Firebase Analytics reserves: `firebase_analytics` throws on it, so it reached
+  every sink except Firebase. The override key is still `event_ad_click`. A
+  caller resolving `ad_click` gets no override.
+
 ## 0.1.0-dev.3
 
 - Add `DeveloperAccessPolicyKeys` (`developer_device_hashes`, a JSON array of

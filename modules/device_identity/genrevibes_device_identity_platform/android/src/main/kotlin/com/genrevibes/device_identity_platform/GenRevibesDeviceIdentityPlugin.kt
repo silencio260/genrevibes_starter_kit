@@ -1,6 +1,9 @@
 package com.genrevibes.device_identity_platform
 
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
+import com.google.android.gms.ads.identifier.AdvertisingIdClient
 import com.google.android.gms.appset.AppSet
 import com.google.android.gms.appset.AppSetIdInfo
 import io.flutter.embedding.engine.plugins.FlutterPlugin
@@ -34,8 +37,31 @@ class GenRevibesDeviceIdentityPlugin : FlutterPlugin, MethodChannel.MethodCallHa
         when (call.method) {
             "appSetId" -> readAppSetId(context, result)
             "firstInstallTime" -> readFirstInstallTime(context, result)
+            "advertisingId" -> readAdvertisingId(context, result)
             else -> result.notImplemented()
         }
+    }
+
+    /**
+     * Google's advertising ID, so a developer can register the phone as an ad
+     * network test device. Play services answers over a blocking call, so it
+     * is read off the main thread. The ID is all zeros once the user deletes
+     * it.
+     */
+    private fun readAdvertisingId(context: Context, result: MethodChannel.Result) {
+        val main = Handler(Looper.getMainLooper())
+        Thread {
+            try {
+                val info = AdvertisingIdClient.getAdvertisingIdInfo(context)
+                val payload = mapOf(
+                    "id" to info.id,
+                    "limitAdTracking" to info.isLimitAdTrackingEnabled,
+                )
+                main.post { result.success(payload) }
+            } catch (error: Exception) {
+                main.post { result.error(UNAVAILABLE, error.message, null) }
+            }
+        }.start()
     }
 
     /**

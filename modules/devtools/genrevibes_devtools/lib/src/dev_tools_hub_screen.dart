@@ -164,7 +164,11 @@ class StarterKitLabScreen extends StatelessWidget {
         icon: Icons.admin_panel_settings,
         build: host.developerAccess == null
             ? null
-            : () => DevDeveloperAccessPage(controller: host.developerAccess!),
+            : () => DevDeveloperAccessPage(
+                  controller: host.developerAccess!,
+                  identity: host.identity,
+                  advertisingId: host.advertisingId,
+                ),
         missing: 'genrevibes_developer_access',
       ),
       _Entry(

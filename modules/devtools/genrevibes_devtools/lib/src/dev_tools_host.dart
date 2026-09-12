@@ -47,6 +47,7 @@ final class DevToolsHost {
     this.remoteConfig,
     this.remoteConfigSchema,
     this.identity,
+    this.advertisingId,
     this.developerAccess,
     this.retention,
     this.crash,
@@ -106,6 +107,13 @@ final class DevToolsHost {
 
   /// Device identity.
   final DeviceIdentityResolver? identity;
+
+  /// Reads the advertising ID for the developer access page, so a developer can
+  /// register the phone as an ad network test device.
+  ///
+  /// Separate from [identity] on purpose: the page reads it only when asked,
+  /// and it never becomes part of the resolved identity the app reports.
+  final AdvertisingIdSource? advertisingId;
 
   /// Developer access, and this device's hash for the developer device lists.
   final DeveloperAccessController? developerAccess;

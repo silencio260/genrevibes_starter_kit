@@ -55,4 +55,7 @@ android {
 dependencies {
     // Google's app set ID. Version from developer.android.com/identity/app-set-id.
     implementation("com.google.android.gms:play-services-appset:16.1.0")
+    // Google's advertising ID, for the developer tools' test-device row. Reading
+    // it needs the AD_ID permission, which an app serving ads declares.
+    implementation("com.google.android.gms:play-services-ads-identifier:18.2.0")
 }

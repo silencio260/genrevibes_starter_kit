@@ -1,6 +1,6 @@
 name: genrevibes_device_identity_platform
-description: App Tracking Transparency, app set ID, and identifierForVendor sources for GenRevibes device identity.
-version: 0.1.0-dev.2
+description: App Tracking Transparency, advertising ID, app set ID, and identifierForVendor sources for GenRevibes device identity.
+version: 0.1.0-dev.3
 publish_to: none
 
 environment:
