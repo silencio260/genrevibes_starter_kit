@@ -1,6 +1,6 @@
 name: genrevibes_remote_policy
 description: Portfolio remote-config schema binding ads policy and analytics event names.
-version: 0.1.0-dev.5
+version: 0.1.0-dev.6
 publish_to: none
 
 environment:

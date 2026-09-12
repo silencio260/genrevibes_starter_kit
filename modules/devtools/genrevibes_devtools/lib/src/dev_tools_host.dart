@@ -1,3 +1,4 @@
+import 'package:flutter/widgets.dart';
 import 'package:genrevibes_ads/genrevibes_ads.dart';
 import 'package:genrevibes_analytics/genrevibes_analytics.dart';
 import 'package:genrevibes_app_rating/genrevibes_app_rating.dart';
@@ -6,6 +7,7 @@ import 'package:genrevibes_crash/genrevibes_crash.dart';
 import 'package:genrevibes_developer_access/genrevibes_developer_access.dart';
 import 'package:genrevibes_device_identity/genrevibes_device_identity.dart';
 import 'package:genrevibes_engagement/genrevibes_engagement.dart';
+import 'package:genrevibes_exit_prompt/genrevibes_exit_prompt.dart';
 import 'package:genrevibes_feedback/genrevibes_feedback.dart';
 import 'package:genrevibes_iap/genrevibes_iap.dart';
 import 'package:genrevibes_notifications/genrevibes_notifications.dart';
@@ -59,6 +61,7 @@ final class DevToolsHost {
     this.onboarding,
     this.localNotifications,
     this.navigationBar,
+    this.exitPrompt,
   });
 
   /// The coordinator, for the module overview.
@@ -147,6 +150,14 @@ final class DevToolsHost {
   /// The system navigation bar, and the developer switch that shows it on
   /// every screen.
   final NavigationBarController? navigationBar;
+
+  /// The app's exit prompt for a style and Exit button, so every style can be
+  /// previewed with the app's own content.
+  final ExitPromptConfig Function(
+    BuildContext context,
+    ExitPromptStyle style,
+    ExitButtonEmphasis exitButton,
+  )? exitPrompt;
 }
 
 /// One capability's keys, for the storage inspector.

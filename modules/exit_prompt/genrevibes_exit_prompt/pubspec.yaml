@@ -1,0 +1,17 @@
+name: genrevibes_exit_prompt
+description: What Android Back does on a GenRevibes app's root screen — native ad sheet, ad dialog, features sheet, offer sheet, plain confirmation, double tap, or none — chosen at runtime for A/B testing.
+version: 0.1.0-dev.1
+publish_to: none
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+  flutter: ">=3.27.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_lints: ^4.0.0
+  flutter_test:
+    sdk: flutter

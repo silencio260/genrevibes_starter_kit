@@ -36,8 +36,11 @@ AppodealNativeAdView(
   ),
 );
 
-// Native callbacks, as neutral events, for analytics:
-AppodealNativeAds.instance.adEvents(onboardingNative).listen(trackAdEvent);
+// Native callbacks, as neutral events, for analytics. Once, for every native
+// placement: each callback is attributed to the placement whose view took it.
+AppodealNativeAds.instance
+    .attributedAdEvents(fallback: onboardingNative)
+    .listen(trackAdEvent);
 ```
 
 ## Behavior

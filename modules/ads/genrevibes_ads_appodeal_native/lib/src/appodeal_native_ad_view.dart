@@ -113,6 +113,7 @@ class _AppodealNativeAdViewState extends State<AppodealNativeAdView> {
       setState(() => _available = true);
     } else if (!_loadRequested) {
       _loadRequested = true;
+      _ads.noteLoadRequested(widget.placement);
       unawaited(widget.provider.load(widget.placement));
     }
   }
@@ -128,6 +129,7 @@ class _AppodealNativeAdViewState extends State<AppodealNativeAdView> {
         // The ad left the cache; the next view needs a fresh load.
         _loadRequested = false;
         if (widget.preloadNext && _eligible) {
+          _ads.noteLoadRequested(widget.placement);
           unawaited(widget.provider.load(widget.placement));
         }
       case AppodealNativeViewEvent.unavailable:
@@ -164,7 +166,11 @@ class _AppodealNativeAdViewState extends State<AppodealNativeAdView> {
               'placement': name,
               ...widget.style.toCreationParams(),
             },
-            onCreated: (id) => _viewId = id,
+            onCreated: (id) {
+              _viewId = id;
+              // Before the ad registers, so its impression is attributed here.
+              _ads.noteViewCreated(widget.placement);
+            },
           ),
         );
       },

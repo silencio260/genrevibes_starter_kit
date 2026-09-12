@@ -72,6 +72,11 @@ fast architecture check.
 - `genrevibes_onboarding`: onboarding completion state with legacy-key adoption,
   an optional theme-driven presentation template, and `OnboardingFlow` — any
   number of pages, an ad-agnostic ad slot, and finish and skip action sequences.
+- `genrevibes_splash`: the launch screen — a loading bar bounded by one wait
+  budget, then the full-screen ad the app resolves, then the app's routing.
+- `genrevibes_exit_prompt`: what Back does on the root screen — native ad
+  sheet, ad dialog, features sheet, offer sheet, confirmation, double tap or
+  none — chosen at runtime for A/B testing, with an ad-agnostic ad slot.
 - `genrevibes_settings`: sealed settings row models and embeddable settings UI.
 - `genrevibes_system_ui`: the Android system navigation bar — hidden by
   default, shown on the screens that ask for it, and on every screen for

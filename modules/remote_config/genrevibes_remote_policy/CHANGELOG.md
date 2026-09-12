@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.1.0-dev.6
+
+- Add `SplashAdPolicyKeys`: `splash_ad_format` (`interstitial`, `rewarded`,
+  `app_open` or `none`; default `interstitial`), `splash_ad_max_wait_seconds`
+  (default 8) and `splash_ad_on_first_launch` (default true), with
+  `formatOf` mapping the format to an `AdFormat`.
+- Add `ExitPromptPolicyKeys`: `exit_prompt_style` (default `features_sheet`,
+  without an ad, because Google Play treats ads triggered by exiting the app
+  as disruptive) and
+  `exit_prompt_exit_button` (`standard` or `dimmed`; default `standard`).
+- `PortfolioRemoteConfigSchema.build` includes both.
+
 ## 0.1.0-dev.5
 
 - Add `OnboardingPolicyKeys.adsEnabled` (`onboarding_ads_enabled`, default

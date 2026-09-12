@@ -58,6 +58,8 @@ final class AppodealNativeAds {
       _viewEvents = StreamController<
           ({int viewId, AppodealNativeViewEvent event})>.broadcast();
   bool _listening = false;
+  AdPlacement? _lastLoadRequested;
+  AdPlacement? _lastViewPlacement;
 
   /// Whether native ads can render here. Android only.
   bool get isSupported =>
@@ -79,7 +81,8 @@ final class AppodealNativeAds {
   ///
   /// Loaded, shown and clicked map to [AdEventType.loaded],
   /// [AdEventType.impression] and [AdEventType.clicked]. Revenue comes from
-  /// the provider's own stream, not here.
+  /// the provider's own stream, not here. An app with more than one native
+  /// placement uses [attributedAdEvents] instead.
   Stream<AdEvent> adEvents(
     AdPlacement placement, {
     KitClock clock = const SystemKitClock(),
@@ -96,6 +99,57 @@ final class AppodealNativeAds {
           AdEvent(
             type: mapped,
             placement: placement,
+            provider: 'appodeal',
+            occurredAt: clock.now(),
+          ),
+      ];
+    });
+  }
+
+  /// Records that a view asked for a native ad for [placement].
+  ///
+  /// Called by `AppodealNativeAdView`, for [attributedAdEvents].
+  void noteLoadRequested(AdPlacement placement) =>
+      _lastLoadRequested = placement;
+
+  /// Records that a view for [placement] is taking an ad.
+  ///
+  /// Called by `AppodealNativeAdView`, for [attributedAdEvents].
+  void noteViewCreated(AdPlacement placement) => _lastViewPlacement = placement;
+
+  /// Native callbacks as neutral ad events, each attributed to its placement.
+  ///
+  /// Appodeal reports native callbacks app-wide, without a placement. A load is
+  /// attributed to the placement whose view last asked for one, and an
+  /// impression or a click to the placement whose view last took an ad;
+  /// [fallback] before any view has. Listen once for every native placement:
+  /// an [adEvents] listener per placement reports each callback once per
+  /// listener.
+  Stream<AdEvent> attributedAdEvents({
+    required AdPlacement fallback,
+    KitClock clock = const SystemKitClock(),
+  }) {
+    return events.expand((type) {
+      final (mapped, placement) = switch (type) {
+        AppodealNativeEventType.loaded => (
+            AdEventType.loaded,
+            _lastLoadRequested,
+          ),
+        AppodealNativeEventType.shown => (
+            AdEventType.impression,
+            _lastViewPlacement,
+          ),
+        AppodealNativeEventType.clicked => (
+            AdEventType.clicked,
+            _lastViewPlacement,
+          ),
+        _ => (null, null),
+      };
+      return <AdEvent>[
+        if (mapped != null)
+          AdEvent(
+            type: mapped,
+            placement: placement ?? fallback,
             provider: 'appodeal',
             occurredAt: clock.now(),
           ),

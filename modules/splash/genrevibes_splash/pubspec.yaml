@@ -1,0 +1,19 @@
+name: genrevibes_splash
+description: Launch screen for GenRevibes apps — a bounded loading bar, then the optional full-screen ad, then the app's own routing.
+version: 0.1.0-dev.1
+publish_to: none
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+  flutter: ">=3.27.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  genrevibes_ads: ^0.1.0-dev.4
+  genrevibes_core: ^0.1.0-dev.1
+
+dev_dependencies:
+  flutter_lints: ^4.0.0
+  flutter_test:
+    sdk: flutter

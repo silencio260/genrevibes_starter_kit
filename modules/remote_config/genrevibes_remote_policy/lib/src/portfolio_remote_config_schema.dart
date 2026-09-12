@@ -3,8 +3,10 @@ import 'package:genrevibes_remote_config/genrevibes_remote_config.dart';
 import 'ads_policy_keys.dart';
 import 'analytics_names_schema.dart';
 import 'developer_access_policy_keys.dart';
+import 'exit_prompt_policy_keys.dart';
 import 'onboarding_policy_keys.dart';
 import 'session_replay_policy_keys.dart';
+import 'splash_ad_policy_keys.dart';
 
 /// Fetch settings every portfolio app uses.
 abstract final class PortfolioRemoteConfigSettings {
@@ -18,7 +20,8 @@ abstract final class PortfolioRemoteConfigSettings {
 /// Builds the schema every portfolio app shares, plus its own keys.
 abstract final class PortfolioRemoteConfigSchema {
   /// Combines ads policy, session replay, the developer device list, the
-  /// onboarding ads switch, optionally analytics names, and [appKeys].
+  /// onboarding ads switch, the splash ad, the exit prompt, optionally
+  /// analytics names, and [appKeys].
   ///
   /// [includeAnalyticsNames] adds forty-two keys that exist only to rename
   /// analytics events remotely. That is worth having when a portfolio needs to
@@ -35,6 +38,8 @@ abstract final class PortfolioRemoteConfigSchema {
       ...SessionReplayPolicyKeys.all,
       ...DeveloperAccessPolicyKeys.all,
       ...OnboardingPolicyKeys.all,
+      ...SplashAdPolicyKeys.all,
+      ...ExitPromptPolicyKeys.all,
       if (includeAnalyticsNames) ...AnalyticsNamesSchema.all,
       ...appKeys,
     ]);

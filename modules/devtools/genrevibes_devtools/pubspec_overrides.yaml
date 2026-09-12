@@ -19,6 +19,8 @@ dependency_overrides:
     path: ../../device_identity/genrevibes_device_identity
   genrevibes_engagement:
     path: ../../engagement/genrevibes_engagement
+  genrevibes_exit_prompt:
+    path: ../../exit_prompt/genrevibes_exit_prompt
   genrevibes_feedback:
     path: ../../feedback/genrevibes_feedback
   genrevibes_iap:

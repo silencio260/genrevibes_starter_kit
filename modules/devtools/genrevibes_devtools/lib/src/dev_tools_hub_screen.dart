@@ -5,6 +5,7 @@ import 'pages/analytics_page.dart';
 import 'pages/capability_pages.dart';
 import 'pages/developer_access_page.dart';
 import 'pages/event_log_page.dart';
+import 'pages/exit_prompt_page.dart';
 import 'pages/log_page.dart';
 import 'pages/modules_page.dart';
 import 'pages/navigation_bar_page.dart';
@@ -171,6 +172,15 @@ class StarterKitLabScreen extends StatelessWidget {
                   advertisingId: host.advertisingId,
                 ),
         missing: 'genrevibes_developer_access',
+      ),
+      _Entry(
+        title: 'Exit prompt',
+        subtitle: 'Preview every Back style with this app\'s content',
+        icon: Icons.exit_to_app,
+        build: host.exitPrompt == null
+            ? null
+            : () => DevExitPromptPage(config: host.exitPrompt!),
+        missing: 'genrevibes_exit_prompt',
       ),
       _Entry(
         title: 'Navigation bar',

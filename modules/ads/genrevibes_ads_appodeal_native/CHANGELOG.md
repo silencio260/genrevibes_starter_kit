@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.0-dev.3
+
+- Add `AppodealNativeAds.attributedAdEvents`, which attributes each app-wide
+  native callback to the placement whose view asked for or took the ad. An app
+  with more than one native placement listens once with it; an `adEvents`
+  listener per placement reported every callback once per listener.
+
 ## 0.1.0-dev.2
 
 - `AppodealNativeAdView.preloadNext` loads the next native ad as soon as a view

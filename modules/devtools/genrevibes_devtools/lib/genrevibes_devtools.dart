@@ -7,6 +7,7 @@ export 'src/dev_tools_hub_screen.dart';
 export 'src/offset_kit_clock.dart';
 export 'src/pages/analytics_page.dart';
 export 'src/pages/event_log_page.dart';
+export 'src/pages/exit_prompt_page.dart';
 export 'src/pages/capability_pages.dart';
 export 'src/pages/developer_access_page.dart';
 export 'src/pages/log_page.dart';
