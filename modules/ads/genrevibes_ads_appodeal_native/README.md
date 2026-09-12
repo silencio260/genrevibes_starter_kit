@@ -51,7 +51,13 @@ AppodealNativeAds.instance.adEvents(onboardingNative).listen(trackAdEvent);
   so nothing loads for a user who never reaches a native placement.
 - **One ad per view.** A view takes one ad out of the SDK's cache and destroys
   it when disposed. Keep the same view on screen across page changes to show
-  one ad; build a new one to show another.
+  one ad; build a new one to show another. With `preloadNext`, a view loads the
+  next ad as soon as it shows its own, so the next view appears at once.
+- **Reserving the space.** Put the view in a space
+  `AppodealNativeAdStyle.resolvedHeight` tall and pass
+  `placeholder: AppodealNativeAdPlaceholder(style: style)`. The screen is laid
+  out with the ad's space from the start, shows a quiet, text-free card until
+  the ad loads, and nothing moves when it does.
 - **Revenue** arrives on the provider's event stream, attributed to the native
   placement, like every other format.
 - **Layout.** `AppodealNativeAdStyle` sets colors, sizes, corner radii and the

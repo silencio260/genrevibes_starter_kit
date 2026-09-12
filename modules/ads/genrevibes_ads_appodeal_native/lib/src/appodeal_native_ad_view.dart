@@ -37,6 +37,7 @@ final class AppodealNativeAdView extends StatefulWidget {
     super.key,
     this.style = const AppodealNativeAdStyle(),
     this.placeholder,
+    this.preloadNext = false,
   });
 
   /// The provider that initialized the SDK, with [placement] configured.
@@ -53,6 +54,14 @@ final class AppodealNativeAdView extends StatefulWidget {
 
   /// Shown instead of an ad. Null shows nothing.
   final Widget? placeholder;
+
+  /// Whether to load the next ad as soon as this view shows one.
+  ///
+  /// A view takes its ad out of the SDK's cache, so a view built next — the
+  /// next ad page of a flow that alternates pages with and without an ad —
+  /// would otherwise wait for a load and appear late. Costs a load that may go
+  /// unused if no further view is built.
+  final bool preloadNext;
 
   @override
   State<AppodealNativeAdView> createState() => _AppodealNativeAdViewState();
@@ -118,6 +127,9 @@ class _AppodealNativeAdViewState extends State<AppodealNativeAdView> {
       case AppodealNativeViewEvent.registered:
         // The ad left the cache; the next view needs a fresh load.
         _loadRequested = false;
+        if (widget.preloadNext && _eligible) {
+          unawaited(widget.provider.load(widget.placement));
+        }
       case AppodealNativeViewEvent.unavailable:
       case AppodealNativeViewEvent.refused:
         // Wait for the next load rather than retrying at once, which would

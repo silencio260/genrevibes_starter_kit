@@ -1,5 +1,18 @@
 import 'package:flutter/material.dart';
 
+/// How an onboarding flow puts pages, controls and the ad together.
+enum OnboardingPresentation {
+  /// Every page is a complete screen — its content, its controls and, when it
+  /// has one, its own ad — and swipes in as a unit. A page without an ad is a
+  /// different screen, not the same screen with something taken out.
+  screens,
+
+  /// One set of controls and one ad area under a swiping content area. The ad
+  /// area opens and closes as the user moves between pages with and without
+  /// an ad.
+  sharedControls,
+}
+
 /// What the skip control does.
 enum OnboardingSkipBehavior {
   /// No skip control.
@@ -54,6 +67,7 @@ final class OnboardingAdSlot {
     this.position = OnboardingAdPosition.bottom,
     this.oneAdPerPage = false,
     this.reservedHeight,
+    this.sizeAnimation = const Duration(milliseconds: 250),
   });
 
   /// Builds the ad.
@@ -64,14 +78,27 @@ final class OnboardingAdSlot {
 
   /// Whether every page gets its own ad.
   ///
+  /// In the shared presentation, whether every page gets its own ad.
+  ///
   /// False keeps one ad on screen while the user pages, so it is not reloaded
-  /// on every swipe. A page with `showAd: false` removes it, and the next page
-  /// that shows one builds a new ad.
+  /// on every swipe. In the screens presentation every ad page is its own
+  /// screen with its own ad, whatever this says.
   final bool oneAdPerPage;
 
-  /// Height kept free for the ad before it loads, so content does not jump
-  /// when it arrives. Null takes only the space the ad uses.
+  /// The ad's height, kept on every page that shows an ad from its first
+  /// frame, whether or not an ad has loaded.
+  ///
+  /// The screen is then laid out with the ad's space as part of its design,
+  /// and nothing moves when the ad arrives. Match it to the ad, such as
+  /// `AppodealNativeAdStyle.resolvedHeight`, and let the ad widget show a
+  /// placeholder until it loads. Null sizes the area to the ad, which then
+  /// grows into place when it arrives.
   final double? reservedHeight;
+
+  /// How long an ad takes to grow into place when it arrives after its screen
+  /// is showing, and, in the shared presentation, how long the ad area takes
+  /// to open or close between pages. `Duration.zero` switches at once.
+  final Duration sizeAnimation;
 }
 
 /// Visual overrides for an onboarding flow. Anything null comes from the
@@ -89,6 +116,10 @@ final class OnboardingFlowStyle {
     this.skipButtonStyle,
     this.pagePadding = const EdgeInsets.symmetric(horizontal: 24),
     this.controlsPadding = const EdgeInsets.fromLTRB(24, 12, 24, 16),
+    this.adFreeControlsPadding,
+    this.immersiveScrimColor = const Color(0xCC000000),
+    this.immersiveTextColor = const Color(0xFFFFFFFF),
+    this.artworkFadeHeight = 0,
     this.artworkFlex = 3,
     this.textFlex = 2,
     this.textSpacing = 12,
@@ -125,6 +156,22 @@ final class OnboardingFlowStyle {
 
   /// Padding around the controls.
   final EdgeInsets controlsPadding;
+
+  /// Padding around the controls of a screen without an ad, in the screens
+  /// presentation. Null uses [controlsPadding]. A screen designed around an ad
+  /// usually wants its controls tight above it, and one without wants them
+  /// where a full-screen page would put them.
+  final EdgeInsets? adFreeControlsPadding;
+
+  /// The fade behind the text of an immersive screen.
+  final Color immersiveScrimColor;
+
+  /// Title and description color on an immersive screen.
+  final Color immersiveTextColor;
+
+  /// Height of the fade from an edge-to-edge screen's artwork into the
+  /// background above the title. Zero ends the artwork on a hard edge.
+  final double artworkFadeHeight;
 
   /// Share of a page's height given to artwork.
   final int artworkFlex;

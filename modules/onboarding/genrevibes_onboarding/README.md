@@ -26,19 +26,34 @@ image library at all.
 `OnboardingFlow` is the configurable flow, for apps that need more than
 `OnboardingView`:
 
+- **Every page a whole screen.** By default each page is a complete screen:
+  its content, its own controls and, when it has one, its own ad, swiping in
+  as a unit. A page without an ad is a different screen, laid out for the full
+  screen, not an ad screen with its ad removed. With
+  `layout: OnboardingScreenLayout.edgeToEdge` the artwork runs across the top
+  edge to edge and takes the height the rest leaves: the top half on an ad
+  screen, most of the screen without one, and `artworkFadeHeight` fades it
+  into the page above the title. `immersive` puts the text and controls over
+  full-bleed artwork instead.
+  `OnboardingPresentation.sharedControls` keeps one set of controls and one ad
+  area under the swiping content instead.
 - **Any number of pages.** Each page can hide the ad with `showAd: false`.
 - **An optional ad slot.** `OnboardingAdSlot` takes a builder, so onboarding
   stays ad-agnostic: pass `AppodealNativeAdView` from
   `genrevibes_ads_appodeal_native`, or anything else. It sits below or above the
-  controls, and keeps one ad on screen across pages unless `oneAdPerPage`.
+  controls. Alternate `showAd` to put an ad screen between full-screen ones.
+  Set `reservedHeight` to the ad's height so every ad screen is laid out with
+  the ad's space from its first frame, and nothing moves when the ad loads.
 - **Finish and skip actions.** A list of `OnboardingAction`s run in order, each
   awaited: `markCompleted`, `navigate`, `when` for a conditional step, or any
   async function, such as opening a paywall. A failing action stops the
   sequence unless `continueOnError`; each can have a `timeout`.
 - **Layout.** `OnboardingControlsLayout.row` (skip, dots, next),
   `stacked` (dots over a centered next, leaving the bottom for an ad) or
-  `fullWidthButton`; `OnboardingFlowStyle` for colors, text styles, padding and
-  transitions; `pageBuilder` and `controlsBuilder` to replace either entirely.
+  `fullWidthButton`, per flow or per page; `OnboardingFlowStyle` for colors,
+  text styles, padding and transitions; `pageBuilder` and `controlsBuilder` to
+  replace either, and `screenBuilder` (flow or page) to arrange a whole screen
+  from its content, controls and ad.
 
 ```dart
 OnboardingFlow(
