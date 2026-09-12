@@ -208,6 +208,9 @@ class _SplashFlowState extends State<SplashFlow> {
     SplashAdRequest request,
     Duration timeout,
   ) async {
+    if (request.canRequest?.call() == false) {
+      return (SplashAdStatus.blocked, null);
+    }
     final provider = request.provider;
     final placement = request.placement;
     if (!provider.supportedFormats.contains(placement.format)) {
@@ -238,6 +241,9 @@ class _SplashFlowState extends State<SplashFlow> {
   static Future<(SplashAdStatus, AdReward?, KitError?)> _show(
     SplashAdRequest request,
   ) async {
+    if (request.canRequest?.call() == false) {
+      return (SplashAdStatus.blocked, null, null);
+    }
     final policy = request.policy;
     final result = policy == null
         ? await request.provider.show(request.placement)

@@ -8,7 +8,11 @@ final class SplashAdRequest {
     required this.provider,
     required this.placement,
     this.policy,
+    this.canRequest,
   });
+
+  /// Rechecked before loading and showing, for access and remote switches.
+  final bool Function()? canRequest;
 
   /// The provider that serves [placement].
   final AdProvider provider;
@@ -75,4 +79,35 @@ final class SplashOutcome {
 
   /// Whether the ad was shown.
   bool get adShown => adStatus == SplashAdStatus.shown;
+}
+
+/// Routes launch ads independently from the app's ordinary ad provider.
+///
+/// Register only integrated providers. The app owns their consent,
+/// initialization, premium suppression, event subscriptions and disposal.
+/// Unknown providers or unsupported formats never fall back to another ad.
+final class SplashAdRegistry {
+  /// Creates a registry keyed by stable, remote-configurable provider IDs.
+  SplashAdRegistry(Map<String, AdProvider> providers)
+      : _providers = Map.unmodifiable(providers);
+
+  final Map<String, AdProvider> _providers;
+
+  /// Selects a provider without initializing it or requesting an ad.
+  SplashAdRequest? resolve({
+    required String providerId,
+    required AdPlacement placement,
+    AdPolicyController? policy,
+    bool Function()? canRequest,
+  }) {
+    final provider = _providers[providerId.trim()];
+    if (provider == null ||
+        !provider.supportedFormats.contains(placement.format)) return null;
+    return SplashAdRequest(
+      provider: provider,
+      placement: placement,
+      policy: policy,
+      canRequest: canRequest,
+    );
+  }
 }

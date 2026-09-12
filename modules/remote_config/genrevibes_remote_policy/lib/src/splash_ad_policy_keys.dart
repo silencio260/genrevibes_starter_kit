@@ -13,6 +13,20 @@ abstract final class SplashAdPolicyKeys {
   static const _bool = RemoteConfigBoolCodec();
   static const _string = RemoteConfigStringCodec();
 
+  /// Independent launch-ad kill switch; does not disable in-app ads.
+  static const enabled = RemoteConfigKey<bool>(
+    name: 'splash_ad_enabled',
+    defaultValue: true,
+    codec: _bool,
+  );
+
+  /// Registered provider ID. Unknown IDs show no ad, with no fallback.
+  static const provider = RemoteConfigKey<String>(
+    name: 'splash_ad_provider',
+    defaultValue: 'appodeal',
+    codec: _string,
+  );
+
   /// The values [format] accepts.
   static const formatNames = <String>{
     'interstitial',
@@ -50,17 +64,21 @@ abstract final class SplashAdPolicyKeys {
     codec: _bool,
   );
 
-  /// The configured format, or null for `none`.
+  /// The configured format, or null when disabled or set to `none`.
   static AdFormat? formatOf(RemoteConfigSnapshot snapshot) =>
-      switch (snapshot.read(format).trim()) {
-        'interstitial' => AdFormat.interstitial,
-        'rewarded' => AdFormat.rewarded,
-        'app_open' => AdFormat.appOpen,
-        _ => null,
-      };
+      !snapshot.read(enabled)
+          ? null
+          : switch (snapshot.read(format).trim()) {
+              'interstitial' => AdFormat.interstitial,
+              'rewarded' => AdFormat.rewarded,
+              'app_open' => AdFormat.appOpen,
+              _ => null,
+            };
 
   /// Every key, widened for a schema.
   static List<RemoteConfigKey<Object?>> get all => <RemoteConfigKey<Object?>>[
+        remoteConfigKey(enabled),
+        remoteConfigKey(provider),
         remoteConfigKey(format),
         remoteConfigKey(maxWaitSeconds),
         remoteConfigKey(onFirstLaunch),
