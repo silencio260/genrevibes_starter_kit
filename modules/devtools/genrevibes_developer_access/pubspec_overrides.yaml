@@ -1,4 +1,6 @@
 dependency_overrides:
+  genrevibes_ads:
+    path: ../../ads/genrevibes_ads
   genrevibes_core:
     path: ../../foundation/genrevibes_core
   genrevibes_storage:

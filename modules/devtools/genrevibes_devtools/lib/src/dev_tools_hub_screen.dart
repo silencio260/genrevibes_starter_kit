@@ -100,6 +100,7 @@ class StarterKitLabScreen extends StatelessWidget {
                   provider: host.ads!,
                   policy: host.adPolicy,
                   placements: host.adPlacements,
+                  switches: host.developerAdSwitches,
                 ),
         missing: 'genrevibes_ads',
       ),

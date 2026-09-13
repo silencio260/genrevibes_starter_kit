@@ -100,7 +100,8 @@ fast architecture check.
   app set ID, and iOS identifierForVendor identity sources.
 - `genrevibes_developer_access`: developer tools and test ads in store builds
   for hashed developer devices (hardcoded, env, or remote list) or a
-  session-only passcode with a reinstall-aware lockout.
+  session-only passcode with a reinstall-aware lockout, plus device-local
+  switches that turn ad formats off on a developer's phone.
 - `genrevibes_app_links`: validated store, support, privacy and terms config
   and the share / rate / contact actions over a neutral `LinkOpener`.
 - `genrevibes_app_links_launcher`: isolated url_launcher and share_plus adapter.

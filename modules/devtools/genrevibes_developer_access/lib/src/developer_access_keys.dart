@@ -1,6 +1,6 @@
-/// Storage keys used by `DeveloperAccessController`.
+/// Storage keys used by `DeveloperAccessController` and `DeveloperAdSwitches`.
 ///
-/// Neither holds the passcode, an attempt, or a device identifier.
+/// None holds the passcode, an attempt, or a device identifier.
 abstract final class DeveloperAccessKeys {
   /// Wrong passcode attempts so far.
   static const failedPasscodeAttempts =
@@ -13,4 +13,8 @@ abstract final class DeveloperAccessKeys {
   /// it. Attempts recorded against a different install are ignored.
   static const failuresInstallMarker =
       'genrevibes.developer_access.failures_install_marker.v1';
+
+  /// Ad formats a developer turned off on this device, by `AdFormat.name`.
+  static const disabledAdFormats =
+      'genrevibes.developer_access.disabled_ad_formats.v1';
 }

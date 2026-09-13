@@ -5,6 +5,7 @@ import 'package:genrevibes_ads/genrevibes_ads.dart';
 import 'package:genrevibes_consent/genrevibes_consent.dart';
 import 'package:genrevibes_core/genrevibes_core.dart';
 import 'package:genrevibes_crash/genrevibes_crash.dart';
+import 'package:genrevibes_developer_access/genrevibes_developer_access.dart';
 import 'package:genrevibes_device_identity/genrevibes_device_identity.dart';
 import 'package:genrevibes_engagement/genrevibes_engagement.dart';
 import 'package:genrevibes_feedback/genrevibes_feedback.dart';
@@ -20,7 +21,13 @@ import '../widgets/dev_scaffold.dart';
 /// Ads: what the policy currently permits, and the provider's own operations.
 class DevAdsPage extends StatelessWidget {
   /// Creates the page.
-  const DevAdsPage({required this.provider, super.key, this.policy, this.placements = const <AdPlacement>[]});
+  const DevAdsPage({
+    required this.provider,
+    super.key,
+    this.policy,
+    this.placements = const <AdPlacement>[],
+    this.switches,
+  });
 
   /// Full-screen ad provider.
   final AdProvider provider;
@@ -31,14 +38,59 @@ class DevAdsPage extends StatelessWidget {
   /// Placements to exercise.
   final List<AdPlacement> placements;
 
+  /// Switches that turn ad formats off on this developer phone.
+  final DeveloperAdSwitches? switches;
+
+  static const List<AdFormat> _switchableFormats = <AdFormat>[
+    AdFormat.interstitial,
+    AdFormat.rewarded,
+    AdFormat.appOpen,
+    AdFormat.native,
+    AdFormat.banner,
+  ];
+
   @override
   Widget build(BuildContext context) {
     final policy = this.policy;
+    final switches = this.switches;
     return DevScaffold(
       title: 'Ads',
       subtitle: '${provider.providerId} · supports '
           '${provider.supportedFormats.map((f) => f.name).join(", ")}',
       builder: (refresh) => <Widget>[
+        if (switches != null) ...<Widget>[
+          const DevHeading('Developer switches'),
+          DevNote(
+            switches.active
+                ? 'A format turned off here is neither loaded nor shown on '
+                    'this phone. Remembered on the device; ordinary users '
+                    'are never affected.'
+                : 'Developer access is not granted on this phone, so these '
+                    'switches do not apply right now.',
+          ),
+          for (final format in _switchableFormats)
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(switch (format) {
+                AdFormat.interstitial => 'Interstitial ads',
+                AdFormat.rewarded => 'Rewarded ads',
+                AdFormat.appOpen => 'App open ads',
+                AdFormat.native => 'Native ads',
+                AdFormat.banner => 'Banner ads',
+              }),
+              subtitle: Text(
+                switches.isSwitchedOff(format)
+                    ? 'Off on this phone'
+                    : 'Loads and shows normally',
+                style: const TextStyle(fontSize: 11),
+              ),
+              value: !switches.isSwitchedOff(format),
+              onChanged: (enabled) async {
+                await switches.setEnabled(format, enabled);
+                refresh();
+              },
+            ),
+        ],
         if (policy != null) ...<Widget>[
           const DevHeading('Policy'),
           DevFact('Premium', '${policy.isPremium}'),

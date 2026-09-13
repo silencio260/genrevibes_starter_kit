@@ -6,4 +6,5 @@ export 'src/developer_access.dart';
 export 'src/developer_access_config.dart';
 export 'src/developer_access_controller.dart';
 export 'src/developer_access_keys.dart';
+export 'src/developer_ad_switches.dart';
 export 'src/developer_device_hash.dart';

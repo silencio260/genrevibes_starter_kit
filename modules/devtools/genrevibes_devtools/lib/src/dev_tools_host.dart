@@ -62,6 +62,7 @@ final class DevToolsHost {
     this.localNotifications,
     this.navigationBar,
     this.exitPrompt,
+    this.developerAdSwitches,
   });
 
   /// The coordinator, for the module overview.
@@ -158,6 +159,9 @@ final class DevToolsHost {
     ExitPromptStyle style,
     ExitButtonEmphasis exitButton,
   )? exitPrompt;
+
+  /// Switches that turn ad formats off on this developer phone.
+  final DeveloperAdSwitches? developerAdSwitches;
 }
 
 /// One capability's keys, for the storage inspector.
