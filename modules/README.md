@@ -69,6 +69,10 @@ fast architecture check.
   contracts.
 - `genrevibes_feedbacknest`: isolated FeedbackNest adapters for feedback
   submission and rating capture.
+- `genrevibes_feedback_ui`: the feedback and contact page — email, message
+  and optional screenshots from an app-supplied picker — in the app's own
+  colors, sent through any `FeedbackProvider`, and usable with the keyboard
+  open.
 - `genrevibes_onboarding`: onboarding completion state with legacy-key adoption,
   an optional theme-driven presentation template, and `OnboardingFlow` — any
   number of pages, an ad-agnostic ad slot, and finish and skip action sequences.
@@ -80,7 +84,8 @@ fast architecture check.
 - `genrevibes_settings`: sealed settings row models and embeddable settings UI.
 - `genrevibes_system_ui`: the Android system navigation bar — hidden by
   default, shown on the screens that ask for it, and on every screen for
-  developers while their switch is on.
+  developers while their switch is on — and full-screen ads shown with no
+  system bars.
 - `genrevibes_crash`: neutral crash report model, reporter contract, observer, and
   the coordinator that applies the collection decision once.
 - `genrevibes_crash_test`: reusable crash reporter contract tests.

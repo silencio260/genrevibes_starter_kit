@@ -51,6 +51,17 @@ NavigationBarVisibility(visible: true, child: Scaffold(/* ... */));
   full-screen ad, takes focus on older versions, and Flutter rewrites the
   system UI flags on resume. The plugin applies the requested state again each
   time the app's window regains focus.
+- **Full-screen ads.** An ad SDK shows interstitials and rewarded ads in an
+  activity of its own, whose window has both system bars. Once initialized, the
+  controller has the plugin show every other activity in the process full
+  screen from the moment it starts, before it is drawn: status bar hidden, and
+  the navigation bar hidden unless developer access is granted and the
+  developer switch is on (`overlayNavigationBarVisible`). A swipe from an edge
+  shows a bar for a moment. Activities whose class name starts with one of
+  `overlayExclusions` keep their bars — by default
+  `defaultOverlayExclusions`: Flutter, billing, RevenueCat, sign-in, Google
+  Play prompts and OneSignal. `fullScreenOverlays: false` leaves every
+  activity alone.
 - **Layout.** A hidden bar takes no space: `MediaQuery.padding.bottom` drops to
   the gesture area, so bottom content moves down. Pad with `MediaQuery`, not a
   fixed inset. With three-button navigation, a hidden bar hides Back, so give

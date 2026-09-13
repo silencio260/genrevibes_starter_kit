@@ -93,6 +93,11 @@ final class NavigationBarRequest {
 /// remembered on the device, and a developer turns it off to see screens the
 /// way users do.
 ///
+/// Activities opened over the app, above all full-screen ads, are shown full
+/// screen: no status bar, and no navigation bar unless the developer switch
+/// shows it on every screen. Pass `fullScreenOverlays: false` to leave them
+/// alone.
+///
 /// Add [observer] to the root navigator and put a `NavigationBarScope` above
 /// the app, so screens can ask with `NavigationBarVisibility`.
 final class NavigationBarController implements StarterModule {
@@ -105,6 +110,8 @@ final class NavigationBarController implements StarterModule {
     bool visibleByDefault = false,
     Map<String, bool> routes = const <String, bool>{},
     bool developerShowsEverywhereByDefault = true,
+    bool fullScreenOverlays = true,
+    List<String> overlayExclusions = defaultOverlayExclusions,
     KitClock clock = const SystemKitClock(),
     KitLogger logger = const NoopKitLogger(),
   })  : _store = store,
@@ -112,6 +119,8 @@ final class NavigationBarController implements StarterModule {
         _visibleByDefault = visibleByDefault,
         _routes = Map<String, bool>.unmodifiable(routes),
         _developerShowsEverywhere = developerShowsEverywhereByDefault,
+        _fullScreenOverlays = fullScreenOverlays,
+        _overlayExclusions = List<String>.unmodifiable(overlayExclusions),
         _clock = clock,
         _logger = logger,
         _health = ModuleHealth(
@@ -126,10 +135,28 @@ final class NavigationBarController implements StarterModule {
 
   static const _moduleId = 'system_ui.navigation_bar';
 
+  /// Activities left as they are while activities over the app are shown full
+  /// screen, by class name prefix: Flutter's own, purchases and subscriptions,
+  /// sign-in, Google Play prompts and notification trampolines. None of them
+  /// is a full-screen ad, and without a status bar they would look broken.
+  static const List<String> defaultOverlayExclusions = <String>[
+    'io.flutter.',
+    'com.android.billingclient.',
+    'com.revenuecat.',
+    'com.google.android.play.core.',
+    'com.google.android.gms.auth.',
+    'com.google.android.gms.common.api.',
+    'com.google.android.libraries.identity.',
+    'androidx.credentials.',
+    'com.onesignal.',
+  ];
+
   final KeyValueStore? _store;
   final SystemNavigationBar _navigationBar;
   final bool _visibleByDefault;
   final Map<String, bool> _routes;
+  final bool _fullScreenOverlays;
+  final List<String> _overlayExclusions;
   final KitClock _clock;
   final KitLogger _logger;
   final StreamController<ModuleHealth> _healthChanges =
@@ -145,6 +172,7 @@ final class NavigationBarController implements StarterModule {
   bool _developerShowsEverywhere;
   bool _developerMode = false;
   bool? _applied;
+  bool? _appliedOverlayNavigationBar;
   bool _applyScheduled = false;
   bool _initialized = false;
   bool _disposed = false;
@@ -177,6 +205,18 @@ final class NavigationBarController implements StarterModule {
   /// The developer switch: whether the bar shows on every screen while
   /// developer access is granted.
   bool get developerShowsEverywhere => _developerShowsEverywhere;
+
+  /// Whether activities opened over the app, such as full-screen ads, are
+  /// shown full screen.
+  bool get fullScreenOverlays => _fullScreenOverlays;
+
+  /// Class name prefixes of the activities [fullScreenOverlays] leaves alone.
+  List<String> get overlayExclusions => _overlayExclusions;
+
+  /// Whether the navigation bar shows over a full-screen ad: only while
+  /// developer access is granted and the developer switch is on.
+  bool get overlayNavigationBarVisible =>
+      _developerMode && _developerShowsEverywhere;
 
   /// Whether this platform lets the app hide the navigation bar.
   bool get isSupported => _navigationBar.isSupported;
@@ -213,6 +253,7 @@ final class NavigationBarController implements StarterModule {
     _initialized = true;
     _setHealth(ModuleState.ready);
     _scheduleApply();
+    unawaited(_applyOverlays());
     return const KitSuccess<void>(null);
   }
 
@@ -222,6 +263,7 @@ final class NavigationBarController implements StarterModule {
     if (_disposed || granted == _developerMode) return;
     _developerMode = granted;
     _scheduleApply();
+    unawaited(_applyOverlays());
   }
 
   /// Sets the developer switch and remembers it on this device.
@@ -229,6 +271,7 @@ final class NavigationBarController implements StarterModule {
     if (!_initialized || _disposed) return _notReady();
     _developerShowsEverywhere = value;
     _scheduleApply();
+    unawaited(_applyOverlays());
     final store = _store;
     if (store == null) return const KitSuccess<void>(null);
     return store.setBool(NavigationBarKeys.developerShowsEverywhere, value);
@@ -344,6 +387,47 @@ final class NavigationBarController implements StarterModule {
     }
   }
 
+  /// Tells the platform how to show activities opened over the app.
+  ///
+  /// Unlike the app's own screens this waits for no frame or route: a splash
+  /// ad can open before the first screen has settled.
+  Future<void> _applyOverlays() async {
+    if (!_initialized ||
+        _disposed ||
+        !_fullScreenOverlays ||
+        !_navigationBar.isSupported) {
+      return;
+    }
+    final visible = overlayNavigationBarVisible;
+    if (_appliedOverlayNavigationBar == visible) return;
+    _appliedOverlayNavigationBar = visible;
+    try {
+      await _navigationBar.setFullScreenOverlays(
+        navigationBarVisible: visible,
+        excludedActivityPrefixes: _overlayExclusions,
+      );
+    } on Object catch (error, stackTrace) {
+      _appliedOverlayNavigationBar = null;
+      const message = 'Full-screen ads could not be shown without system bars.';
+      _logger.log(
+        KitLogLevel.warning,
+        message,
+        moduleId: moduleId,
+        error: error,
+        stackTrace: stackTrace,
+      );
+      _setHealth(
+        ModuleState.degraded,
+        error: KitError(
+          code: KitErrorCode.provider,
+          message: message,
+          cause: error,
+          stackTrace: stackTrace,
+        ),
+      );
+    }
+  }
+
   NavigationBarState _resolve() {
     if (_developerMode && _developerShowsEverywhere) {
       return NavigationBarState(
@@ -405,6 +489,8 @@ final class NavigationBarController implements StarterModule {
         'reason': _current.reason.name,
         'developerMode': _developerMode,
         'developerShowsEverywhere': _developerShowsEverywhere,
+        'fullScreenOverlays': _fullScreenOverlays,
+        'overlayNavigationBarVisible': overlayNavigationBarVisible,
         'supported': _navigationBar.isSupported,
       },
     );

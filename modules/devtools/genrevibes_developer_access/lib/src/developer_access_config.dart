@@ -10,7 +10,7 @@ abstract final class DeveloperAccessDefaults {
   /// Wrong passcode attempts before entry locks.
   static const int maxPasscodeAttempts = 3;
 
-  /// Taps on the hidden target that open the passcode prompt.
+  /// Taps on the hidden target that open the passcode page.
   static const int unlockTaps = 7;
 }
 

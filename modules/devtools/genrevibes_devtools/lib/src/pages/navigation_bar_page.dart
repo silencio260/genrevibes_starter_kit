@@ -46,6 +46,20 @@ class DevNavigationBarPage extends StatelessWidget {
           'Remembered on this device. Turn it off to see the app the way users '
           'do: hidden, except on the screens that show it.',
         ),
+        const DevHeading('Full-screen ads'),
+        DevFact(
+          'System bars',
+          !controller.fullScreenOverlays
+              ? 'left to the ad SDK'
+              : controller.overlayNavigationBarVisible
+                  ? 'status bar hidden, navigation bar shown'
+                  : 'both hidden',
+        ),
+        const DevNote(
+          'Interstitial and rewarded ads open activities of their own, which '
+          'start full screen. The navigation bar shows over them only while '
+          '"Show on every screen" is on with developer access.',
+        ),
         const DevHeading('Everyone else'),
         DevFact(
           'Default',
