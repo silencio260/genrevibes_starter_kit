@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.1.0-dev.4
+
+- `AppodealNativeAdView` recreates its Android view when its style changes,
+  such as a screen switching between a large and a small card. The Android
+  view reads its style only at creation, so it used to keep the old layout
+  inside the new size. The recreated view takes the next loaded ad.
+- Add `AppodealNativeAdLayout.compact`: one row with the icon, the
+  attribution badge and headline above one line of body, and the call to
+  action at the end. No media and no top strip, for bottom-of-screen natives
+  that replace banners. `resolvedHeight` and the placeholder support it.
+- The attribution badge and AdChoices sit in their own strip at the top of the
+  card (`AppodealNativeAdStyle.attributionStripHeight`, default 20) instead of
+  over its corners, where the badge covered the icon and AdChoices could cover
+  the headline. `resolvedHeight` and the placeholder include the strip, so
+  views sized from them grow by the strip and one spacing.
+
 ## 0.1.0-dev.3
 
 - Add `AppodealNativeAds.attributedAdEvents`, which attributes each app-wide

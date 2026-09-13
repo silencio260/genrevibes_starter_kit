@@ -64,8 +64,9 @@ AppodealNativeAds.instance
 - **Revenue** arrives on the provider's event stream, attributed to the native
   placement, like every other format.
 - **Layout.** `AppodealNativeAdStyle` sets colors, sizes, corner radii and the
-  attribution label, and whether the media view is shown. The Flutter view is
-  sized to `AppodealNativeAdStyle.resolvedHeight`.
+  attribution label, and the layout: `medium` (with media), `small` (no
+  media), or `compact`, a single row for the bottom of a screen. The Flutter
+  view is sized to `AppodealNativeAdStyle.resolvedHeight`.
 
 Android only. On other platforms the view renders its placeholder and no events
 are reported.

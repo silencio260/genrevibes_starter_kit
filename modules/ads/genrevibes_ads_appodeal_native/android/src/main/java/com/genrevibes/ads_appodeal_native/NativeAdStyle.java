@@ -5,6 +5,7 @@ import java.util.Map;
 
 /** The look of a native ad view, read from the Flutter view's creation parameters. */
 final class NativeAdStyle {
+  final boolean compact;
   final boolean showMedia;
   final int backgroundColor;
   final int titleColor;
@@ -16,6 +17,7 @@ final class NativeAdStyle {
   final String attributionLabel;
   final float cornerRadius;
   final float callToActionCornerRadius;
+  final int attributionStripHeight;
   final int padding;
   final int spacing;
   final int iconSize;
@@ -26,7 +28,9 @@ final class NativeAdStyle {
   final float callToActionFontSize;
 
   private NativeAdStyle(Map<?, ?> args, float density) {
-    showMedia = !"small".equals(args.get("layout"));
+    final Object layout = args.get("layout");
+    compact = "compact".equals(layout);
+    showMedia = !compact && !"small".equals(layout);
     backgroundColor = color(args, "backgroundColor", 0xFFFFFFFF);
     titleColor = color(args, "titleColor", 0xFF6F42D8);
     bodyColor = color(args, "bodyColor", 0xFF202124);
@@ -38,6 +42,7 @@ final class NativeAdStyle {
     attributionLabel = label instanceof String ? (String) label : "Ad";
     cornerRadius = (float) number(args, "cornerRadius", 0) * density;
     callToActionCornerRadius = (float) number(args, "callToActionCornerRadius", 16) * density;
+    attributionStripHeight = pixels(args, "attributionStripHeight", 20, density);
     padding = pixels(args, "padding", 12, density);
     spacing = pixels(args, "spacing", 8, density);
     iconSize = pixels(args, "iconSize", 56, density);

@@ -89,6 +89,14 @@ class _AppodealNativeAdViewState extends State<AppodealNativeAdView> {
   @override
   void didUpdateWidget(covariant AppodealNativeAdView oldWidget) {
     super.didUpdateWidget(oldWidget);
+    // The Android view reads its style only when it is created, so a new style
+    // needs a new view, which takes the next loaded ad.
+    if (!mapEquals(
+      oldWidget.style.toCreationParams(),
+      widget.style.toCreationParams(),
+    )) {
+      _generation++;
+    }
     if (oldWidget.enabled != widget.enabled ||
         oldWidget.placement != widget.placement) {
       unawaited(_refresh());

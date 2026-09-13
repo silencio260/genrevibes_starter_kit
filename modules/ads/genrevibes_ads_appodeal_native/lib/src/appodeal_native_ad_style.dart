@@ -9,6 +9,11 @@ enum AppodealNativeAdLayout {
 
   /// Icon and title, body, and a full-width call to action. No media.
   small,
+
+  /// One row: the icon, the attribution badge and headline above one line of
+  /// body, and the call to action at the end. No media, and no top strip:
+  /// roughly a third of the height of [small].
+  compact,
 }
 
 /// The look of an `AppodealNativeAdView`.
@@ -30,6 +35,7 @@ final class AppodealNativeAdStyle {
     this.attributionLabel = 'Ad',
     this.cornerRadius = 0,
     this.callToActionCornerRadius = 16,
+    this.attributionStripHeight = 20,
     this.padding = 12,
     this.spacing = 8,
     this.iconSize = 56,
@@ -74,6 +80,11 @@ final class AppodealNativeAdStyle {
   /// Call-to-action corner radius.
   final double callToActionCornerRadius;
 
+  /// Height of the strip at the top of the card that holds the attribution
+  /// badge and AdChoices, so neither covers the icon or the headline. Not used
+  /// by [AppodealNativeAdLayout.compact], which puts the badge by the headline.
+  final double attributionStripHeight;
+
   /// Space inside the card.
   final double padding;
 
@@ -103,15 +114,23 @@ final class AppodealNativeAdStyle {
 
   /// The height the Flutter view gives the native view.
   ///
-  /// The body shows at most two lines, so this leaves room for two.
+  /// The body shows at most two lines, so this leaves room for two; the
+  /// [AppodealNativeAdLayout.compact] row shows one.
   double get resolvedHeight {
     final fixed = height;
     if (fixed != null) return fixed;
+    if (layout == AppodealNativeAdLayout.compact) {
+      final text = titleFontSize * 1.4 + 2 + bodyFontSize * 1.4;
+      return padding * 2 +
+          math.max(iconSize, math.max(callToActionHeight, text));
+    }
     final header = math.max(iconSize, titleFontSize * 1.4 * 2);
     final body = bodyFontSize * 1.4 * 2;
     final media =
         layout == AppodealNativeAdLayout.medium ? spacing + mediaHeight : 0;
     return padding * 2 +
+        attributionStripHeight +
+        spacing +
         header +
         spacing +
         body +
@@ -133,6 +152,7 @@ final class AppodealNativeAdStyle {
         'attributionLabel': attributionLabel,
         'cornerRadius': cornerRadius,
         'callToActionCornerRadius': callToActionCornerRadius,
+        'attributionStripHeight': attributionStripHeight,
         'padding': padding,
         'spacing': spacing,
         'iconSize': iconSize,

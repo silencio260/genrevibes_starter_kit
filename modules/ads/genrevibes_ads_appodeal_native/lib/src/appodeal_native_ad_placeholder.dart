@@ -40,6 +40,45 @@ final class AppodealNativeAdPlaceholder extends StatelessWidget {
           ),
         );
 
+    if (style.layout == AppodealNativeAdLayout.compact) {
+      return ExcludeSemantics(
+        child: IgnorePointer(
+          child: Container(
+            width: double.infinity,
+            height: style.resolvedHeight,
+            padding: EdgeInsets.all(style.padding),
+            decoration: BoxDecoration(
+              color: style.backgroundColor,
+              borderRadius: BorderRadius.circular(style.cornerRadius),
+            ),
+            child: Row(
+              children: <Widget>[
+                shape(style.iconSize, width: style.iconSize, radius: 8),
+                SizedBox(width: style.spacing),
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      shape(style.titleFontSize, width: 140),
+                      const SizedBox(height: 6),
+                      shape(style.bodyFontSize, width: 180),
+                    ],
+                  ),
+                ),
+                SizedBox(width: style.spacing),
+                shape(
+                  style.callToActionHeight,
+                  width: 80,
+                  radius: style.callToActionCornerRadius,
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return ExcludeSemantics(
       child: IgnorePointer(
         child: Container(
@@ -53,6 +92,15 @@ final class AppodealNativeAdPlaceholder extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
+              // Where the attribution badge will be.
+              SizedBox(
+                height: style.attributionStripHeight,
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: shape(14, width: 24),
+                ),
+              ),
+              SizedBox(height: style.spacing),
               Row(
                 children: <Widget>[
                   shape(style.iconSize, width: style.iconSize, radius: 8),
