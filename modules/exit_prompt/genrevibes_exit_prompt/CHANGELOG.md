@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased — 2026-09-13
+
+- Align the Dart minimum with the existing Flutter 3.27 requirement.
+
 ## 0.1.0-dev.1
 
 - Add `ExitGuard`, which intercepts Back on the app's root screen and asks in

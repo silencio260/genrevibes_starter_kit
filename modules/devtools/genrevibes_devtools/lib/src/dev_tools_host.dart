@@ -29,13 +29,14 @@ import 'recording_kit_logger.dart';
 /// things up. The host passes what it has; every capability is nullable, and a
 /// page whose capability is absent says so rather than crashing.
 ///
-/// That also makes the bench a migration checklist: the capabilities showing
-/// "not adopted" are exactly the ones still to be wired.
+/// An absent capability means it is not connected to this host. Module health
+/// separately describes whether an adopted service is disabled or failing.
 final class DevToolsHost {
   /// Creates a host.
   const DevToolsHost({
     required this.kit,
     required this.catalogue,
+    this.requireDeveloperAccess = true,
     this.logger,
     this.eventLog,
     this.analytics,
@@ -64,6 +65,9 @@ final class DevToolsHost {
     this.exitPrompt,
     this.developerAdSwitches,
   });
+
+  /// Set false only when the host supplies its own access guard.
+  final bool requireDeveloperAccess;
 
   /// The coordinator, for the module overview.
   final GenRevibesStarterKit kit;

@@ -1,17 +1,8 @@
 import 'package:genrevibes_analytics/genrevibes_analytics.dart';
 import 'package:genrevibes_remote_config/genrevibes_remote_config.dart';
 
-/// The remote-config keys that govern session replay.
-///
-/// Session replay is billed per recording and stores what the user's screen
-/// looked like, so both the volume and the privacy of it are things a portfolio
-/// needs to change without shipping a release. These four are that lever.
-///
-/// The percentage defaults to 100 because that is what every app in the
-/// portfolio does today: replay is on for everyone in release. A key whose
-/// default silently cut recording to zero would look like an outage the first
-/// time an app adopted this and Firebase had no value set for it. Turning the
-/// number *down* is the deliberate act, done remotely, watching the bill.
+/// Session replay defaults for new apps: zero rollout and masked content.
+/// Apps choose their own rollout via PortfolioRemoteConfigSchema.build.
 abstract final class SessionReplayPolicyKeys {
   static const _int = RemoteConfigIntCodec();
   static const _bool = RemoteConfigBoolCodec();
@@ -31,31 +22,22 @@ abstract final class SessionReplayPolicyKeys {
   /// narrows the recorded cohort instead of resampling it.
   static const percentOfUsers = RemoteConfigKey<int>(
     name: 'session_replay_percent',
-    defaultValue: 100,
+    defaultValue: 0,
     codec: _int,
     isValid: _isPercentage,
   );
 
-  /// Whether replay masks all rendered text.
-  ///
-  /// Off by default, which is what the portfolio ships today: a replay of a
-  /// masked screen shows grey boxes moving around, and cannot answer the
-  /// question replay is paid for — where a user got stuck and what they were
-  /// looking at when they did.
-  ///
-  /// It is a remote key rather than a constant so it can be turned on for
-  /// everyone, immediately and without a release, if a screen ever renders
-  /// something that should not be recorded.
+  /// Whether replay masks text. Changing SDK masking requires a restart.
   static const maskAllText = RemoteConfigKey<bool>(
     name: 'session_replay_mask_text',
-    defaultValue: false,
+    defaultValue: true,
     codec: _bool,
   );
 
   /// Whether replay masks all rendered images. Same reasoning as [maskAllText].
   static const maskAllImages = RemoteConfigKey<bool>(
     name: 'session_replay_mask_images',
-    defaultValue: false,
+    defaultValue: true,
     codec: _bool,
   );
 
@@ -65,6 +47,27 @@ abstract final class SessionReplayPolicyKeys {
         remoteConfigKey(percentOfUsers),
         remoteConfigKey(maskAllText),
         remoteConfigKey(maskAllImages),
+      ];
+
+  /// Override bundled defaults without changing the shared key names.
+  static List<RemoteConfigKey<Object?>> withDefaults(
+          SessionReplayPolicy policy) =>
+      [
+        remoteConfigKey(RemoteConfigKey<bool>(
+            name: enabled.name, defaultValue: policy.enabled, codec: _bool)),
+        remoteConfigKey(RemoteConfigKey<int>(
+            name: percentOfUsers.name,
+            defaultValue: policy.boundedPercent,
+            codec: _int,
+            isValid: _isPercentage)),
+        remoteConfigKey(RemoteConfigKey<bool>(
+            name: maskAllText.name,
+            defaultValue: policy.maskAllText,
+            codec: _bool)),
+        remoteConfigKey(RemoteConfigKey<bool>(
+            name: maskAllImages.name,
+            defaultValue: policy.maskAllImages,
+            codec: _bool)),
       ];
 
   /// Reads a policy out of [snapshot].

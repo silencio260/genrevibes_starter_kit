@@ -14,8 +14,8 @@ import 'session_replay_settings.dart';
 /// and the most sensitive thing it stores, so the decision is deliberately not
 /// left to the SDK. Three inputs, in strict order of authority:
 ///
-/// 1. A developer's [SessionReplayOverride], persisted on the device.
-/// 2. The rollout's master switch.
+/// 1. The rollout's master switch.
+/// 2. A developer's [SessionReplayOverride], persisted on the device.
 /// 3. This install's stable bucket against the rollout percentage.
 ///
 /// The bucket is drawn once, on the first launch that asks, and kept. That is
@@ -70,6 +70,28 @@ final class SessionReplayController implements StarterModule {
   SessionReplayRecorder? _recorder;
   SessionReplayOverride _override = SessionReplayOverride.followRemote;
   SessionReplayPlan _plan = SessionReplayPlan.none;
+  SessionReplayPlan? _configuredPlan;
+  bool? _appliedRecording;
+  Future<KitResult<void>> _enforcement =
+      Future.value(const KitSuccess<void>(null));
+
+  /// Masking plan supplied when the attached SDK was configured.
+  SessionReplayPlan? get configuredPlan => _configuredPlan;
+
+  /// Last successful recording command; null means it was not confirmed.
+  bool? get appliedRecording => _appliedRecording;
+
+  /// Whether requested masking differs from the configured SDK masking.
+  bool get maskingNeedsRestart =>
+      _configuredPlan != null &&
+      (_plan.maskAllText != _configuredPlan!.maskAllText ||
+          _plan.maskAllImages != _configuredPlan!.maskAllImages);
+
+  /// Whether stricter requested masking requires recording to stop.
+  bool get blockedByMaskChange =>
+      _configuredPlan != null &&
+      ((_plan.maskAllText && !_configuredPlan!.maskAllText) ||
+          (_plan.maskAllImages && !_configuredPlan!.maskAllImages));
   ModuleHealth _health;
   int _bucket = 0;
   bool _bucketResolved = false;
@@ -99,8 +121,8 @@ final class SessionReplayController implements StarterModule {
 
   @override
   Future<KitResult<void>> initialize() async {
-    if (_initialized) return const KitSuccess<void>(null);
     if (_disposed) return _notReady<void>();
+    if (_initialized) return const KitSuccess<void>(null);
     _setHealth(ModuleState.initializing);
 
     var degraded = false;
@@ -124,6 +146,7 @@ final class SessionReplayController implements StarterModule {
 
     if (!await _resolveBucket()) degraded = true;
 
+    if (_disposed) return _notReady<void>();
     _initialized = true;
     _publish(_resolve());
     _setHealth(degraded ? ModuleState.degraded : ModuleState.ready);
@@ -136,9 +159,11 @@ final class SessionReplayController implements StarterModule {
   /// same plan, so the sync is usually a no-op; it exists for the case where
   /// the plan moved between configuration and now, and for a provider that
   /// starts recording on its own.
-  Future<KitResult<void>> attach(SessionReplayRecorder recorder) async {
+  Future<KitResult<void>> attach(SessionReplayRecorder recorder,
+      {SessionReplayPlan? configuredPlan}) async {
     if (!_initialized || _disposed) return _notReady<void>();
     _recorder = recorder;
+    _configuredPlan = configuredPlan ?? _plan;
     return _enforce();
   }
 
@@ -218,11 +243,28 @@ final class SessionReplayController implements StarterModule {
     if (_disposed) return const KitSuccess<void>(null);
     _initialized = false;
     _disposed = true;
-    _recorder = null;
-    _setHealth(ModuleState.disposed);
-    await _planChanges.close();
-    await _healthChanges.close();
-    return const KitSuccess<void>(null);
+    KitResult<void> result = const KitSuccess<void>(null);
+    try {
+      await _enforcement;
+      final recorder = _recorder;
+      if (recorder != null) {
+        result =
+            await recorder.stopRecording().timeout(const Duration(seconds: 5));
+      }
+    } on Object catch (error, stack) {
+      result = KitFailure<void>(KitError(
+          code: KitErrorCode.provider,
+          message: 'Replay cleanup failed.',
+          cause: error,
+          stackTrace: stack));
+    } finally {
+      _recorder = null;
+      _appliedRecording = result.isSuccess ? false : null;
+      _setHealth(ModuleState.disposed);
+      await _planChanges.close();
+      await _healthChanges.close();
+    }
+    return result;
   }
 
   /// Reads this install's bucket, drawing and storing one the first time.
@@ -233,7 +275,8 @@ final class SessionReplayController implements StarterModule {
   /// silently dropping out of the sample.
   Future<bool> _resolveBucket() async {
     final read = await _store.getInt(SessionReplayKeys.bucket);
-    final existing = read.fold(onSuccess: (value) => value, onFailure: (_) => null);
+    final existing =
+        read.fold(onSuccess: (value) => value, onFailure: (_) => null);
     if (read.isFailure) {
       final error = read.fold(onSuccess: (_) => null, onFailure: (e) => e)!;
       _logFailure('Session replay bucket could not be read.', error);
@@ -262,17 +305,25 @@ final class SessionReplayController implements StarterModule {
 
   SessionReplayPlan _resolve() {
     final percent = _policy.boundedPercent;
-    final (bool recording, SessionReplayReason reason) = switch (_override) {
-      SessionReplayOverride.forceOn => (true, SessionReplayReason.forcedOn),
-      SessionReplayOverride.forceOff => (false, SessionReplayReason.forcedOff),
-      SessionReplayOverride.followRemote when !_policy.enabled => (
-          false,
-          SessionReplayReason.disabledRemotely,
-        ),
-      SessionReplayOverride.followRemote => _bucket < percent
-          ? (true, SessionReplayReason.inRollout)
-          : (false, SessionReplayReason.outsideRollout),
-    };
+    final (bool recording, SessionReplayReason reason) = !_policy.enabled
+        ? (false, SessionReplayReason.disabledRemotely)
+        : switch (_override) {
+            SessionReplayOverride.forceOn => (
+                true,
+                SessionReplayReason.forcedOn
+              ),
+            SessionReplayOverride.forceOff => (
+                false,
+                SessionReplayReason.forcedOff
+              ),
+            SessionReplayOverride.followRemote when !_policy.enabled => (
+                false,
+                SessionReplayReason.disabledRemotely,
+              ),
+            SessionReplayOverride.followRemote => _bucket < percent
+                ? (true, SessionReplayReason.inRollout)
+                : (false, SessionReplayReason.outsideRollout),
+          };
     return SessionReplayPlan(
       recording: recording,
       maskAllText: _policy.maskAllText,
@@ -291,20 +342,41 @@ final class SessionReplayController implements StarterModule {
         _plan.maskAllImages != plan.maskAllImages ||
         _plan.bucket != plan.bucket ||
         _plan.percentOfUsers != plan.percentOfUsers;
+    if (_disposed) return;
     _plan = plan;
     if (changed && !_planChanges.isClosed) _planChanges.add(plan);
   }
 
-  Future<KitResult<void>> _enforce() async {
+  Future<KitResult<void>> _enforce() {
+    _enforcement = _enforcement.then((_) => _applyRecording(),
+        onError: (Object _, StackTrace __) => _applyRecording());
+    return _enforcement;
+  }
+
+  Future<KitResult<void>> _applyRecording() async {
+    if (_disposed) return _notReady<void>();
     final recorder = _recorder;
     if (recorder == null) return const KitSuccess<void>(null);
-    final result = _plan.recording
-        ? await recorder.startRecording()
-        : await recorder.stopRecording();
+    final shouldRecord = _plan.recording && !blockedByMaskChange;
+    KitResult<void> result;
+    try {
+      result = await (shouldRecord
+              ? recorder.startRecording()
+              : recorder.stopRecording())
+          .timeout(const Duration(seconds: 5));
+    } on Object catch (error, stack) {
+      result = KitFailure<void>(KitError(
+          code: KitErrorCode.provider,
+          message: 'Replay control failed.',
+          cause: error,
+          stackTrace: stack));
+    }
+    if (_disposed) return _notReady<void>();
+    _appliedRecording = result.isSuccess ? shouldRecord : null;
     result.fold(
       onSuccess: (_) => _logger.log(
         KitLogLevel.debug,
-        _plan.recording
+        shouldRecord
             ? 'Session replay recording.'
             : 'Session replay not recording.',
         moduleId: moduleId,
@@ -340,6 +412,7 @@ final class SessionReplayController implements StarterModule {
   }
 
   void _setHealth(ModuleState state, {KitError? error}) {
+    if (_disposed && state != ModuleState.disposed) return;
     _health = ModuleHealth(
       moduleId: moduleId,
       provider: _recorder?.providerId,
@@ -347,7 +420,10 @@ final class SessionReplayController implements StarterModule {
       observedAt: _clock.now(),
       error: error,
       details: <String, Object?>{
-        'recording': _plan.recording,
+        'recordingRequested': _plan.recording,
+        'recordingApplied': _appliedRecording,
+        'maskingNeedsRestart': maskingNeedsRestart,
+        'blockedByMaskChange': blockedByMaskChange,
         'reason': _plan.reason.name,
         'bucket': _bucket,
         'bucketPersisted': _bucketResolved,

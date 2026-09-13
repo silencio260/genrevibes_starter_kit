@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased — 2026-09-13
+
+- Track configured replay masking and applied recording; stop for stricter masking and remote disable. Continue cleanup after sink errors.
+
 ## 0.1.0-dev.3
 
 - Add `SessionReplayController`, which resolves whether an install records

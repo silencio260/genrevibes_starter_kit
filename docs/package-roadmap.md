@@ -1,5 +1,15 @@
 # Package roadmap
 
+## Current owner priorities — 13 September 2026
+
+Follow the [kit and Story Saver hardening plan](production-hardening-plan.md).
+Agents/skills changes are outside this workstream.
+
+- [ ] CI: deferred; revisit only when the owner asks. Future reviews: tiny TODO only.
+
+The hosted-matrix and automated-publishing items below are historical backlog,
+not prerequisites for the current internal hardening work.
+
 ## Foundation milestone
 
 - [x] Archive the pre-modular monolith to `deprecated_old_version_1/` under the
@@ -65,7 +75,13 @@
 - [x] Create `genrevibes_auth` / `genrevibes_database` contracts and Firebase
   adapters (consumers: ai_chatbot, note_ai; never Story Saver).
 
-## Production-hardening milestone
+## September hardening changes
+
+Source changes are recorded in the [implementation notes](production-hardening-plan.md).
+The [adoption guide](portfolio-adoption.md) covers current shared features.
+Device checks remain pending; older build results below do not validate this diff.
+
+## Production-hardening milestone (historical backlog)
 
 - [ ] Test the minimum supported and current stable Flutter versions. The
   exact-version CI matrix is implemented; Flutter 3.44.1 passes locally, and
@@ -82,8 +98,8 @@
 
 ## Portfolio migration milestone
 
-- [ ] Migrate Story Saver analytics and remote config.
-- [ ] Migrate notifications.
+- [x] Migrate Story Saver analytics and remote config.
+- [x] Migrate Story Saver notifications.
 - [ ] Migrate ads and premium suppression.
 - [ ] Migrate RevenueCat IAP and validate purchases/restores.
 - [ ] Migrate reusable rating, feedback, consent, and onboarding behavior.
@@ -92,7 +108,7 @@
 ## Expansion milestone
 
 - [ ] Add Adapty after RevenueCat contract parity is proven.
-- [ ] Add Appodeal after the AdMob policy boundary is proven.
+- [x] Add Appodeal and its Android native UI adapter.
 - [ ] Add CAS.AI and Yodo1 MAS through the same ads contract.
 - [ ] Add an entitlement backend only when cross-provider migration or webhook
   reconciliation requires it.

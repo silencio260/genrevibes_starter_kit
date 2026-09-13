@@ -12,3 +12,10 @@ without logging private identifiers or tokens.
 `NotificationCampaignSource` accepts hardcoded campaigns, an app-owned remote
 config decoder, or a fallback composition of both. The neutral package does not
 depend on a remote-config vendor.
+
+## September hardening
+
+Add optional pending-tap consumption and timezone-update contracts.
+
+See [portfolio adoption](../../../docs/portfolio-adoption.md) and
+[implementation/check status](../../../docs/production-hardening-plan.md).

@@ -48,7 +48,7 @@ final class DeveloperAccessController implements StarterModule {
           observedAt: clock.now(),
         ),
         _current = DeveloperAccess(
-          reason: config.isDevelopmentBuild
+          reason: config.enabled && config.isDevelopmentBuild
               ? DeveloperAccessReason.developmentBuild
               : DeveloperAccessReason.none,
           lockedOut: false,
@@ -85,6 +85,29 @@ final class DeveloperAccessController implements StarterModule {
   /// The current decision.
   DeveloperAccess get current => _current;
 
+  /// Whether the hidden gesture may offer passcode entry now.
+  bool get canEnterPasscode =>
+      _config.enabled &&
+      _config.allowPasscode &&
+      !_disposed &&
+      !_lockedOut &&
+      !_current.isGranted;
+
+  /// Whether the current grant permits this action under the app configuration.
+  bool allows(DeveloperAction action) =>
+      !_disposed &&
+      _config.enabled &&
+      current.isGranted &&
+      _config.actions.contains(action) &&
+      (current.reason != DeveloperAccessReason.passcode ||
+          (_config.passcodeActions ?? _config.actions).contains(action));
+
+  /// Revoke this session's passcode grant; listed devices remain listed.
+  void lockSession() {
+    _passcodeGranted = false;
+    _publish();
+  }
+
   /// Emits each changed decision.
   Stream<DeveloperAccess> get changes => _changes.stream;
 
@@ -96,7 +119,7 @@ final class DeveloperAccessController implements StarterModule {
     if (_disposed) return _notReady();
     if (_initialized) return const KitSuccess<void>(null);
     _initialized = true;
-    if (_config.isDevelopmentBuild) {
+    if (_config.enabled && _config.isDevelopmentBuild) {
       await _clearFailures();
     } else {
       _failures = await _readFailures();
@@ -110,6 +133,7 @@ final class DeveloperAccessController implements StarterModule {
   ///
   /// Hashed immediately; the identifier itself is not kept.
   void setDeviceId(String? deviceId) {
+    if (_disposed) return;
     final trimmed = deviceId?.trim();
     _deviceHash = trimmed == null || trimmed.isEmpty
         ? null
@@ -119,6 +143,7 @@ final class DeveloperAccessController implements StarterModule {
 
   /// Replaces the remote list. Malformed entries are ignored.
   void setRemoteDeviceHashes(Iterable<String> hashes) {
+    if (_disposed) return;
     _remoteHashes
       ..clear()
       ..addAll(DeveloperDeviceHash.normalizeAll(hashes));
@@ -131,7 +156,11 @@ final class DeveloperAccessController implements StarterModule {
   /// limit returns [PasscodeOutcome.lockedOut] rather than
   /// [PasscodeOutcome.incorrect].
   Future<PasscodeOutcome> submitPasscode(String attempt) async {
-    if (!_initialized || _disposed || _lockedOut) {
+    if (!_config.enabled ||
+        !_config.allowPasscode ||
+        !_initialized ||
+        _disposed ||
+        _lockedOut) {
       return PasscodeOutcome.lockedOut;
     }
     if (attempt.trim().isEmpty) return PasscodeOutcome.incorrect;
@@ -139,6 +168,7 @@ final class DeveloperAccessController implements StarterModule {
     if (_config.matchesPasscode(attempt)) {
       _passcodeGranted = true;
       await _clearFailures();
+      if (_disposed) return PasscodeOutcome.lockedOut;
       _publish();
       return PasscodeOutcome.granted;
     }
@@ -165,6 +195,8 @@ final class DeveloperAccessController implements StarterModule {
   Future<KitResult<void>> dispose() async {
     if (_disposed) return const KitSuccess<void>(null);
     _disposed = true;
+    _passcodeGranted = false;
+    _publish();
     _setHealth(ModuleState.disposed);
     await _changes.close();
     await _healthChanges.close();
@@ -172,8 +204,9 @@ final class DeveloperAccessController implements StarterModule {
   }
 
   Future<int> _readFailures() async {
-    final count = (await _store.getInt(DeveloperAccessKeys.failedPasscodeAttempts))
-        .fold(onSuccess: (value) => value ?? 0, onFailure: (_) => 0);
+    final count =
+        (await _store.getInt(DeveloperAccessKeys.failedPasscodeAttempts))
+            .fold(onSuccess: (value) => value ?? 0, onFailure: (_) => 0);
     if (count <= 0) return 0;
     final marker = _installMarker;
     if (marker == null) return count;
@@ -202,20 +235,21 @@ final class DeveloperAccessController implements StarterModule {
       if (hash != null && _remoteHashes.contains(hash))
         DeveloperDeviceList.remote,
     };
-    final reason = _config.isDevelopmentBuild
-        ? DeveloperAccessReason.developmentBuild
-        : listedIn.isNotEmpty
-            ? DeveloperAccessReason.listedDevice
-            : _passcodeGranted
-                ? DeveloperAccessReason.passcode
-                : DeveloperAccessReason.none;
+    final reason = !_config.enabled || _disposed
+        ? DeveloperAccessReason.none
+        : _config.isDevelopmentBuild
+            ? DeveloperAccessReason.developmentBuild
+            : listedIn.isNotEmpty
+                ? DeveloperAccessReason.listedDevice
+                : _passcodeGranted
+                    ? DeveloperAccessReason.passcode
+                    : DeveloperAccessReason.none;
     final next = DeveloperAccess(
       reason: reason,
       deviceHash: hash,
       listedIn: Set<DeveloperDeviceList>.unmodifiable(listedIn),
       lockedOut: _lockedOut,
-      attemptsRemaining:
-          math.max(0, _config.maxPasscodeAttempts - _failures),
+      attemptsRemaining: math.max(0, _config.maxPasscodeAttempts - _failures),
     );
     final previous = _current;
     _current = next;
@@ -250,6 +284,7 @@ final class DeveloperAccessController implements StarterModule {
   }
 
   void _setHealth(ModuleState state) {
+    if (_disposed && state != ModuleState.disposed) return;
     _health = ModuleHealth(
       moduleId: moduleId,
       state: state,

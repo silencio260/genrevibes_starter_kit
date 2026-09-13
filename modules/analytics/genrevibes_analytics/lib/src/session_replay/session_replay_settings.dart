@@ -62,8 +62,8 @@ final class SessionReplayPolicy {
   const SessionReplayPolicy({
     this.enabled = true,
     this.percentOfUsers = 0,
-    this.maskAllText = false,
-    this.maskAllImages = false,
+    this.maskAllText = true,
+    this.maskAllImages = true,
   });
 
   /// Master switch. `false` stops every device recording, rollout or not.

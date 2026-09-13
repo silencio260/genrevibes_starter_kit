@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased — 2026-09-13
+
+- Make replay defaults configurable per app; new apps default to zero rollout and masked content.
+
 ## 0.1.0-dev.6
 
 - Add `SplashAdPolicyKeys`: `splash_ad_format` (`interstitial`, `rewarded`,

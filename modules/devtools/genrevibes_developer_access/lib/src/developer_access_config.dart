@@ -2,6 +2,15 @@ import 'dart:convert';
 
 import 'developer_device_hash.dart';
 
+/// Shared actions an app can enable or restrict without reimplementing access.
+enum DeveloperAction {
+  /// Access shared developer diagnostics and Kit Lab.
+  diagnostics,
+
+  /// Simulate paid feature access without a real purchase.
+  premiumSimulation,
+}
+
 /// Values every portfolio app shares unless it has a reason not to.
 abstract final class DeveloperAccessDefaults {
   /// The passcode when a build supplies none.
@@ -25,14 +34,23 @@ final class DeveloperAccessConfig {
   /// A blank [passcode] means [DeveloperAccessDefaults.passcode].
   DeveloperAccessConfig({
     required this.isDevelopmentBuild,
+    this.enabled = true,
+    this.allowPasscode = true,
+    Set<DeveloperAction> actions = const {
+      DeveloperAction.diagnostics,
+      DeveloperAction.premiumSimulation
+    },
+    Set<DeveloperAction>? passcodeActions,
     Iterable<String> hardcodedDeviceHashes = const <String>[],
     String environmentDeviceHashes = '',
     String passcode = '',
     this.maxPasscodeAttempts = DeveloperAccessDefaults.maxPasscodeAttempts,
-  })  : hardcodedDeviceHashes =
-            Set<String>.unmodifiable(
-              DeveloperDeviceHash.normalizeAll(hardcodedDeviceHashes),
-            ),
+  })  : actions = Set.unmodifiable(actions),
+        passcodeActions =
+            passcodeActions == null ? null : Set.unmodifiable(passcodeActions),
+        hardcodedDeviceHashes = Set<String>.unmodifiable(
+          DeveloperDeviceHash.normalizeAll(hardcodedDeviceHashes),
+        ),
         environmentDeviceHashes = Set<String>.unmodifiable(
           DeveloperDeviceHash.parseList(environmentDeviceHashes),
         ),
@@ -47,6 +65,18 @@ final class DeveloperAccessConfig {
       );
     }
   }
+
+  /// Opt out of all kit developer access, even in a development build.
+  final bool enabled;
+
+  /// Use the kit passcode/gesture defaults, or disable passcode entry.
+  final bool allowPasscode;
+
+  /// Default action set for all granted devices.
+  final Set<DeveloperAction> actions;
+
+  /// Optional narrower action set for passcode-only sessions.
+  final Set<DeveloperAction>? passcodeActions;
 
   /// Whether this is a development build. Grants access, and clears a lockout.
   final bool isDevelopmentBuild;
@@ -68,6 +98,7 @@ final class DeveloperAccessConfig {
   ///
   /// Compares every byte regardless of where the first difference is.
   bool matchesPasscode(String attempt) {
+    if (!enabled || !allowPasscode) return false;
     final expected = utf8.encode(_passcode);
     final actual = utf8.encode(attempt.trim());
     var difference = expected.length ^ actual.length;

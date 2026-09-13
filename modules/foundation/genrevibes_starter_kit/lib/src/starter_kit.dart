@@ -1,99 +1,106 @@
 import 'dart:async';
 
 import 'package:genrevibes_core/genrevibes_core.dart';
-
 import 'starter_module_registration.dart';
 
-/// Starts and observes only the modules explicitly selected by an application.
+/// Starts only selected modules. Failed or timed-out optional work never blocks
+/// the next module; a timeout does not invent a successful provider result.
 final class GenRevibesStarterKit implements StarterModule {
-  /// Creates a provider-agnostic starter-kit coordinator.
-  ///
-  /// [moduleTimeout] bounds how long a single module may spend in
-  /// `initialize()`. Vendor SDKs bridge callbacks to futures, and a callback
-  /// that never fires would otherwise suspend startup permanently with no
-  /// error, no log and an empty Dart stack. A module that overruns its budget
-  /// is recorded as a timeout failure and the remaining modules still start,
-  /// which is the whole point of a health model: a broken capability degrades,
-  /// it does not take the application down with it.
   GenRevibesStarterKit({
     required Iterable<StarterModuleRegistration> modules,
     KitClock clock = const SystemKitClock(),
     KitLogger logger = const NoopKitLogger(),
     Duration moduleTimeout = const Duration(seconds: 10),
-  })  : _registrations = List<StarterModuleRegistration>.unmodifiable(modules),
+    this.autoStartDeferred = true,
+  })  : _registrations = List.unmodifiable(modules),
         _clock = clock,
         _logger = logger,
         _moduleTimeout = moduleTimeout,
         _health = ModuleHealth(
-          moduleId: 'starter_kit',
-          state: ModuleState.idle,
-          observedAt: clock.now(),
-        );
+            moduleId: 'starter_kit',
+            state: ModuleState.idle,
+            observedAt: clock.now());
 
+  /// Hosts with UI call startDeferred after their first frame instead.
+  final bool autoStartDeferred;
   final List<StarterModuleRegistration> _registrations;
   final KitClock _clock;
   final KitLogger _logger;
   final Duration _moduleTimeout;
-  final Map<String, StarterModule> _modules = <String, StarterModule>{};
-  final Map<String, StreamSubscription<ModuleHealth>> _subscriptions =
-      <String, StreamSubscription<ModuleHealth>>{};
-  final Map<String, KitError> _initializationErrors = <String, KitError>{};
+  final Map<String, StarterModule> _modules = {};
+  final Map<String, StreamSubscription<ModuleHealth>> _subscriptions = {};
+  final Map<String, KitError> _initializationErrors = {};
   final StreamController<ModuleHealth> _healthChanges =
-      StreamController<ModuleHealth>.broadcast();
+      StreamController.broadcast();
   late ModuleHealth _health;
   Future<KitResult<void>>? _initialization;
+  Future<KitResult<void>>? _disposal;
   KitResult<void>? _lastInitializationResult;
-  bool _initializationInProgress = false;
+  final Completer<void> _stopped = Completer<void>();
+  final Completer<void> _deferredComplete = Completer<void>();
   Future<void>? _deferredStartup;
+  bool _initializationInProgress = false;
   bool _initialized = false;
   bool _disposed = false;
 
   @override
   String get moduleId => 'starter_kit';
-
   @override
   ModuleHealth get health => _health;
-
   @override
   Stream<ModuleHealth> get healthChanges => _healthChanges.stream;
+  Map<String, StarterModule> get modules => Map.unmodifiable(_modules);
+  List<String> get registeredModuleIds =>
+      List.unmodifiable(_registrations.map((r) => r.moduleId));
 
-  /// Instantiated enabled modules, keyed by stable module ID.
-  Map<String, StarterModule> get modules =>
-      Map<String, StarterModule>.unmodifiable(_modules);
-
-  /// Completes when every deferred module has finished starting.
-  ///
-  /// Startup does not wait for these, but a caller that actually depends on one
-  /// must. An ad request, for example, may not be made before consent has been
-  /// gathered, so the ad path awaits this rather than the application doing so.
-  ///
-  /// Completes normally whatever the outcome; a deferred failure is reported on
-  /// that module's health, not here. Returns immediately when there are no
-  /// deferred modules or initialization has not run.
+  /// Completes after all deferred attempts, including failures/timeouts, or stop.
+  /// Inspect moduleHealth for the outcome. Manual hosts must call startDeferred.
   Future<void> get deferredStartupComplete =>
-      _deferredStartup ?? Future<void>.value();
+      _registrations.any((r) => r.enabled && r.isDeferred)
+          ? _deferredComplete.future
+          : Future<void>.value();
 
-  /// Returns an initialized module without introducing a service locator.
-  T? module<T extends StarterModule>(String moduleId) {
-    final value = _modules[moduleId];
+  ModuleHealth? moduleHealth(String id) {
+    final current = _modules[id]?.health;
+    final error = _initializationErrors[id];
+    if (error == null) {
+      if (current != null) return current;
+      for (final registration in _registrations) {
+        if (registration.moduleId == id) {
+          return ModuleHealth(
+              moduleId: id,
+              state: _disposed
+                  ? ModuleState.disposed
+                  : registration.enabled
+                      ? ModuleState.idle
+                      : ModuleState.disabled,
+              observedAt: _clock.now(),
+              message: registration.enabled
+                  ? 'Waiting to start'
+                  : 'Disabled by this app');
+        }
+      }
+      return null;
+    }
+    return ModuleHealth(
+        moduleId: id,
+        provider: current?.provider,
+        state: ModuleState.failed,
+        observedAt: _clock.now(),
+        error: error,
+        details: current?.details ?? const {});
+  }
+
+  T? module<T extends StarterModule>(String id) {
+    final value = _modules[id];
     return value is T ? value : null;
   }
 
   @override
   Future<KitResult<void>> initialize() {
-    if (_disposed) {
-      return Future<KitResult<void>>.value(_notReady());
-    }
-    if (_initialized) {
-      return Future<KitResult<void>>.value(
-        _lastInitializationResult ?? const KitSuccess<void>(null),
-      );
-    }
-    final active = _initialization;
-    if (active != null) return active;
-    final started = _initializeOnce();
-    _initialization = started;
-    return started.whenComplete(() => _initialization = null);
+    if (_disposed) return Future.value(_notReady());
+    if (_initialized) return Future.value(_lastInitializationResult!);
+    return _initialization ??= _initializeOnce();
   }
 
   Future<KitResult<void>> _initializeOnce() async {
@@ -104,135 +111,142 @@ final class GenRevibesStarterKit implements StarterModule {
       _setHealth(ModuleState.failed, error: validation);
       return _lastInitializationResult!;
     }
-
     _initializationInProgress = true;
     _setHealth(ModuleState.initializing);
-    KitError? firstRequiredError;
-    for (final registration in _registrations
-        .where((item) => item.enabled && !item.isDeferred)) {
-      StarterModule module;
-      try {
-        module = registration.create!();
-      } on Object catch (error, stackTrace) {
-        final mapped = KitError(
-          code: KitErrorCode.unknown,
-          message: 'Module factory ${registration.moduleId} failed: $error',
-          cause: error,
-          stackTrace: stackTrace,
-        );
-        _recordInitializationError(registration, mapped);
-        firstRequiredError ??= registration.isRequired ? mapped : null;
-        continue;
+    KitError? requiredError;
+    for (final registration
+        in _registrations.where((r) => r.enabled && !r.isDeferred)) {
+      if (_disposed) break;
+      final result = await _start(registration);
+      if (registration.isRequired) {
+        result.fold(
+            onSuccess: (_) {}, onFailure: (error) => requiredError ??= error);
       }
-
-      // An adapter names itself under the capability it implements:
-      // `ads.admob` for the `ads` registration, `notifications.push.onesignal`
-      // for `notifications.push`. Registering an adapter directly under its
-      // capability is the ordinary composition, so a namespaced child is
-      // accepted; only an unrelated module is a configuration error.
-      final moduleId = module.moduleId;
-      final registeredId = registration.moduleId;
-      if (moduleId != registeredId && !moduleId.startsWith('$registeredId.')) {
-        final mapped = KitError(
-          code: KitErrorCode.invalidConfiguration,
-          message: 'Registration $registeredId created unrelated module '
-              '$moduleId.',
-        );
-        _recordInitializationError(registration, mapped);
-        firstRequiredError ??= registration.isRequired ? mapped : null;
-        await module.dispose();
-        continue;
-      }
-
-      _modules[registration.moduleId] = module;
-      _subscriptions[registration.moduleId] = module.healthChanges.listen(
-        (health) => _onModuleHealthChanged(registration.moduleId, health),
-      );
-      KitResult<void> result;
-      _logger.log(
-        KitLogLevel.debug,
-        'Starter-kit module initialization started.',
-        moduleId: registration.moduleId,
-      );
-      try {
-        result = await module.initialize().timeout(
-              _moduleTimeout,
-              // The underlying work is not cancellable, so it may still settle
-              // later and update this module's health. What matters here is
-              // that startup is released.
-              onTimeout: () => KitFailure<void>(
-                KitError(
-                  code: KitErrorCode.timeout,
-                  message: 'Module ${registration.moduleId} did not finish '
-                      'initializing within '
-                      '${_moduleTimeout.inMilliseconds}ms.',
-                  metadata: <String, Object?>{
-                    'moduleId': registration.moduleId,
-                    'timeoutMs': _moduleTimeout.inMilliseconds,
-                  },
-                ),
-              ),
-            );
-      } on Object catch (error, stackTrace) {
-        result = KitFailure<void>(
-          KitError(
-            code: KitErrorCode.unknown,
-            message: 'Module ${registration.moduleId} threw during startup: '
-                '$error',
-            cause: error,
-            stackTrace: stackTrace,
-          ),
-        );
-      }
-      result.fold(
-        onSuccess: (_) => _logger.log(
-          KitLogLevel.info,
-          'Starter-kit module ready.',
-          moduleId: registration.moduleId,
-        ),
-        onFailure: (error) {
-          _recordInitializationError(registration, error);
-          firstRequiredError ??= registration.isRequired ? error : null;
-        },
-      );
     }
-
     _initializationInProgress = false;
+    if (_disposed) return _notReady();
     _initialized = true;
-    // Not awaited: that is the whole point. They run in registration order so
-    // one can still depend on the one before it. The future is kept so callers
-    // that genuinely depend on a deferred capability can wait for it without
-    // the whole application having to.
-    _deferredStartup = _startDeferred();
-    unawaited(_deferredStartup);
-    final requiredError = firstRequiredError;
     _lastInitializationResult = requiredError == null
         ? const KitSuccess<void>(null)
-        : KitFailure<void>(requiredError);
+        : KitFailure<void>(requiredError!);
     _recomputeHealth(error: requiredError);
+    if (autoStartDeferred) unawaited(startDeferred());
     return _lastInitializationResult!;
   }
 
-  @override
-  Future<KitResult<void>> dispose() async {
-    if (_disposed) return const KitSuccess<void>(null);
-    final active = _initialization;
-    if (active != null) await active;
+  /// Idempotent. A deferred failure never prevents the next module starting.
+  Future<void> startDeferred() => _deferredStartup ??= _startDeferred();
 
+  Future<void> _startDeferred() async {
+    try {
+      await initialize();
+      if (_validateRegistrations() != null) return;
+      for (final registration
+          in _registrations.where((r) => r.enabled && r.isDeferred)) {
+        if (_disposed) break;
+        await _start(registration);
+        if (!_disposed) _recomputeHealth();
+      }
+    } finally {
+      if (!_deferredComplete.isCompleted) _deferredComplete.complete();
+    }
+  }
+
+  Future<KitResult<void>> _start(StarterModuleRegistration registration) async {
+    StarterModule? created;
+    KitResult<void> result;
+    try {
+      final module = registration.create!();
+      created = module;
+      if (module.moduleId != registration.moduleId &&
+          !module.moduleId.startsWith('${registration.moduleId}.')) {
+        await _disposeModule(module);
+        throw StateError(
+            'Registration ${registration.moduleId} created unrelated module ${module.moduleId}.');
+      }
+      if (_disposed) {
+        await _disposeModule(module);
+        return _notReady();
+      }
+      _modules[registration.moduleId] = module;
+      _subscriptions[registration.moduleId] = module.healthChanges.listen(
+          (health) => _onModuleHealthChanged(registration.moduleId, health));
+      _logger.log(KitLogLevel.debug, 'Module initialization started.',
+          moduleId: registration.moduleId);
+      final work = module.initialize();
+      // Native operations may be uncancellable. Clean up again if one finishes
+      // after stop, and never let its callback restart the remaining sequence.
+      unawaited(work.then<void>((_) async {
+        if (_disposed) await _disposeModule(module);
+      }, onError: (Object _, StackTrace __) {}));
+      result = await Future.any<KitResult<void>>([
+        work.timeout(registration.timeout ?? _moduleTimeout,
+            onTimeout: () => KitFailure<void>(KitError(
+                code: KitErrorCode.timeout,
+                message: 'Module ${registration.moduleId} timed out.'))),
+        _stopped.future.then((_) => _notReady()),
+      ]);
+    } on Object catch (error, stack) {
+      result = KitFailure<void>(KitError(
+          code: created != null &&
+                  created.moduleId != registration.moduleId &&
+                  !created.moduleId.startsWith('${registration.moduleId}.')
+              ? KitErrorCode.invalidConfiguration
+              : KitErrorCode.unknown,
+          message: 'Module ${registration.moduleId} could not start.',
+          cause: error,
+          stackTrace: stack));
+    }
+    if (_disposed) return _notReady();
+    result.fold(
+        onSuccess: (_) => _logger.log(KitLogLevel.info, 'Module ready.',
+            moduleId: registration.moduleId),
+        onFailure: (error) => _recordInitializationError(registration, error));
+    return result;
+  }
+
+  Future<KitResult<void>> _disposeModule(StarterModule module) async {
+    try {
+      return await module.dispose().timeout(_moduleTimeout);
+    } on Object catch (error, stack) {
+      return KitFailure<void>(KitError(
+          code: error is TimeoutException
+              ? KitErrorCode.timeout
+              : KitErrorCode.unknown,
+          message: 'Module ${module.moduleId} cleanup failed.',
+          cause: error,
+          stackTrace: stack));
+    }
+  }
+
+  @override
+  Future<KitResult<void>> dispose() {
+    if (_disposal != null) return _disposal!;
+    _disposed = true;
+    if (!_stopped.isCompleted) _stopped.complete();
+    if (!_deferredComplete.isCompleted) _deferredComplete.complete();
+    return _disposal = _dispose();
+  }
+
+  Future<KitResult<void>> _dispose() async {
     KitError? firstError;
-    for (final subscription in _subscriptions.values) {
-      await subscription.cancel();
+    for (final subscription in _subscriptions.values.toList()) {
+      try {
+        await subscription.cancel().timeout(_moduleTimeout);
+      } on Object catch (error) {
+        firstError ??= KitError(
+            code: KitErrorCode.unknown,
+            message: 'Listener cleanup failed.',
+            cause: error);
+      }
     }
     _subscriptions.clear();
-    for (final module in _modules.values.toList(growable: false).reversed) {
-      final result = await module.dispose();
+    for (final module in _modules.values.toList().reversed) {
+      final result = await _disposeModule(module);
       result.fold(
-        onSuccess: (_) {},
-        onFailure: (error) => firstError ??= error,
-      );
+          onSuccess: (_) {}, onFailure: (error) => firstError ??= error);
     }
     _modules.clear();
-    _disposed = true;
     _setHealth(ModuleState.disposed, error: firstError);
     await _healthChanges.close();
     return firstError == null
@@ -240,82 +254,14 @@ final class GenRevibesStarterKit implements StarterModule {
         : KitFailure<void>(firstError!);
   }
 
-  /// Starts deferred modules sequentially, after startup has been reported.
-  Future<void> _startDeferred() async {
-    for (final registration
-        in _registrations.where((item) => item.enabled && item.isDeferred)) {
-      if (_disposed) return;
-      StarterModule module;
-      try {
-        module = registration.create!();
-      } on Object catch (error, stackTrace) {
-        _recordInitializationError(
-          registration,
-          KitError(
-            code: KitErrorCode.unknown,
-            message: 'Deferred module ${registration.moduleId} could not be '
-                'created: $error',
-            cause: error,
-            stackTrace: stackTrace,
-          ),
-        );
-        continue;
-      }
-
-      final moduleId = module.moduleId;
-      if (moduleId != registration.moduleId &&
-          !moduleId.startsWith('${registration.moduleId}.')) {
-        _recordInitializationError(
-          registration,
-          KitError(
-            code: KitErrorCode.invalidConfiguration,
-            message: 'Registration ${registration.moduleId} created unrelated '
-                'module $moduleId.',
-          ),
-        );
-        await module.dispose();
-        continue;
-      }
-
-      _modules[registration.moduleId] = module;
-      _subscriptions[registration.moduleId] = module.healthChanges.listen(
-        (health) => _onModuleHealthChanged(registration.moduleId, health),
-      );
-      _logger.log(
-        KitLogLevel.debug,
-        'Deferred module initialization started.',
-        moduleId: registration.moduleId,
-      );
-
-      // No timeout. A deferred module may legitimately wait on a person — a
-      // consent form stays open until it is dismissed — and nothing is held up
-      // behind it.
-      KitResult<void> result;
-      try {
-        result = await module.initialize();
-      } on Object catch (error, stackTrace) {
-        result = KitFailure<void>(
-          KitError(
-            code: KitErrorCode.unknown,
-            message: 'Deferred module ${registration.moduleId} threw: $error',
-            cause: error,
-            stackTrace: stackTrace,
-          ),
-        );
-      }
-      result.fold(
-        onSuccess: (_) => _logger.log(
-          KitLogLevel.info,
-          'Deferred module ready.',
-          moduleId: registration.moduleId,
-        ),
-        onFailure: (error) => _recordInitializationError(registration, error),
-      );
-      if (!_disposed) _recomputeHealth();
-    }
-  }
-
   KitError? _validateRegistrations() {
+    if (_moduleTimeout <= Duration.zero ||
+        _registrations
+            .any((r) => r.timeout != null && r.timeout! <= Duration.zero)) {
+      return const KitError(
+          code: KitErrorCode.invalidConfiguration,
+          message: 'Module timeouts must be positive.');
+    }
     final ids = <String>{};
     for (final registration in _registrations) {
       final id = registration.moduleId.trim();
@@ -355,6 +301,7 @@ final class GenRevibesStarterKit implements StarterModule {
   }
 
   void _onModuleHealthChanged(String moduleId, ModuleHealth moduleHealth) {
+    if (_disposed) return;
     if (moduleHealth.isOperational) {
       _initializationErrors.remove(moduleId);
     }
@@ -399,7 +346,7 @@ final class GenRevibesStarterKit implements StarterModule {
       details: <String, Object?>{
         'moduleStates': <String, String>{
           for (final entry in _modules.entries)
-            entry.key: entry.value.health.state.name,
+            entry.key: moduleHealth(entry.key)!.state.name,
         },
         'disabledModuleIds': _registrations
             .where((item) => !item.enabled)

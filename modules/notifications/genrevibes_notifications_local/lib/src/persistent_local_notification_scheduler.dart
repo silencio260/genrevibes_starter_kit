@@ -8,7 +8,10 @@ import 'local_notifications_configuration.dart';
 
 /// Persistent OS-backed local notification scheduler.
 final class PersistentLocalNotificationScheduler
-    implements LocalNotificationScheduler {
+    implements
+        LocalNotificationScheduler,
+        LocalNotificationPendingInteractions,
+        LocalNotificationTimeZoneUpdater {
   /// Creates a local notification scheduler.
   PersistentLocalNotificationScheduler({
     required GenRevibesLocalNotificationsConfiguration configuration,
@@ -35,6 +38,41 @@ final class PersistentLocalNotificationScheduler
   final StreamController<ModuleHealth> _healthChanges =
       StreamController<ModuleHealth>.broadcast();
   late ModuleHealth _health;
+  LocalNotificationInteraction? _pendingInteraction;
+  final Map<int, LocalNotificationRequest> _dailyRequests = {};
+  String? _timeZone;
+
+  @override
+  LocalNotificationInteraction? takePendingInteraction() {
+    final pending = _pendingInteraction;
+    _pendingInteraction = null;
+    return pending;
+  }
+
+  @override
+  Future<KitResult<void>> updateTimeZone(String name) async {
+    final notReady = _requireReady<void>();
+    if (notReady != null) return notReady;
+    if (_timeZone == name) return const KitSuccess<void>(null);
+    final client = _client;
+    if (client is! FlutterLocalNotificationsTimeZoneClient) {
+      return const KitFailure<void>(KitError(
+          code: KitErrorCode.unsupported,
+          message: 'This notification client cannot update its timezone.'));
+    }
+    final result = await _guard<void>(() async {
+      await (client as FlutterLocalNotificationsTimeZoneClient)
+          .updateTimeZone(name);
+      for (final request in _dailyRequests.values.toList()) {
+        final daily = request.schedule as LocalNotificationDaily;
+        await _client.scheduleDaily(request,
+            hour: daily.hour, minute: daily.minute);
+      }
+    });
+    if (result.isSuccess) _timeZone = name;
+    return result;
+  }
+
   bool _initialized = false;
   bool _disposed = false;
 
@@ -66,6 +104,8 @@ final class PersistentLocalNotificationScheduler
     _setHealth(ModuleState.initializing);
     try {
       await _client.initialize(_configuration, _onInteraction);
+      if (_disposed) return _notReady<void>();
+      _timeZone = _configuration.timeZoneName;
       _initialized = true;
       _setHealth(ModuleState.ready);
       return const KitSuccess<void>(null);
@@ -95,10 +135,10 @@ final class PersistentLocalNotificationScheduler
   }
 
   @override
-  Future<KitResult<void>> schedule(LocalNotificationRequest request) {
+  Future<KitResult<void>> schedule(LocalNotificationRequest request) async {
     final invalid = _validate(request.id, request.content);
-    if (invalid != null) return Future.value(invalid);
-    return switch (request.schedule) {
+    if (invalid != null) return invalid;
+    final result = await switch (request.schedule) {
       LocalNotificationOnce(:final at) => at.isAfter(_clock.now())
           ? _guard<void>(() => _client.scheduleOnce(request, at))
           : Future<KitResult<void>>.value(
@@ -115,6 +155,14 @@ final class PersistentLocalNotificationScheduler
           () => _client.scheduleDaily(request, hour: hour, minute: minute),
         ),
     };
+    if (result.isSuccess && !_disposed) {
+      if (request.schedule is LocalNotificationDaily) {
+        _dailyRequests[request.id] = request;
+      } else {
+        _dailyRequests.remove(request.id);
+      }
+    }
+    return result;
   }
 
   @override
@@ -125,17 +173,26 @@ final class PersistentLocalNotificationScheduler
               .toList(growable: false));
 
   @override
-  Future<KitResult<void>> cancel(int id) =>
-      _guard<void>(() => _client.cancel(id));
+  Future<KitResult<void>> cancel(int id) async {
+    final result = await _guard<void>(() => _client.cancel(id));
+    if (result.isSuccess) _dailyRequests.remove(id);
+    return result;
+  }
 
   @override
-  Future<KitResult<void>> cancelAll() => _guard<void>(_client.cancelAll);
+  Future<KitResult<void>> cancelAll() async {
+    final result = await _guard<void>(_client.cancelAll);
+    if (result.isSuccess) _dailyRequests.clear();
+    return result;
+  }
 
   @override
   Future<KitResult<void>> dispose() async {
     if (_disposed) return const KitSuccess<void>(null);
     _initialized = false;
     _disposed = true;
+    _dailyRequests.clear();
+    _pendingInteraction = null;
     _setHealth(ModuleState.disposed);
     await _interactions.close();
     await _healthChanges.close();
@@ -172,6 +229,8 @@ final class PersistentLocalNotificationScheduler
   }
 
   void _onInteraction(LocalNotificationInteraction interaction) {
+    if (_disposed) return;
+    _pendingInteraction = interaction;
     if (!_interactions.isClosed) _interactions.add(interaction);
   }
 
@@ -202,6 +261,7 @@ final class PersistentLocalNotificationScheduler
   }
 
   void _setHealth(ModuleState state, {KitError? error}) {
+    if (_disposed && state != ModuleState.disposed) return;
     _health = ModuleHealth(
       moduleId: moduleId,
       provider: 'flutter_local_notifications',

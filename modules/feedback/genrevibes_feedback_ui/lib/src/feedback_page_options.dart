@@ -32,6 +32,9 @@ final class FeedbackPageLabels {
     this.sendFailed =
         'Your message didn\'t send. Check your connection and try again.',
     this.screenshotFailed = 'That screenshot couldn\'t be attached.',
+    this.attachmentTooLarge = 'That attachment is too large.',
+    this.sendUnconfirmed =
+        'We could not confirm delivery. Your message may have been sent. Retrying could send it twice.',
   });
 
   /// Wording for a support request.
@@ -107,6 +110,8 @@ final class FeedbackPageLabels {
 
   /// When picking a screenshot throws.
   final String screenshotFailed;
+  final String attachmentTooLarge;
+  final String sendUnconfirmed;
 }
 
 /// Colors and shape of the feedback page.

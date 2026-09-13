@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased — 2026-09-13
+
+- Export PostHogMaskWidget for sensitive host routes without a vendor dependency in neutral UI.
+
 ## 0.1.0-dev.2
 
 - Require `posthog_flutter >=5.39.0`, for manual session-recording control that

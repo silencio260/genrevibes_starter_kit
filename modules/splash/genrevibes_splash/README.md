@@ -61,3 +61,10 @@ implementations include "Do not place interstitial ads on app load and when
 exiting apps", and that applies whenever AdMob serves the ad through mediation.
 App open ads are the format made for launch screens. Rewarded ads must be
 opted into by the user.
+
+## September hardening
+
+Align the Dart minimum with the existing Flutter 3.27 requirement.
+
+See [portfolio adoption](../../../docs/portfolio-adoption.md) and
+[implementation/check status](../../../docs/production-hardening-plan.md).

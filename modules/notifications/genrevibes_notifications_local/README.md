@@ -12,3 +12,10 @@ The host must provide the device's current IANA timezone (for example,
 `Africa/Lagos`). Inexact-while-idle Android scheduling is the default so exact
 alarm permission is not silently required. Native Android/iOS setup described
 by `flutter_local_notifications` is still required in each host app.
+
+## September hardening
+
+Retain pending navigation taps, update timezones and daily schedules, and compute next calendar day across DST.
+
+See [portfolio adoption](../../../docs/portfolio-adoption.md) and
+[implementation/check status](../../../docs/production-hardening-plan.md).

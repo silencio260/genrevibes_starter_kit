@@ -8,3 +8,10 @@ from receiving the same event.
 
 The API is experimental until the first stable release.
 
+
+## September hardening
+
+Track configured replay masking and applied recording; stop for stricter masking and remote disable. Continue cleanup after sink errors.
+
+See [portfolio adoption](../../../docs/portfolio-adoption.md) and
+[implementation/check status](../../../docs/production-hardening-plan.md).

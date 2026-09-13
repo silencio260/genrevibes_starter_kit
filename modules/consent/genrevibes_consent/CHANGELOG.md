@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased — 2026-09-13
+
+- Bound consent waits; release fail-open startup without fabricating consent or regional status. Stop safely during initialization.
+
 ## 0.1.0-dev.2
 
 - Add the optional `ConsentFormPreviewProvider` capability, for showing the

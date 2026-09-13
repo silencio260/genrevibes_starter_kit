@@ -32,6 +32,7 @@ final class DeveloperAdSwitches {
   final Set<AdFormat> _off = <AdFormat>{};
   final StreamController<void> _changes = StreamController<void>.broadcast();
   bool _loaded = false;
+  bool _disposed = false;
 
   StreamSubscription<DeveloperAccess>? _accessChanges;
   bool _lastActive = false;
@@ -44,7 +45,7 @@ final class DeveloperAdSwitches {
   }
 
   void _listenToAccess() {
-    if (_accessChanges != null) return;
+    if (_disposed || _accessChanges != null) return;
     _lastActive = active;
     _accessChanges = _access.changes.listen((_) {
       if (active == _lastActive) return;
@@ -55,6 +56,8 @@ final class DeveloperAdSwitches {
 
   /// Stops following developer access and closes [changes].
   Future<void> dispose() async {
+    if (_disposed) return;
+    _disposed = true;
     await _accessChanges?.cancel();
     await _changes.close();
   }
@@ -70,13 +73,13 @@ final class DeveloperAdSwitches {
 
   /// Reads the remembered switches. Safe to call more than once.
   Future<void> load() async {
-    if (_loaded) return;
+    if (_disposed || _loaded) return;
     _loaded = true;
     final stored =
         await _store.getStringList(DeveloperAccessKeys.disabledAdFormats);
     final names =
         stored.fold(onSuccess: (value) => value, onFailure: (_) => null);
-    if (names == null) return;
+    if (_disposed || names == null) return;
     final byName = AdFormat.values.asNameMap();
     _off
       ..clear()
@@ -88,6 +91,11 @@ final class DeveloperAdSwitches {
 
   /// Turns [format] on or off on this device and remembers it.
   Future<KitResult<void>> setEnabled(AdFormat format, bool enabled) async {
+    if (_disposed) {
+      return const KitFailure<void>(KitError(
+          code: KitErrorCode.notInitialized,
+          message: 'Developer ad switches were stopped.'));
+    }
     final changed = enabled ? _off.remove(format) : _off.add(format);
     if (!changed) return const KitSuccess<void>(null);
     if (!_changes.isClosed) _changes.add(null);

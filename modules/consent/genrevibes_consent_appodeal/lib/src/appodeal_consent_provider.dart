@@ -23,8 +23,8 @@ final class AppodealConsentProvider
         ConsentSignalsReader {
   /// Creates an Appodeal consent provider.
   ///
-  /// [timeout] bounds the network steps only. Presenting a form waits for the
-  /// user, however long they take.
+  /// [timeout] bounds the whole request, including waiting for the form.
+  /// Timeout cannot dismiss native UI, but releases the startup sequence.
   AppodealConsentProvider({
     required String appKey,
     bool tagForUnderAgeOfConsent = false,
@@ -113,6 +113,7 @@ final class AppodealConsentProvider
     }
     return _serialized(() async {
       try {
+        if (_disposed) return _notReady<ConsentSnapshot>();
         final refreshed = await _request();
         _publish(refreshed);
         return KitSuccess<ConsentSnapshot>(refreshed);
@@ -123,45 +124,32 @@ final class AppodealConsentProvider
   }
 
   Future<ConsentSnapshot> _request() async {
-    AppodealConsentStatus? status;
-    Object? loadError;
-    try {
-      status = await _client
-          .load(appKey: _appKey, tagForUnderAgeOfConsent: _tagForUnderAgeOfConsent)
-          .timeout(_timeout);
-    } on Object catch (error) {
-      loadError = error;
-    }
-    var privacyOptions = await _client.privacyOptions().timeout(_timeout);
-
-    if (status == null) {
-      // Loading covers two steps: updating consent information, then loading a
-      // form. The privacy-options status is known only once the first has
-      // succeeded, so it says which step failed. A failure after a successful
-      // update means no form is offered to this user, which is what happens
-      // outside regulated regions. A failure before it is a real failure.
-      if (privacyOptions == AppodealPrivacyOptions.unknown) {
-        throw StateError('Consent information could not be updated: $loadError');
+    final elapsed = Stopwatch()..start();
+    Future<T> step<T>(Future<T> Function() operation) async {
+      if (_disposed) throw StateError('Consent provider was stopped.');
+      final remaining = _timeout - elapsed.elapsed;
+      if (remaining <= Duration.zero) {
+        throw TimeoutException('Consent took too long.');
       }
-      return _snapshotOf(
-        ConsentState.notRequired,
-        formAvailable: false,
-        privacyOptions: privacyOptions,
-      );
+      final value = await operation().timeout(remaining);
+      if (_disposed) throw StateError('Consent provider was stopped.');
+      return value;
     }
 
+    // Only a status returned by the SDK establishes regional applicability.
+    // A load error must never be interpreted as consent not being required.
+    final status = await step(() => _client.load(
+        appKey: _appKey, tagForUnderAgeOfConsent: _tagForUnderAgeOfConsent));
     var state = _mapStatus(status);
     if (status == AppodealConsentStatus.required) {
-      await _client.show();
-      // A dismissal without an error means the form was answered.
+      await step(_client.show);
       state = ConsentState.obtained;
-      privacyOptions = await _client.privacyOptions().timeout(_timeout);
     }
-    return _snapshotOf(
-      state,
-      formAvailable: true,
-      privacyOptions: privacyOptions,
-    );
+    final privacyOptions = await step(_client.privacyOptions);
+    return _snapshotOf(state,
+        formAvailable: status == AppodealConsentStatus.required ||
+            status == AppodealConsentStatus.obtained,
+        privacyOptions: privacyOptions);
   }
 
   @override
@@ -172,8 +160,7 @@ final class AppodealConsentProvider
     return _serialized(() async {
       try {
         await _client.showPrivacyOptionsForm();
-        final privacyOptions =
-            await _client.privacyOptions().timeout(_timeout);
+        final privacyOptions = await _client.privacyOptions().timeout(_timeout);
         _publish(
           _snapshotOf(
             _snapshot.state,
@@ -197,7 +184,8 @@ final class AppodealConsentProvider
       try {
         await _client.revoke();
         _publish(
-          ConsentSnapshot(state: ConsentState.unknown, observedAt: _clock.now()),
+          ConsentSnapshot(
+              state: ConsentState.unknown, observedAt: _clock.now()),
         );
         return const KitSuccess<void>(null);
       } on Object catch (error, stackTrace) {
@@ -303,6 +291,7 @@ final class AppodealConsentProvider
       };
 
   void _publish(ConsentSnapshot value) {
+    if (_disposed) return;
     _snapshot = value;
     if (!_snapshotChanges.isClosed) _snapshotChanges.add(value);
     if (!_disposed) _setHealth(ModuleState.ready);

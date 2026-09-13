@@ -38,9 +38,15 @@ abstract interface class FlutterLocalNotificationsClient {
   Future<void> cancelAll();
 }
 
+abstract interface class FlutterLocalNotificationsTimeZoneClient {
+  Future<void> updateTimeZone(String name);
+}
+
 /// Default platform client for `flutter_local_notifications` 19.x.
 final class DefaultFlutterLocalNotificationsClient
-    implements FlutterLocalNotificationsClient {
+    implements
+        FlutterLocalNotificationsClient,
+        FlutterLocalNotificationsTimeZoneClient {
   /// Creates a default platform client.
   DefaultFlutterLocalNotificationsClient({
     FlutterLocalNotificationsPlugin? plugin,
@@ -130,6 +136,11 @@ final class DefaultFlutterLocalNotificationsClient
   }
 
   @override
+  Future<void> updateTimeZone(String name) async {
+    _location = tz.getLocation(name);
+  }
+
+  @override
   Future<bool> requestPermission() async {
     if (kIsWeb) return false;
     switch (defaultTargetPlatform) {
@@ -212,7 +223,10 @@ final class DefaultFlutterLocalNotificationsClient
       hour,
       minute,
     );
-    if (!next.isAfter(now)) next = next.add(const Duration(days: 1));
+    if (!next.isAfter(now)) {
+      next = tz.TZDateTime(
+          _location, now.year, now.month, now.day + 1, hour, minute);
+    }
     return _plugin.zonedSchedule(
       request.id,
       request.content.title,

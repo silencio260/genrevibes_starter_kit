@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:genrevibes_core/genrevibes_core.dart';
 import 'package:genrevibes_feedback/genrevibes_feedback.dart';
@@ -14,23 +15,31 @@ Future<bool> openFeedbackPage(
   FeedbackScreenshotPicker? pickScreenshot,
   bool? requireEmail,
   int maxScreenshots = 1,
+  int maxAttachmentBytes = 10 * 1024 * 1024,
+  Duration submissionTimeout = const Duration(seconds: 30),
+  Widget Function(Widget)? protectContent,
   Map<String, String> metadata = const <String, String>{},
   void Function(FeedbackSubmission submission, KitResult<void> result)?
       onSubmitted,
 }) async {
   final sent = await Navigator.of(context).push<bool>(
     MaterialPageRoute<bool>(
-      builder: (_) => FeedbackPage(
-        provider: provider,
-        kind: kind,
-        labels: labels,
-        theme: theme,
-        pickScreenshot: pickScreenshot,
-        requireEmail: requireEmail,
-        maxScreenshots: maxScreenshots,
-        metadata: metadata,
-        onSubmitted: onSubmitted,
-      ),
+      builder: (_) {
+        final page = FeedbackPage(
+          provider: provider,
+          kind: kind,
+          labels: labels,
+          theme: theme,
+          pickScreenshot: pickScreenshot,
+          requireEmail: requireEmail,
+          maxScreenshots: maxScreenshots,
+          maxAttachmentBytes: maxAttachmentBytes,
+          submissionTimeout: submissionTimeout,
+          metadata: metadata,
+          onSubmitted: onSubmitted,
+        );
+        return protectContent?.call(page) ?? page;
+      },
     ),
   );
   return sent ?? false;
@@ -50,6 +59,8 @@ class FeedbackPage extends StatefulWidget {
     this.pickScreenshot,
     this.requireEmail,
     this.maxScreenshots = 1,
+    this.maxAttachmentBytes = 10 * 1024 * 1024,
+    this.submissionTimeout = const Duration(seconds: 30),
     this.metadata = const <String, String>{},
     this.onSubmitted,
   });
@@ -74,6 +85,8 @@ class FeedbackPage extends StatefulWidget {
 
   /// The most screenshots the user can attach.
   final int maxScreenshots;
+  final int maxAttachmentBytes;
+  final Duration submissionTimeout;
 
   /// Non-personal context passed to the provider.
   final Map<String, String> metadata;
@@ -94,6 +107,7 @@ class _FeedbackPageState extends State<FeedbackPage> {
   final TextEditingController _message = TextEditingController();
   final List<FeedbackAttachment> _attachments = <FeedbackAttachment>[];
   bool _sending = false;
+  bool _picking = false;
   bool _sent = false;
   String? _error;
 
@@ -118,20 +132,35 @@ class _FeedbackPageState extends State<FeedbackPage> {
 
   Future<void> _addScreenshot() async {
     final pick = widget.pickScreenshot;
-    if (pick == null) return;
+    if (pick == null ||
+        _picking ||
+        _sending ||
+        _sent ||
+        _attachments.length >= widget.maxScreenshots) {
+      return;
+    }
+    setState(() => _picking = true);
     try {
       final picked = await pick();
-      if (picked == null || !mounted) return;
+      if (picked == null || !mounted || _sending || _sent) return;
+      if (_attachments.length >= widget.maxScreenshots ||
+          picked.sizeInBytes > widget.maxAttachmentBytes) {
+        setState(() => _error = _labels.attachmentTooLarge);
+        return;
+      }
       setState(() {
         _attachments.add(picked);
         _error = null;
       });
     } on Object {
       if (mounted) setState(() => _error = _labels.screenshotFailed);
+    } finally {
+      if (mounted) setState(() => _picking = false);
     }
   }
 
   Future<void> _submit() async {
+    if (_sending || _sent) return;
     FocusScope.of(context).unfocus();
     if (!(_formKey.currentState?.validate() ?? false)) return;
     final email = _email.text.trim();
@@ -139,24 +168,41 @@ class _FeedbackPageState extends State<FeedbackPage> {
       message: _message.text.trim(),
       kind: widget.kind,
       email: email.isEmpty ? null : email,
-      attachments: _attachments,
+      attachments: List.of(_attachments),
       metadata: widget.metadata,
     );
     setState(() {
       _sending = true;
       _error = null;
     });
-    final result = await widget.provider.submit(submission);
+    KitResult<void> result;
+    try {
+      result = await widget.provider
+          .submit(submission)
+          .timeout(widget.submissionTimeout);
+    } on Object catch (error, stack) {
+      result = KitFailure<void>(KitError(
+          code: error is TimeoutException
+              ? KitErrorCode.timeout
+              : KitErrorCode.provider,
+          message: 'Feedback submission could not be confirmed.',
+          cause: error,
+          stackTrace: stack));
+    }
     if (!mounted) return;
-    widget.onSubmitted?.call(submission, result);
+    // User callbacks cannot leave the page stuck in its sending state.
     setState(() {
       _sending = false;
-      if (result.isSuccess) {
-        _sent = true;
-      } else {
-        _error = _labels.sendFailed;
-      }
+      _sent = result.isSuccess;
+      _error = result.fold(
+          onSuccess: (_) => null,
+          onFailure: (error) => error.code == KitErrorCode.timeout
+              ? _labels.sendUnconfirmed
+              : _labels.sendFailed);
     });
+    try {
+      widget.onSubmitted?.call(submission, result);
+    } on Object {/* Reporting must not change submission success. */}
   }
 
   /// Leaves with whether the message was sent. Not while it is sending.
@@ -270,7 +316,7 @@ class _FeedbackPageState extends State<FeedbackPage> {
                   ),
                 if (_attachments.length < widget.maxScreenshots)
                   OutlinedButton.icon(
-                    onPressed: _sending ? null : _addScreenshot,
+                    onPressed: _sending || _picking ? null : _addScreenshot,
                     icon: const Icon(Icons.add_photo_alternate_outlined),
                     label: Text(labels.addScreenshot),
                     style: OutlinedButton.styleFrom(

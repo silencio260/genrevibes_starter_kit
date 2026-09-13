@@ -10,26 +10,23 @@ final class StarterModuleRegistration {
     required this.moduleId,
     required this.create,
     this.isRequired = true,
+    this.timeout,
   })  : enabled = true,
         isDeferred = false;
 
   /// Creates a module that starts after `initialize()` has returned.
   ///
-  /// Some capabilities are slow and nothing else depends on them. Consent is
-  /// the clearest case: it may present a form and wait for a person to dismiss
-  /// it, which can take seconds or minutes, and running that in the startup
-  /// chain holds back every module behind it and the first frame with them.
-  ///
-  /// Deferred modules are created and health-tracked like any other, but the
-  /// coordinator does not wait for them. They start in registration order, in
-  /// one background sequence, so a deferred module can still depend on the one
-  /// declared before it.
+  /// Starts in a separate ordered sequence, bounded by [timeout] or the
+  /// coordinator's default. Failure or timeout still starts the next entry.
+  /// For UI prompts, disable automatic deferred startup on the coordinator and
+  /// call startDeferred after a frame is rendered.
   ///
   /// A deferred module cannot be required: initialization has already been
   /// reported by the time it runs.
   const StarterModuleRegistration.deferred({
     required this.moduleId,
     required this.create,
+    this.timeout,
   })  : enabled = true,
         isRequired = false,
         isDeferred = true;
@@ -38,9 +35,13 @@ final class StarterModuleRegistration {
   const StarterModuleRegistration.disabled({
     required this.moduleId,
     this.create,
-  })  : enabled = false,
+  })  : timeout = null,
+        enabled = false,
         isRequired = false,
         isDeferred = false;
+
+  /// Overrides the coordinator timeout for this module, including deferred work.
+  final Duration? timeout;
 
   /// Stable ID expected from the created module.
   final String moduleId;

@@ -86,3 +86,10 @@ where your users might be more prone to accidental clicks". A user closing an
 app taps fast, and an Exit button styled to look unavailable steers taps to
 the ad. Networks treat clicks that do not convert as invalid traffic. Watch the
 click-through and conversion of any `dimmed` test.
+
+## September hardening
+
+Align the Dart minimum with the existing Flutter 3.27 requirement.
+
+See [portfolio adoption](../../../docs/portfolio-adoption.md) and
+[implementation/check status](../../../docs/production-hardening-plan.md).

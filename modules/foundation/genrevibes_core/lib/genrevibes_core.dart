@@ -3,6 +3,7 @@ library;
 
 export 'src/clock/kit_clock.dart';
 export 'src/error/kit_error.dart';
+export 'src/lifecycle/kit_resource_scope.dart';
 export 'src/lifecycle/module_health.dart';
 export 'src/lifecycle/starter_module.dart';
 export 'src/logging/kit_logger.dart';

@@ -1,31 +1,22 @@
-# Compatibility matrix
+# Compatibility requirements
 
-The package family is tested in independent tiers so a high-floor optional SDK
-does not raise the minimum for unrelated applications.
+These are declared package requirements, not a claim that every minimum was
+built in this run. Install only the capabilities the app uses; optional SDKs
+raise the requirement only for apps selecting them.
 
-| Tier | Exact minimum Flutter | Packages |
-| --- | ---: | --- |
-| Base | 3.19.0 | Pure contracts, coordinator, AdMob, Firebase, Mixpanel events, PostHog, OneSignal, and SharedPreferences adapters |
-| Local notifications | 3.22.0 | `genrevibes_notifications_local` |
-| RevenueCat | 3.27.0 | RevenueCat core and optional hosted UI |
-| Mixpanel replay | 3.38.0 | Optional Mixpanel session replay |
-| Current | Stable channel | Every package and the Android/iOS native smoke app |
+| Flutter floor | Packages |
+| --- | --- |
+| 3.19 | Most neutral contracts and lower-floor adapters; check each pubspec |
+| 3.22 | Local notifications adapter |
+| 3.27 / Dart 3.6 | RevenueCat, PostHog, Appodeal native UI, feedback UI, splash, exit prompt and Kit Lab |
+| 3.38 | Optional Mixpanel replay adapter |
 
-`tool/test_compatibility_tier.sh` is the source of truth for tier membership.
-The GitHub Actions workflow runs every exact minimum and the moving stable
-channel. Provider packages use their committed `pubspec_overrides.yaml` during
-minimum tests so the lower supported vendor version is actually exercised.
+Kit Lab depends on the exit-prompt UI and uses newer Flutter UI APIs, so it now
+declares Flutter 3.27 and Dart 3.6. UI packages already declaring Flutter 3.27
+also declare its Dart 3.6 floor. PostHog keeps its existing SDK minimum 5.39.
+No vendor versions were changed by this hardening work.
 
-The native smoke app resolves the newest provider versions allowed by package
-constraints by running `flutter pub upgrade` in CI before each native build.
-This gives the matrix both ends of the supported dependency range: minimum
-provider versions at each Flutter floor and newest compatible provider versions
-on current stable. Its committed lockfile records the last locally verified
-provider graph; CI does not rely on that lockfile remaining current.
-
-Passing the matrix is required before changing a package's documented Flutter
-floor. Adding an optional adapter with a higher floor creates a new tier; it
-must not raise the floor of provider-neutral or unrelated packages.
-
-Changing a Dart/Flutter lower bound or moving a package between tiers requires
-updating this document and the compatibility script in the same change.
+The package pubspecs are the source of truth. Existing compatibility scripts
+are historical tooling; their old grouping is not evidence of a successful
+minimum-version build. This run used source inspection and formatting, not
+minimum-toolchain or native builds. CI: deferred TODO at the owner's request.

@@ -10,28 +10,23 @@ import 'model/consent_signals.dart';
 import 'model/consent_snapshot.dart';
 import 'model/consent_state.dart';
 
-/// Resolves consent once and lets dependent modules wait for the outcome.
-///
-/// Ads and analytics must not initialize before consent is settled. Applications
-/// typically express that as an ad-hoc global `Completer` plus a "already
-/// initialized" boolean; this module owns that sequencing instead, so the
-/// ordering rule is testable and no vendor SDK is involved.
-///
-/// Await [ready] before starting a module that depends on consent.
+/// Resolves consent with a bounded wait. Failure releases startup without
+/// inventing a user's consent or regional status. SDKs retain their own signals.
 final class ConsentGate implements StarterModule {
   /// Creates a gate over [provider].
   ///
   /// When [failOpen] is true a consent platform failure still releases waiters,
-  /// matching the common production stance that a broken consent SDK should
-  /// degrade to limited ads rather than block the app. Set it to false when a
+  /// allowing the app to attempt ads using the SDK's real stored signals. Set it to false when a
   /// failure must stop dependent modules from starting at all.
   ConsentGate({
     required ConsentProvider provider,
     bool failOpen = true,
+    Duration timeout = const Duration(seconds: 30),
     KitClock clock = const SystemKitClock(),
     KitLogger logger = const NoopKitLogger(),
   })  : _provider = provider,
         _failOpen = failOpen,
+        _timeout = timeout,
         _clock = clock,
         _logger = logger,
         _snapshot = ConsentSnapshot(
@@ -47,6 +42,7 @@ final class ConsentGate implements StarterModule {
 
   final ConsentProvider _provider;
   final bool _failOpen;
+  final Duration _timeout;
   final KitClock _clock;
   final KitLogger _logger;
   final Completer<ConsentSnapshot> _ready = Completer<ConsentSnapshot>();
@@ -73,9 +69,8 @@ final class ConsentGate implements StarterModule {
 
   /// Completes once consent has been resolved.
   ///
-  /// Never completes with an error, so a caller cannot deadlock on a consent
-  /// platform fault. Inspect [ConsentSnapshot.canRequestAds] on the result to
-  /// decide whether ad loading may start.
+  /// Never completes with an error. Completion means the attempt ended, not
+  /// that consent was granted. The snapshot and health retain the actual outcome.
   Future<ConsentSnapshot> get ready => _ready.future;
 
   /// Whether the consent platform permits requesting ads.
@@ -102,28 +97,42 @@ final class ConsentGate implements StarterModule {
   Future<KitResult<void>> _initializeOnce() async {
     _setHealth(ModuleState.initializing);
 
-    final providerStart = await _provider.initialize();
-    if (providerStart.isFailure) {
-      final error = providerStart.fold(
-        onSuccess: (_) => null,
-        onFailure: (value) => value,
+    final elapsed = Stopwatch()..start();
+    try {
+      final providerStart = await _provider.initialize().timeout(_timeout);
+      if (_disposed) return _notReady();
+      if (providerStart.isFailure) {
+        return _finishWithFailure(providerStart.fold(
+            onSuccess: (_) => throw StateError('Expected provider failure'),
+            onFailure: (e) => e));
+      }
+      final remaining = _timeout - elapsed.elapsed;
+      if (remaining <= Duration.zero) {
+        throw TimeoutException('Consent took too long.');
+      }
+      _providerChanges = _provider.snapshotChanges.listen(_onSnapshot);
+      final requested = await _provider.requestConsent().timeout(remaining);
+      if (_disposed) return _notReady();
+      return requested.fold(
+        onSuccess: (value) {
+          _snapshot = value;
+          _initialized = true;
+          _release(value);
+          _setHealth(ModuleState.ready);
+          return const KitSuccess<void>(null);
+        },
+        onFailure: _finishWithFailure,
       );
-      return _finishWithFailure(error!);
+    } on Object catch (error, stack) {
+      if (_disposed) return _notReady();
+      return _finishWithFailure(KitError(
+          code: error is TimeoutException
+              ? KitErrorCode.timeout
+              : KitErrorCode.provider,
+          message: 'Consent could not be resolved.',
+          cause: error,
+          stackTrace: stack));
     }
-
-    _providerChanges = _provider.snapshotChanges.listen(_onSnapshot);
-
-    final requested = await _provider.requestConsent();
-    return requested.fold(
-      onSuccess: (value) {
-        _snapshot = value;
-        _initialized = true;
-        _release(value);
-        _setHealth(ModuleState.ready);
-        return const KitSuccess<void>(null);
-      },
-      onFailure: _finishWithFailure,
-    );
   }
 
   KitResult<void> _finishWithFailure(KitError error) {
@@ -135,18 +144,7 @@ final class ConsentGate implements StarterModule {
       error: error,
     );
     if (_failOpen) {
-      // Release waiters as "not required" so dependent modules start in a
-      // limited, non-personalized mode instead of hanging forever.
-      //
-      // `canRequestAds` is set explicitly here because that is the whole point
-      // of failing open: a broken consent SDK should cost personalization, not
-      // revenue. Leaving it at its default false would silently turn a consent
-      // platform outage into a total ad outage.
-      _snapshot = ConsentSnapshot(
-        state: ConsentState.notRequired,
-        observedAt: _clock.now(),
-        canRequestAds: true,
-      );
+      // Keep the actual snapshot. Releasing startup is not a consent grant.
       _release(_snapshot);
       _setHealth(ModuleState.degraded, error: error);
       return const KitSuccess<void>(null);
@@ -210,19 +208,28 @@ final class ConsentGate implements StarterModule {
   @override
   Future<KitResult<void>> dispose() async {
     if (_disposed) return const KitSuccess<void>(null);
-    final active = _initialization;
-    if (active != null) await active;
-    await _providerChanges?.cancel();
-    _providerChanges = null;
-    final result = await _provider.dispose();
     _disposed = true;
     _release(_snapshot);
-    _setHealth(ModuleState.disposed);
-    await _healthChanges.close();
+    KitResult<void> result = const KitSuccess<void>(null);
+    try {
+      await _providerChanges?.cancel();
+      _providerChanges = null;
+      result = await _provider.dispose().timeout(const Duration(seconds: 5));
+    } on Object catch (error, stack) {
+      result = KitFailure<void>(KitError(
+          code: KitErrorCode.provider,
+          message: 'Consent cleanup failed.',
+          cause: error,
+          stackTrace: stack));
+    } finally {
+      _setHealth(ModuleState.disposed);
+      await _healthChanges.close();
+    }
     return result;
   }
 
   void _onSnapshot(ConsentSnapshot value) {
+    if (_disposed) return;
     _snapshot = value;
     if (!_disposed && _initialized) _setHealth(_health.state);
   }

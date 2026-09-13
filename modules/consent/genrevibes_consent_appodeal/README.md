@@ -8,12 +8,10 @@ an app that mediates through Appodeal needs neither `google_mobile_ads` nor
 
 `requestConsent` updates consent information, then presents the form once, and
 only when the status is `required`. It never re-presents after a dismissal.
-Presentation waits for the user; only the network steps are bounded by
-`timeout`.
-
-If consent information updates but no form loads, the user is reported as
-`notRequired`: no form is offered to them. If consent information cannot be
-updated at all, the request fails and `ConsentGate` fails open.
+The complete request, including presentation, is bounded by `timeout`. A timeout
+releases the awaiting code but cannot dismiss native UI. Failure does not become
+`notRequired`: that state is accepted only when the SDK actually returns it.
+Apps can continue ad initialization on failure without changing SDK signals.
 
 Appodeal's consent manager never passes debug settings to Google's User
 Messaging Platform, so `requestConsent` always uses the device's real location.
@@ -34,3 +32,10 @@ them. Android only. Outside a regulated region, the next consent update
 overwrites a TC string written by a preview.
 
 The SDK is wrapped by the injectable `AppodealConsentClient`.
+
+## September hardening
+
+Bound the complete request; show only for SDK-required status and preserve failure as failure.
+
+See [portfolio adoption](../../../docs/portfolio-adoption.md) and
+[implementation/check status](../../../docs/production-hardening-plan.md).

@@ -223,6 +223,7 @@ final class AnalyticsPipeline implements StarterModule {
       (sink) => sink.initialize(),
       requireInitialized: false,
     );
+    if (_disposed) return _notReady<void>();
     final delivery = report.fold(
       onSuccess: (value) => value,
       onFailure: (_) => null,
@@ -350,15 +351,32 @@ final class AnalyticsPipeline implements StarterModule {
   @override
   Future<KitResult<void>> dispose() async {
     if (_disposed) return const KitSuccess<void>(null);
-    await Future.wait(_sinks.map((sink) => sink.dispose()));
-    _activeSinkIds.clear();
     _disposed = true;
-    _setHealth(ModuleState.disposed);
+    _initialized = false;
+    _activeSinkIds.clear();
+    KitError? firstError;
+    await Future.wait(_sinks.map((sink) async {
+      try {
+        final result = await sink.dispose().timeout(const Duration(seconds: 5));
+        result.fold(
+            onSuccess: (_) {}, onFailure: (error) => firstError ??= error);
+      } on Object catch (error, stack) {
+        firstError ??= KitError(
+            code: KitErrorCode.provider,
+            message: 'Analytics sink cleanup failed.',
+            cause: error,
+            stackTrace: stack);
+      }
+    }));
+    _setHealth(ModuleState.disposed, error: firstError);
     await _healthChanges.close();
-    return const KitSuccess<void>(null);
+    return firstError == null
+        ? const KitSuccess<void>(null)
+        : KitFailure<void>(firstError!);
   }
 
   void _setHealth(ModuleState state, {KitError? error}) {
+    if (_disposed && state != ModuleState.disposed) return;
     _health = ModuleHealth(
       moduleId: moduleId,
       state: state,

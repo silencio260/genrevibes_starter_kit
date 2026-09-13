@@ -85,6 +85,11 @@ final class FeedbackNestFeedbackProvider implements FeedbackProvider {
         ),
       );
     }
+    if (submission.metadata.isNotEmpty) {
+      return const KitFailure<void>(KitError(
+          code: KitErrorCode.unsupported,
+          message: 'FeedbackNest does not support submission metadata.'));
+    }
     try {
       await _client.submitCommunication(
         message: submission.message,

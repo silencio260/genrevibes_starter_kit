@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased — 2026-09-13
+
+- Bound the complete request; show only for SDK-required status and preserve failure as failure.
+
 ## 0.1.0-dev.2
 
 - `AppodealConsentProvider` implements `ConsentFormPreviewProvider`. An Android

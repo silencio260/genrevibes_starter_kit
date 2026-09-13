@@ -22,3 +22,10 @@ once the request completes, successfully or not.
 
 The API key belongs in the application's build-time configuration. Never commit
 it to a package or a repository.
+
+## September hardening
+
+Reject unsupported metadata and cap/safely stage attachments in per-request temporary directories.
+
+See [portfolio adoption](../../../docs/portfolio-adoption.md) and
+[implementation/check status](../../../docs/production-hardening-plan.md).

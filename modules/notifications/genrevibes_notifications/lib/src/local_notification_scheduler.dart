@@ -25,3 +25,15 @@ abstract interface class LocalNotificationScheduler implements StarterModule {
   /// Cancels every local notification owned by the host application.
   Future<KitResult<void>> cancelAll();
 }
+
+/// A single navigation consumer drains taps after its routes are ready.
+/// Reading consumes the pending tap; analytics listeners do not consume it.
+abstract interface class LocalNotificationPendingInteractions {
+  LocalNotificationInteraction? takePendingInteraction();
+}
+
+/// Updates the IANA zone for future schedules and daily requests made in this
+/// process. Hosts re-sync persisted campaign definitions after each cold start.
+abstract interface class LocalNotificationTimeZoneUpdater {
+  Future<KitResult<void>> updateTimeZone(String name);
+}

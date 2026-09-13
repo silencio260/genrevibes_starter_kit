@@ -28,10 +28,21 @@ class DevSessionReplayPage extends StatelessWidget {
         final policy = controller.policy;
 
         return <Widget>[
+          const DevHeading('Requested recording'),
           _StateBanner(plan: plan),
+          DevFact(
+              'Applied recording',
+              controller.appliedRecording == null
+                  ? 'not confirmed'
+                  : controller.appliedRecording!
+                      ? 'on'
+                      : 'off'),
+          if (controller.blockedByMaskChange)
+            const DevNote(
+                'Recording is requested off until masking is applied on restart. Check the applied status below for SDK failures.'),
           const DevHeading('Override'),
           const DevNote(
-            'Beats the rollout on this device only, and is remembered across '
+            'Overrides the percentage on this device; the master off switch still wins. Remembered across '
             'launches. Recording starts or stops as soon as you choose — '
             'nothing here needs a restart except masking.',
           ),
@@ -68,6 +79,22 @@ class DevSessionReplayPage extends StatelessWidget {
             },
           ),
           const DevHeading('Masking'),
+          DevFact(
+              'Needs restart', controller.maskingNeedsRestart ? 'yes' : 'no'),
+          DevFact(
+              'Applied text mask',
+              controller.configuredPlan == null
+                  ? 'not attached'
+                  : controller.configuredPlan!.maskAllText
+                      ? 'on'
+                      : 'off'),
+          DevFact(
+              'Applied image mask',
+              controller.configuredPlan == null
+                  ? 'not attached'
+                  : controller.configuredPlan!.maskAllImages
+                      ? 'on'
+                      : 'off'),
           DevFact('Text', plan.maskAllText ? 'masked' : 'visible'),
           DevFact('Images', plan.maskAllImages ? 'masked' : 'visible'),
           const DevNote(

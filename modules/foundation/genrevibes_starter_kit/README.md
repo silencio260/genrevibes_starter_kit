@@ -13,3 +13,10 @@ calls coalesce and disposal runs in reverse order.
 The application remains the composition root and may keep its existing DI
 container. `GenRevibesStarterKit.module<T>()` is only an instance lookup for
 already-created modules, not a global service locator.
+
+## September hardening
+
+Add manual deferred startup, per-registration timeouts, early stop guards, continued cleanup and complete module-health lookup.
+
+See [portfolio adoption](../../../docs/portfolio-adoption.md) and
+[implementation/check status](../../../docs/production-hardening-plan.md).

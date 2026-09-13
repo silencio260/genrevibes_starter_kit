@@ -53,5 +53,12 @@ final sent = await openFeedbackPage(
   failure keeps what the user wrote and shows `sendFailed`; success replaces
   the form with a confirmation and Done. `openFeedbackPage` returns whether it
   was sent, and `onSubmitted` reports every attempt with its result.
-- **Metadata** such as app version is passed through to the provider. Never put
-  personal data in it.
+- **Metadata** reaches the selected provider. FeedbackNest currently rejects
+  nonempty metadata as unsupported; do not promise it is delivered.
+
+## September hardening
+
+Bound submissions, guard picker/submission overlap, retain failed forms and add route protection hook. Align Dart floor.
+
+See [portfolio adoption](../../../docs/portfolio-adoption.md) and
+[implementation/check status](../../../docs/production-hardening-plan.md).

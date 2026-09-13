@@ -48,3 +48,10 @@ The passcode, any attempt, and the device identifier are never logged, stored,
 or reported. Storage holds a wrong-attempt count and the install marker it was
 counted on — the marker, so a lockout restored by Android Auto Backup into a
 reinstalled app is ignored.
+
+## September hardening
+
+Keep shared defaults with enabled, allowPasscode and action overrides; add session lock and disposal guards.
+
+See [portfolio adoption](../../../docs/portfolio-adoption.md) and
+[implementation/check status](../../../docs/production-hardening-plan.md).

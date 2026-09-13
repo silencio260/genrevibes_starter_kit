@@ -9,12 +9,21 @@ network ships its own adapter package. An application depends on this contract
 and selects one adapter during composition, which keeps consent gating available
 to analytics-only apps that install no ad network at all.
 
-`ConsentState.notRequired` permits personalized work. Treating it as a denial is
-a common and expensive mistake, because it silently disables monetization and
-measurement for every user outside a regulated region.
+`ConsentState.notRequired` reports the SDK's regional requirement result. It is
+not an application-created consent grant. Advertising SDKs retain responsibility
+for interpreting the stored signals and selecting available inventory.
 
-`ConsentGate` resolves consent once and exposes a `ready` future that ads and
-analytics initialization can await. It replaces the ad-hoc global completer and
-"already initialized" flag that applications usually grow for this ordering rule.
-By default it fails open: a consent platform fault releases waiters in a
-non-personalized state rather than hanging the app forever.
+`ConsentGate.ready` releases after a bounded consent attempt. With the default
+`failOpen: true`, failure leaves the real snapshot intact and degrades health,
+but completes initialization so the next module can start. Inspect health for
+failure; do not equate successful sequence completion with consent obtained.
+Set `timeout` to the app's chosen budget (eight seconds in Story Saver).
+`failOpen: false` returns a failed result for hosts that require that policy.
+Analytics consent is a separate app decision, not automatically tied to this gate.
+
+## September hardening
+
+Bound consent waits; release fail-open startup without fabricating consent or regional status. Stop safely during initialization.
+
+See [portfolio adoption](../../../docs/portfolio-adoption.md) and
+[implementation/check status](../../../docs/production-hardening-plan.md).

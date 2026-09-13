@@ -1,3 +1,4 @@
+import 'package:genrevibes_analytics/genrevibes_analytics.dart';
 import 'package:genrevibes_remote_config/genrevibes_remote_config.dart';
 
 import 'ads_policy_keys.dart';
@@ -32,10 +33,11 @@ abstract final class PortfolioRemoteConfigSchema {
   static RemoteConfigSchema build({
     Iterable<RemoteConfigKey<Object?>> appKeys = const [],
     bool includeAnalyticsNames = false,
+    SessionReplayPolicy replayDefaults = const SessionReplayPolicy(),
   }) {
     return RemoteConfigSchema(<RemoteConfigKey<Object?>>[
       ...AdsPolicyKeys.all,
-      ...SessionReplayPolicyKeys.all,
+      ...SessionReplayPolicyKeys.withDefaults(replayDefaults),
       ...DeveloperAccessPolicyKeys.all,
       ...OnboardingPolicyKeys.all,
       ...SplashAdPolicyKeys.all,

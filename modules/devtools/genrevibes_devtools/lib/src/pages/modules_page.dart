@@ -26,15 +26,29 @@ class _DevModulesPageState extends State<DevModulesPage> {
   final List<StreamSubscription<ModuleHealth>> _subscriptions =
       <StreamSubscription<ModuleHealth>>[];
 
+  final Set<String> _following = {};
+
   @override
   void initState() {
     super.initState();
+    _subscriptions.add(widget.kit.healthChanges.listen((_) {
+      if (!mounted) return;
+      _followModules();
+      setState(() {});
+    }));
+    _followModules();
+  }
+
+  void _followModules() {
     for (final module in widget.kit.modules.values) {
+      if (!_following.add(module.moduleId)) continue;
       _subscriptions.add(
         module.healthChanges.listen((health) {
           if (!mounted) return;
-          setState(
-              () => _timeline.insert(0, _Transition(health, DateTime.now())));
+          setState(() {
+            _timeline.insert(0, _Transition(health, DateTime.now()));
+            if (_timeline.length > 100) _timeline.removeLast();
+          });
         }),
       );
     }
@@ -50,8 +64,7 @@ class _DevModulesPageState extends State<DevModulesPage> {
 
   @override
   Widget build(BuildContext context) {
-    final modules = widget.kit.modules.values.toList()
-      ..sort((a, b) => a.moduleId.compareTo(b.moduleId));
+    final modules = widget.kit.registeredModuleIds.toList()..sort();
 
     return Scaffold(
       appBar: AppBar(
@@ -70,7 +83,8 @@ class _DevModulesPageState extends State<DevModulesPage> {
           Text('${modules.length} registered',
               style: Theme.of(context).textTheme.bodySmall),
           const SizedBox(height: 8),
-          for (final module in modules) _ModuleCard(module: module),
+          for (final id in modules)
+            _ModuleCard(health: widget.kit.moduleHealth(id)!),
           if (_timeline.isNotEmpty) ...<Widget>[
             const SizedBox(height: 16),
             Row(
@@ -111,13 +125,12 @@ class _Transition {
 }
 
 class _ModuleCard extends StatelessWidget {
-  const _ModuleCard({required this.module});
+  const _ModuleCard({required this.health});
 
-  final StarterModule module;
+  final ModuleHealth health;
 
   @override
   Widget build(BuildContext context) {
-    final health = module.health;
     final scheme = Theme.of(context).colorScheme;
     final (Color colour, IconData icon) = switch (health.state) {
       ModuleState.ready => (Colors.green.shade700, Icons.check_circle),

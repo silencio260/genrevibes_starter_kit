@@ -16,6 +16,7 @@ class DeveloperUnlockGesture extends StatefulWidget {
     this.window = const Duration(seconds: 3),
     this.theme = const DeveloperPasscodeTheme(),
     this.onGranted,
+    this.protectContent,
   });
 
   /// The controller that checks the passcode.
@@ -32,6 +33,9 @@ class DeveloperUnlockGesture extends StatefulWidget {
 
   /// Colors of the passcode page. Pass those of the screen the gesture is on.
   final DeveloperPasscodeTheme theme;
+
+  /// Host-supplied replay protection around the entire passcode page.
+  final Widget Function(Widget)? protectContent;
 
   /// Called after a correct passcode.
   final VoidCallback? onGranted;
@@ -57,12 +61,17 @@ class _DeveloperUnlockGestureState extends State<DeveloperUnlockGesture> {
     _firstTapAt = null;
 
     final access = widget.controller.current;
-    if (access.isGranted || access.lockedOut) return;
+    if (access.isGranted ||
+        access.lockedOut ||
+        !widget.controller.canEnterPasscode) {
+      return;
+    }
 
     final outcome = await openDeveloperPasscodePage(
       context,
       controller: widget.controller,
       theme: widget.theme,
+      protectContent: widget.protectContent,
     );
     if (outcome == PasscodeOutcome.granted) widget.onGranted?.call();
   }
@@ -134,11 +143,15 @@ Future<PasscodeOutcome?> openDeveloperPasscodePage(
   BuildContext context, {
   required DeveloperAccessController controller,
   DeveloperPasscodeTheme theme = const DeveloperPasscodeTheme(),
+  Widget Function(Widget)? protectContent,
 }) {
   return Navigator.of(context).push<PasscodeOutcome>(
     MaterialPageRoute<PasscodeOutcome>(
-      builder: (_) =>
-          DeveloperPasscodePage(controller: controller, theme: theme),
+      builder: (_) {
+        final page =
+            DeveloperPasscodePage(controller: controller, theme: theme);
+        return protectContent?.call(page) ?? page;
+      },
     ),
   );
 }
@@ -177,7 +190,20 @@ class _DeveloperPasscodePageState extends State<DeveloperPasscodePage> {
   Future<void> _submit() async {
     if (_submitting || _field.text.trim().isEmpty) return;
     setState(() => _submitting = true);
-    final outcome = await widget.controller.submitPasscode(_field.text);
+    PasscodeOutcome outcome;
+    try {
+      outcome = await widget.controller
+          .submitPasscode(_field.text)
+          .timeout(const Duration(seconds: 10));
+    } on Object {
+      if (mounted) {
+        setState(() {
+          _submitting = false;
+          _error = 'Could not unlock. Please try again.';
+        });
+      }
+      return;
+    }
     if (!mounted) return;
     switch (outcome) {
       case PasscodeOutcome.granted:

@@ -70,3 +70,10 @@ AppodealNativeAds.instance
 
 Android only. On other platforms the view renders its placeholder and no events
 are reported.
+
+## September hardening
+
+Align the Dart minimum with the existing Flutter 3.27 requirement.
+
+See [portfolio adoption](../../../docs/portfolio-adoption.md) and
+[implementation/check status](../../../docs/production-hardening-plan.md).

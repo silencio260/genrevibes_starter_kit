@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased — 2026-09-13
+
+- Keep shared defaults with enabled, allowPasscode and action overrides; add session lock and disposal guards.
+
 ## 0.1.0-dev.2
 
 - Add `DeveloperAdSwitches`: device-local switches that turn ad formats, such

@@ -43,14 +43,22 @@ final class DefaultFeedbackNestClient implements FeedbackNestClient {
     // attachments are staged in the system temp directory and removed again
     // once the request completes, successfully or not.
     final staged = <File>[];
+    Directory? directory;
     try {
+      if (attachments.isNotEmpty) {
+        directory =
+            await Directory.systemTemp.createTemp('genrevibes_feedback_');
+      }
       for (final attachment in attachments) {
+        if (attachment.sizeInBytes > 10 * 1024 * 1024) {
+          throw ArgumentError('Feedback attachment exceeds 10 MB.');
+        }
+        final safeName =
+            attachment.filename.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
         final file = File(
-          '${Directory.systemTemp.path}/'
-          '${DateTime.now().microsecondsSinceEpoch}_${attachment.filename}',
-        );
-        await file.writeAsBytes(attachment.bytes);
+            '${directory!.path}/${staged.length}_${safeName.isEmpty ? 'attachment' : safeName}');
         staged.add(file);
+        await file.writeAsBytes(attachment.bytes);
       }
       await Feedbacknest.submitCommunication(
         message: message,
@@ -64,6 +72,13 @@ final class DefaultFeedbackNestClient implements FeedbackNestClient {
           if (file.existsSync()) await file.delete();
         } on Object {
           // A leftover temp file is not worth failing a submission over.
+        }
+      }
+      if (directory != null) {
+        try {
+          await directory.delete(recursive: true);
+        } on Object {
+          // Cleanup failure must not change the submission result.
         }
       }
     }

@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased — 2026-09-13
+
+- Bound submissions, guard picker/submission overlap, retain failed forms and add route protection hook. Align Dart floor.
+
 ## 0.1.0-dev.1
 
 - Add `openFeedbackPage` and `FeedbackPage`: feedback and contact pages with

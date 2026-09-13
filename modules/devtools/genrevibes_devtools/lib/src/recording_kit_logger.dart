@@ -88,6 +88,7 @@ final class RecordingKitLogger implements KitLogger {
     StackTrace? stackTrace,
     Map<String, Object?> fields = const <String, Object?>{},
   }) {
+    if (_added.isClosed) return;
     _forwardTo?.log(
       level,
       message,

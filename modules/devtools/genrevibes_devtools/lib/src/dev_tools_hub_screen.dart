@@ -1,3 +1,4 @@
+import 'package:genrevibes_developer_access/genrevibes_developer_access.dart';
 import 'package:flutter/material.dart';
 
 import 'dev_tools_host.dart';
@@ -28,8 +29,25 @@ class StarterKitLabScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final entries = <_Entry>[
       _Entry(
+          title: 'Rating',
+          subtitle: 'Eligibility and reset',
+          icon: Icons.star_outline,
+          build: host.rating == null
+              ? null
+              : () => DevRatingPage(controller: host.rating!),
+          missing: 'rating controller wiring'),
+      _Entry(
+          title: 'Onboarding',
+          subtitle: 'Completion state and reset',
+          icon: Icons.flag_outlined,
+          build: host.onboarding == null
+              ? null
+              : () => DevOnboardingPage(controller: host.onboarding!),
+          missing: 'onboarding controller wiring'),
+      _Entry(
         title: 'Modules',
-        subtitle: '${host.kit.modules.length} registered · health and timeline',
+        subtitle:
+            '${host.kit.registeredModuleIds.length} registered · health and timeline',
         icon: Icons.widgets,
         build: () => DevModulesPage(kit: host.kit),
       ),
@@ -230,22 +248,24 @@ class StarterKitLabScreen extends StatelessWidget {
 
     final adopted = entries.where((entry) => entry.build != null).length;
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Starter Kit Lab')),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(12, 12, 12, 96),
-        children: <Widget>[
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8, left: 4),
-            child: Text(
-              '$adopted of ${entries.length} capabilities wired',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
+    return _DevAccessGuard(
+        host: host,
+        child: Scaffold(
+          appBar: AppBar(title: const Text('Starter Kit Lab')),
+          body: ListView(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 96),
+            children: <Widget>[
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8, left: 4),
+                child: Text(
+                  '$adopted of ${entries.length} tools connected',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ),
+              for (final entry in entries) _EntryTile(entry: entry, host: host),
+            ],
           ),
-          for (final entry in entries) _EntryTile(entry: entry),
-        ],
-      ),
-    );
+        ));
   }
 }
 
@@ -270,7 +290,9 @@ class _Entry {
 }
 
 class _EntryTile extends StatelessWidget {
-  const _EntryTile({required this.entry});
+  const _EntryTile({required this.entry, required this.host});
+
+  final DevToolsHost host;
 
   final _Entry entry;
 
@@ -289,7 +311,7 @@ class _EntryTile extends StatelessWidget {
         ),
         title: Text(entry.title),
         subtitle: Text(
-          available ? entry.subtitle : 'Not adopted — needs ${entry.missing}',
+          available ? entry.subtitle : 'Not connected — needs ${entry.missing}',
           style: const TextStyle(fontSize: 11),
         ),
         trailing: available
@@ -297,10 +319,34 @@ class _EntryTile extends StatelessWidget {
             : Icon(Icons.block, size: 16, color: scheme.outline),
         onTap: available
             ? () => Navigator.of(context).push(
-                  MaterialPageRoute<void>(builder: (_) => entry.build!()),
+                  MaterialPageRoute<void>(
+                      builder: (_) =>
+                          _DevAccessGuard(host: host, child: entry.build!())),
                 )
             : null,
       ),
+    );
+  }
+}
+
+/// Rechecks access on every pushed Lab page, including revocation mid-session.
+class _DevAccessGuard extends StatelessWidget {
+  const _DevAccessGuard({required this.host, required this.child});
+  final DevToolsHost host;
+  final Widget child;
+  @override
+  Widget build(BuildContext context) {
+    if (!host.requireDeveloperAccess) return child;
+    final access = host.developerAccess;
+    return StreamBuilder<DeveloperAccess>(
+      stream: access?.changes,
+      initialData: access?.current,
+      builder: (context, _) => access?.allows(DeveloperAction.diagnostics) ==
+              true
+          ? child
+          : Scaffold(
+              appBar: AppBar(title: const Text('Developer tools')),
+              body: const Center(child: Text('Developer access is required.'))),
     );
   }
 }

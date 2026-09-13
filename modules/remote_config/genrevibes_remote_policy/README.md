@@ -22,17 +22,15 @@ share of installs recorded, and `session_replay_mask_text` /
 expensive thing an analytics provider bills for and the most sensitive thing it
 stores, so both the volume and the privacy of it move without a release.
 
-The defaults are what the portfolio ships today: 100% of installs, unmasked. A
-masked replay is grey boxes moving around and cannot show where a user got
-stuck, which is the only thing replay is paid for — so masking is a key rather
-than a constant so it can be turned on for everyone, immediately, if a screen
-ever renders something that should not be recorded. Turning the percentage
-down is likewise the deliberate act, done while watching the bill.
+New apps default to zero rollout with masked text/images. Pass `replayDefaults`
+to `PortfolioRemoteConfigSchema.build` to make another choice. Story Saver
+explicitly keeps its previous 100% rollout and global masking settings.
 
 `SessionReplayRemotePolicyBinder` keeps a `SessionReplayController` tuned to
 those values. Recording starts and stops in place; masking reaches the plan
 immediately but the SDK only on the next launch, because providers fix masking
-when they are configured.
+when they are configured. A stricter masking request stops recording until
+restart, and the master off switch overrides a device force-on setting.
 
 `DeveloperAccessPolicyKeys.deviceHashes` (`developer_device_hashes`) is a JSON
 array of developer device hashes, and `DeveloperAccessRemotePolicyBinder` keeps a
@@ -48,3 +46,10 @@ and every kit emitter, and a blank override keeps the canonical name.
 
 `PortfolioRemoteConfigSchema.build` combines all three with an app's own keys, and
 `PortfolioRemoteConfigSettings` records the shared fetch timeout and interval.
+
+## September hardening
+
+Make replay defaults configurable per app; new apps default to zero rollout and masked content.
+
+See [portfolio adoption](../../../docs/portfolio-adoption.md) and
+[implementation/check status](../../../docs/production-hardening-plan.md).
