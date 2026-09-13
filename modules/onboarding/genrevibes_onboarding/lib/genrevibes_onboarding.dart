@@ -9,3 +9,5 @@ export 'src/onboarding_keys.dart';
 export 'src/widget/onboarding_flow.dart';
 export 'src/widget/onboarding_page_indicator.dart';
 export 'src/widget/onboarding_view.dart';
+
+export 'src/widget/folder_access_preview.dart';

@@ -74,3 +74,10 @@ OnboardingFlow(
   ],
 );
 ```
+
+## Folder connection preview
+
+`FolderAccessPreview` is a local, labeled two-step visual for Android folder
+access: Use this folder, then Allow. Labels and the folder name are configurable.
+It respects reduced motion and does not replace the system picker. Apps own
+folder validation, persisted grants, cancellation recovery and analytics.
