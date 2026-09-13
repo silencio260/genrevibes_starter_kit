@@ -111,8 +111,8 @@ class DevFact extends StatelessWidget {
             Expanded(
               child: SelectableText(
                 value,
-                style: const TextStyle(
-                    fontSize: 12, fontWeight: FontWeight.w600),
+                style:
+                    const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
               ),
             ),
           ],

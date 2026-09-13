@@ -60,13 +60,14 @@ class _DevRemoteConfigPageState extends State<DevRemoteConfigPage> {
     final snapshot = widget.coordinator.current;
     final needle = _filter.trim().toLowerCase();
     final keys = widget.schema.keys
-        .where((key) => needle.isEmpty || key.name.toLowerCase().contains(needle))
+        .where(
+            (key) => needle.isEmpty || key.name.toLowerCase().contains(needle))
         .toList()
       ..sort((a, b) => a.name.compareTo(b.name));
 
     final remoteCount = widget.schema.keys
-        .where((key) =>
-            snapshot.originOf(key) == RemoteConfigValueOrigin.remote)
+        .where(
+            (key) => snapshot.originOf(key) == RemoteConfigValueOrigin.remote)
         .length;
 
     return Scaffold(
@@ -142,7 +143,8 @@ class _KeyRow extends StatelessWidget {
       RemoteConfigValueOrigin.cache ||
       RemoteConfigValueOrigin.providerCache =>
         Colors.blue.shade700,
-      RemoteConfigValueOrigin.defaultValue => Theme.of(context).colorScheme.outline,
+      RemoteConfigValueOrigin.defaultValue =>
+        Theme.of(context).colorScheme.outline,
     };
 
     return Padding(
@@ -155,13 +157,11 @@ class _KeyRow extends StatelessWidget {
               Expanded(
                 child: SelectableText(
                   key_.name,
-                  style: const TextStyle(
-                      fontFamily: 'monospace', fontSize: 12),
+                  style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
                 ),
               ),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
                   color: colour.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(4),

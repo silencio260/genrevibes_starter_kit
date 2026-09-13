@@ -44,7 +44,9 @@ class _DevLogPageState extends State<DevLogPage> {
   bool _passes(KitLogRecord record) {
     if (_minimum != null && record.level.index < _minimum!.index) return false;
     if (_module.isEmpty) return true;
-    return (record.moduleId ?? '').toLowerCase().contains(_module.toLowerCase());
+    return (record.moduleId ?? '')
+        .toLowerCase()
+        .contains(_module.toLowerCase());
   }
 
   @override
@@ -161,14 +163,12 @@ class _RecordTile extends StatelessWidget {
               ),
             ],
           ),
-          SelectableText(record.message,
-              style: const TextStyle(fontSize: 12)),
+          SelectableText(record.message, style: const TextStyle(fontSize: 12)),
           if (record.error != null)
             SelectableText('${record.error}',
                 style: TextStyle(fontSize: 11, color: colour)),
           if (record.fields.isNotEmpty)
-            Text('${record.fields}',
-                style: const TextStyle(fontSize: 10)),
+            Text('${record.fields}', style: const TextStyle(fontSize: 10)),
           const Divider(height: 10),
         ],
       ),

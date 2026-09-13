@@ -33,7 +33,8 @@ class _DevModulesPageState extends State<DevModulesPage> {
       _subscriptions.add(
         module.healthChanges.listen((health) {
           if (!mounted) return;
-          setState(() => _timeline.insert(0, _Transition(health, DateTime.now())));
+          setState(
+              () => _timeline.insert(0, _Transition(health, DateTime.now())));
         }),
       );
     }
@@ -98,8 +99,7 @@ class _DevModulesPageState extends State<DevModulesPage> {
     );
   }
 
-  String _time(DateTime at) =>
-      '${at.hour.toString().padLeft(2, '0')}:'
+  String _time(DateTime at) => '${at.hour.toString().padLeft(2, '0')}:'
       '${at.minute.toString().padLeft(2, '0')}:'
       '${at.second.toString().padLeft(2, '0')}';
 }

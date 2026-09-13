@@ -108,8 +108,9 @@ class StarterKitLabScreen extends StatelessWidget {
         title: 'Consent',
         subtitle: 'UMP snapshot and forms',
         icon: Icons.privacy_tip,
-        build:
-            host.consent == null ? null : () => DevConsentPage(gate: host.consent!),
+        build: host.consent == null
+            ? null
+            : () => DevConsentPage(gate: host.consent!),
         missing: 'genrevibes_consent',
       ),
       _Entry(
@@ -212,9 +213,8 @@ class StarterKitLabScreen extends StatelessWidget {
         title: 'Crash',
         subtitle: 'Non-fatal, breadcrumb, uncaught',
         icon: Icons.bug_report,
-        build: host.crash == null
-            ? null
-            : () => DevCrashPage(crash: host.crash!),
+        build:
+            host.crash == null ? null : () => DevCrashPage(crash: host.crash!),
         missing: 'genrevibes_crash',
       ),
       _Entry(
@@ -289,9 +289,7 @@ class _EntryTile extends StatelessWidget {
         ),
         title: Text(entry.title),
         subtitle: Text(
-          available
-              ? entry.subtitle
-              : 'Not adopted — needs ${entry.missing}',
+          available ? entry.subtitle : 'Not adopted — needs ${entry.missing}',
           style: const TextStyle(fontSize: 11),
         ),
         trailing: available

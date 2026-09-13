@@ -375,7 +375,8 @@ class _DeliveryPanel extends StatelessWidget {
         border: Border.all(color: colour.withValues(alpha: 0.4)),
         borderRadius: BorderRadius.circular(6),
       ),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: children),
+      child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start, children: children),
     );
   }
 }

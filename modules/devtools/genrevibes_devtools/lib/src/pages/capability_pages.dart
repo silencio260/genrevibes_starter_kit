@@ -100,8 +100,8 @@ class DevAdsPage extends StatelessWidget {
                 ? 'none'
                 : policy.suppressionReasons.join(', '),
           ),
-          DevFact('Currently showing',
-              policy.showingPlacement?.id ?? 'nothing'),
+          DevFact(
+              'Currently showing', policy.showingPlacement?.id ?? 'nothing'),
           ActionRow(
             label: 'Toggle premium suppression',
             icon: Icons.workspace_premium,
@@ -183,8 +183,8 @@ class DevConsentPage extends StatelessWidget {
           DevFact('State', snapshot.state.name),
           DevFact('Can request ads', '${snapshot.canRequestAds}'),
           DevFact('Form available', '${snapshot.formAvailable}'),
-          DevFact('Privacy options required',
-              '${snapshot.privacyOptionsRequired}'),
+          DevFact(
+              'Privacy options required', '${snapshot.privacyOptionsRequired}'),
           DevFact('Observed at', snapshot.observedAt.toIso8601String()),
           const DevHeading('Actions'),
           ActionRow(
@@ -324,8 +324,8 @@ class DevPurchasesPage extends StatelessWidget {
       builder: (refresh) => <Widget>[
         DevFact('Hosted paywall', '${capabilities.hostedPaywall}'),
         DevFact('Customer centre', '${capabilities.customerCenter}'),
-        DevFact('Account identification',
-            '${capabilities.accountIdentification}'),
+        DevFact(
+            'Account identification', '${capabilities.accountIdentification}'),
         const DevHeading('Actions'),
         ActionRow(
           label: 'Read entitlements',
@@ -357,9 +357,7 @@ class DevPurchasesPage extends StatelessWidget {
             return result.map(
               (products) => products.isEmpty
                   ? 'no products returned'
-                  : products
-                      .map((p) => '${p.id} ${p.priceString}')
-                      .join('\n'),
+                  : products.map((p) => '${p.id} ${p.priceString}').join('\n'),
             );
           },
         ),
@@ -452,7 +450,8 @@ class DevPushPage extends StatelessWidget {
         ActionRow(
           label: 'Set tag kit_lab=true',
           icon: Icons.sell,
-          run: () => provider.setTags(const <String, String>{'kit_lab': 'true'}),
+          run: () =>
+              provider.setTags(const <String, String>{'kit_lab': 'true'}),
         ),
         ActionRow(
           label: 'Remove tag kit_lab',
@@ -581,8 +580,8 @@ class DevIdentityPage extends StatelessWidget {
         ],
         if (retention != null) ...<Widget>[
           const DevHeading('Engagement'),
-          DevFact('Days since install',
-              '${retention.snapshot.daysSinceInstall}'),
+          DevFact(
+              'Days since install', '${retention.snapshot.daysSinceInstall}'),
           DevFact('Total opens', '${retention.snapshot.totalOpens}'),
           DevFact('Active days', '${retention.snapshot.activeDays}'),
           DevFact('Sessions today', '${retention.snapshot.sessionsToday}'),
@@ -590,7 +589,8 @@ class DevIdentityPage extends StatelessWidget {
           DevFact('Level', retention.profile.level.name),
           DevFact('Score', '${retention.profile.score}'),
           const DevHeading('Targeting decisions'),
-          for (final entry in retention.profile.decisions.toProperties().entries)
+          for (final entry
+              in retention.profile.decisions.toProperties().entries)
             DevFact(entry.key, '${entry.value}'),
           const DevHeading('Actions'),
           ActionRow(

@@ -189,15 +189,16 @@ class _ActionRowState extends State<ActionRow> {
               ],
             ],
           ),
-          if (_result != null) _ResultPanel(
-            phase: _phase,
-            result: _result!,
-            took: _took,
-            onDismiss: () => setState(() {
-              _phase = ActionPhase.idle;
-              _result = null;
-            }),
-          ),
+          if (_result != null)
+            _ResultPanel(
+              phase: _phase,
+              result: _result!,
+              took: _took,
+              onDismiss: () => setState(() {
+                _phase = ActionPhase.idle;
+                _result = null;
+              }),
+            ),
         ],
       ),
     );
