@@ -65,5 +65,8 @@ final class _FakeReplayClient implements MixpanelReplayClient {
   }
 
   @override
+  bool get isRecording => false;
+
+  @override
   Widget wrap(Widget child) => child;
 }

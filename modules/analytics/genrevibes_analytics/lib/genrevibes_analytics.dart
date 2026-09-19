@@ -13,3 +13,4 @@ export 'src/session_replay/session_replay_controller.dart';
 export 'src/session_replay/session_replay_keys.dart';
 export 'src/session_replay/session_replay_recorder.dart';
 export 'src/session_replay/session_replay_settings.dart';
+export 'src/switchable_analytics_sink.dart';

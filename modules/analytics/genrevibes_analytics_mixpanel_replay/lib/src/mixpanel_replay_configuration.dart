@@ -1,3 +1,4 @@
+import 'package:genrevibes_analytics/genrevibes_analytics.dart';
 import 'package:mixpanel_flutter_session_replay/mixpanel_flutter_session_replay.dart';
 
 /// Privacy-first configuration for Mixpanel session replay.
@@ -42,6 +43,28 @@ final class GenRevibesMixpanelReplayConfiguration {
 
   /// Mixpanel remote replay-settings behavior.
   final RemoteSettingsMode remoteSettingsMode;
+
+  /// Returns a copy with [plan]'s masking and SDK self-sampling turned off.
+  ///
+  /// Use this when a `SessionReplayController` decides recording through
+  /// `MixpanelSessionReplayRecorder`. Masking is read once at setup, so the
+  /// plan must be resolved before the SDK is configured; `sessionsPercent` is
+  /// forced to 0 so the SDK never starts recording outside the rollout.
+  GenRevibesMixpanelReplayConfiguration withSessionReplay(
+    SessionReplayPlan plan,
+  ) {
+    return GenRevibesMixpanelReplayConfiguration(
+      token: token,
+      distinctId: distinctId,
+      maskAllText: plan.maskAllText,
+      maskAllImages: plan.maskAllImages,
+      sessionsPercent: 0,
+      wifiOnly: wifiOnly,
+      flushInterval: flushInterval,
+      storageQuotaMb: storageQuotaMb,
+      remoteSettingsMode: remoteSettingsMode,
+    );
+  }
 
   /// Converts this application configuration to the vendor options object.
   SessionReplayOptions toSdkOptions() {

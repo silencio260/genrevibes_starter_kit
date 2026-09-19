@@ -17,6 +17,9 @@ abstract interface class MixpanelReplayClient {
   /// Stops capturing the current replay.
   Future<void> stop();
 
+  /// Whether the SDK is recording or setting up a recording.
+  bool get isRecording;
+
   /// Updates the distinct ID for future replay events.
   Future<void> identify(String distinctId);
 
@@ -66,6 +69,11 @@ final class DefaultMixpanelReplayClient implements MixpanelReplayClient {
 
   @override
   Future<void> stop() async => _readyInstance.stopRecording();
+
+  @override
+  bool get isRecording =>
+      _instance != null &&
+      _readyInstance.recordingState != RecordingState.notRecording;
 
   @override
   Future<void> identify(String distinctId) async {

@@ -71,11 +71,33 @@ final class MixpanelReplayController implements StarterModule {
     return const KitSuccess<void>(null);
   }
 
+  /// The configuration the SDK was (or will be) set up with.
+  GenRevibesMixpanelReplayConfiguration get configuration => _configuration;
+
   /// Starts recording. Call only after analytics consent is granted.
-  Future<KitResult<void>> start() {
+  ///
+  /// [sessionsPercent] overrides the configured sampling for this call. A
+  /// caller that has already decided this install records, such as
+  /// `MixpanelSessionReplayRecorder`, passes 100.
+  Future<KitResult<void>> start({double? sessionsPercent}) {
     return _guard(
-      () => _client.start(sessionsPercent: _configuration.sessionsPercent),
+      () => _client.start(
+        sessionsPercent: sessionsPercent ?? _configuration.sessionsPercent,
+      ),
     );
+  }
+
+  /// Whether the SDK reports a recording in progress or being set up.
+  KitResult<bool> isRecording() {
+    if (!_initialized || _disposed) {
+      return const KitFailure<bool>(
+        KitError(
+          code: KitErrorCode.notInitialized,
+          message: 'Mixpanel replay has not been initialized.',
+        ),
+      );
+    }
+    return KitSuccess<bool>(_client.isRecording);
   }
 
   /// Immediately stops capture for private or secure application surfaces.

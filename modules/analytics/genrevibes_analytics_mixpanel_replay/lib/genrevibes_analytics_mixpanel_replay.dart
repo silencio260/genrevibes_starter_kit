@@ -5,3 +5,4 @@ export 'src/mixpanel_replay_client.dart';
 export 'src/mixpanel_replay_configuration.dart';
 export 'src/mixpanel_replay_controller.dart';
 export 'src/mixpanel_replay_scope.dart';
+export 'src/mixpanel_session_replay_recorder.dart';

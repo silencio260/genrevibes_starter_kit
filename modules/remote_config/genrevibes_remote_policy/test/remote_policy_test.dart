@@ -147,6 +147,7 @@ void main() {
         schema.keys.length,
         AdsPolicyKeys.all.length +
             SessionReplayPolicyKeys.all.length +
+            AnalyticsSinkPolicyKeys.all.length +
             DeveloperAccessPolicyKeys.all.length +
             AnalyticsNamesSchema.all.length +
             1,
@@ -162,6 +163,7 @@ void main() {
         schema.keys.length,
         AdsPolicyKeys.all.length +
             SessionReplayPolicyKeys.all.length +
+            AnalyticsSinkPolicyKeys.all.length +
             DeveloperAccessPolicyKeys.all.length,
       );
       expect(

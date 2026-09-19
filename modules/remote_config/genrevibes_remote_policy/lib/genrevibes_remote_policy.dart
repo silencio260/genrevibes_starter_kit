@@ -5,6 +5,8 @@ export 'src/ads_policy_config.dart';
 export 'src/ads_policy_keys.dart';
 export 'src/ads_remote_policy_binder.dart';
 export 'src/analytics_names_schema.dart';
+export 'src/analytics_sink_policy_keys.dart';
+export 'src/analytics_sink_remote_policy_binder.dart';
 export 'src/developer_access_policy_keys.dart';
 export 'src/developer_access_remote_policy_binder.dart';
 export 'src/exit_prompt_policy_keys.dart';
