@@ -124,11 +124,8 @@ class _EventTile extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final report = record.report;
     final at = record.at;
-    final colour = report.suppressedByConsent
-        ? Colors.orange.shade800
-        : report.isCompleteSuccess
-            ? Colors.green.shade700
-            : scheme.error;
+    final colour =
+        report.isCompleteSuccess ? Colors.green.shade700 : scheme.error;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -167,9 +164,7 @@ class _EventTile extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(top: 2),
             child: Text(
-              report.suppressedByConsent
-                  ? 'suppressed before any sink'
-                  : <String>[
+              <String>[
                       for (final sink in report.attemptedSinks)
                         report.successfulSinks.contains(sink)
                             ? '✓ $sink'

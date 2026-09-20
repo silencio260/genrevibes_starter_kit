@@ -6,8 +6,14 @@ abstract interface class FirebaseAnalyticsClient {
   /// Whether the host application initialized at least one Firebase app.
   bool get isFirebaseInitialized;
 
-  /// Enables or disables analytics collection.
-  Future<void> setCollectionEnabled(bool enabled);
+  /// Turns analytics collection on.
+  ///
+  /// There is deliberately no way to turn it off. Firebase Analytics is the
+  /// portfolio's baseline measurement, disclosed in every app's privacy
+  /// policy, so no consent state, remote switch or host call may disable it.
+  /// This exists only to repair an install that an older build left disabled
+  /// in Firebase's own preferences.
+  Future<void> enableCollection();
 
   /// Logs an event with Firebase-compatible parameters.
   Future<void> logEvent(String name, Map<String, Object>? parameters);
@@ -42,8 +48,8 @@ final class DefaultFirebaseAnalyticsClient implements FirebaseAnalyticsClient {
   Future<void> resetAnalyticsData() => _analytics.resetAnalyticsData();
 
   @override
-  Future<void> setCollectionEnabled(bool enabled) {
-    return _analytics.setAnalyticsCollectionEnabled(enabled);
+  Future<void> enableCollection() {
+    return _analytics.setAnalyticsCollectionEnabled(true);
   }
 
   @override

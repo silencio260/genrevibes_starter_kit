@@ -23,21 +23,18 @@ void main() {
     expect(client.collectionCalls.last, isTrue);
   });
 
-  test('a sink configured not to collect stays off when asked to collect',
-      () async {
+  test('cannot be turned off', () async {
     final client = _FakeFirebaseAnalyticsClient();
-    final sink = FirebaseAnalyticsSink(
-      client: client,
-      collectionEnabled: false,
-    );
+    final sink = FirebaseAnalyticsSink(client: client);
 
     await sink.initialize();
-    // The pipeline asserts consent on every launch; configuration outranks it.
-    await sink.setCollectionEnabled(true);
+    // Consent changes, remote switches and hosts all reach the sink through
+    // this method. Firebase collection is not theirs to disable.
+    await sink.setCollectionEnabled(false);
 
-    expect(client.collectionCalls, everyElement(isFalse));
-    expect(client.collectionCalls.first, isFalse,
-        reason: 'must state its position at init, not inherit the disk flag');
+    expect(client.collectionCalls, everyElement(isTrue));
+    expect(client.collectionCalls.first, isTrue,
+        reason: 'init must repair an install an older build left disabled');
   });
 
   test('normalizes Firebase event parameter values', () {
@@ -72,8 +69,8 @@ final class _FakeFirebaseAnalyticsClient implements FirebaseAnalyticsClient {
   final List<bool> collectionCalls = <bool>[];
 
   @override
-  Future<void> setCollectionEnabled(bool enabled) async {
-    collectionCalls.add(enabled);
+  Future<void> enableCollection() async {
+    collectionCalls.add(true);
   }
 
   @override

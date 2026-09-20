@@ -5,29 +5,9 @@ import 'package:genrevibes_core/genrevibes_core.dart';
 import 'package:test/test.dart';
 
 void main() {
-  test('an app that opts into consent gating is silenced until it grants',
-      () async {
-    // Opt-in: only a pipeline constructed with an ungranted consent waits.
-    final sink = _FakeAnalyticsSink('firebase');
-    final pipeline = AnalyticsPipeline(
-      sinks: <AnalyticsSink>[sink],
-      initialConsent: AnalyticsConsent.unknown,
-    );
-
-    expect((await pipeline.initialize()).isSuccess, isTrue);
-    final report = _value(
-      await pipeline.track(const AnalyticsEvent(name: 'app_open')),
-    );
-
-    expect(sink.initializeCount, 0);
-    expect(sink.events, isEmpty);
-    expect(report.suppressedByConsent, isTrue);
-    await pipeline.dispose();
-  });
-
-  test('delivers without anyone granting consent first', () async {
-    // The default. Forgetting to call setConsent used to mean no analytics at
-    // all, silently, which is a worse default than the one it protected.
+  test('delivers without anything having to enable it', () async {
+    // Analytics is a condition of using these apps: there is no consent gate
+    // that could leave a pipeline silently collecting nothing.
     final sink = _FakeAnalyticsSink('firebase');
     final pipeline = AnalyticsPipeline(sinks: <AnalyticsSink>[sink]);
 
@@ -37,7 +17,7 @@ void main() {
     );
 
     expect(sink.events.single.name, 'app_open');
-    expect(report.suppressedByConsent, isFalse);
+    expect(report.wasDelivered, isTrue);
     await pipeline.dispose();
   });
 
@@ -46,7 +26,6 @@ void main() {
     final posthog = _FakeAnalyticsSink('posthog', failTracking: true);
     final pipeline = AnalyticsPipeline(
       sinks: <AnalyticsSink>[firebase, posthog],
-      initialConsent: AnalyticsConsent.granted,
     );
 
     expect((await pipeline.initialize()).isSuccess, isTrue);
@@ -61,37 +40,14 @@ void main() {
     await pipeline.dispose();
   });
 
-  test('granted consent starts sinks after a disabled initialization',
-      () async {
-    final sink = _FakeAnalyticsSink('firebase');
-    final pipeline = AnalyticsPipeline(
-      sinks: <AnalyticsSink>[sink],
-      initialConsent: AnalyticsConsent.unknown,
-    );
-    await pipeline.initialize();
-
-    final report = _value(
-      await pipeline.setConsent(AnalyticsConsent.granted),
-    );
-
-    expect(sink.initializeCount, 1);
-    expect(sink.collectionEnabled, isTrue);
-    expect(report.wasDelivered, isTrue);
-    expect(pipeline.health.state, ModuleState.ready);
-    await pipeline.dispose();
-  });
-
-  test('initialization turns provider collection back on when granted',
-      () async {
+  test('initialization turns provider collection back on', () async {
     // Regression: a provider that persists its collection flag across launches
     // — Firebase writes `measurement_enabled_from_api` to its own preferences —
-    // used to keep a stale `false` forever, because collection was only ever
-    // set on a consent transition and a pipeline that starts granted makes no
-    // transition. Every sink reported healthy while Firebase dropped the lot.
+    // used to keep a stale `false` forever. Every sink reported healthy while
+    // Firebase dropped the lot, so startup asserts the position it wants.
     final sink = _FakeAnalyticsSink('firebase')..collectionEnabled = false;
     final pipeline = AnalyticsPipeline(
       sinks: <AnalyticsSink>[sink],
-      initialConsent: AnalyticsConsent.granted,
     );
 
     await pipeline.initialize();
@@ -104,7 +60,6 @@ void main() {
     final sink = _FakeAnalyticsSink('firebase');
     final pipeline = AnalyticsPipeline(
       sinks: <AnalyticsSink>[sink],
-      initialConsent: AnalyticsConsent.granted,
       names: MappedAnalyticsEventNames(<String, String>{
         'rating_submitted': 'custom_rating_submitted',
       }),
@@ -137,7 +92,6 @@ void main() {
         observer: observer,
       );
       await pipeline.initialize();
-      await pipeline.setConsent(AnalyticsConsent.granted);
 
       await pipeline.track(const AnalyticsEvent(name: 'checkout'));
 
@@ -149,25 +103,6 @@ void main() {
       expect(report.failures.keys, contains('bad'));
     });
 
-    test('reports an event suppressed by consent rather than staying silent',
-        () async {
-      final observer = _RecordingObserver();
-      final pipeline = AnalyticsPipeline(
-        sinks: <AnalyticsSink>[_FakeAnalyticsSink('sink')],
-        initialConsent: AnalyticsConsent.unknown,
-        observer: observer,
-      );
-      await pipeline.initialize();
-
-      // Consent never granted, so nothing reaches a sink. A diagnostics screen
-      // still has to be able to say why.
-      await pipeline.track(const AnalyticsEvent(name: 'blocked'));
-
-      expect(observer.events, hasLength(1));
-      expect(observer.events.single.$2.suppressedByConsent, isTrue);
-      expect(observer.events.single.$2.successfulSinks, isEmpty);
-    });
-
     test('an observer that throws cannot break delivery', () async {
       final sink = _FakeAnalyticsSink('sink');
       final pipeline = AnalyticsPipeline(
@@ -175,7 +110,6 @@ void main() {
         observer: _ThrowingObserver(),
       );
       await pipeline.initialize();
-      await pipeline.setConsent(AnalyticsConsent.granted);
 
       final result = await pipeline.track(const AnalyticsEvent(name: 'safe'));
 

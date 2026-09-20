@@ -285,7 +285,6 @@ void main() {
       final sink = _RecordingSink();
       final pipeline = AnalyticsPipeline(
         sinks: <AnalyticsSink>[sink],
-        initialConsent: AnalyticsConsent.granted,
       );
       await pipeline.initialize();
       final tracker = RetentionTracker(

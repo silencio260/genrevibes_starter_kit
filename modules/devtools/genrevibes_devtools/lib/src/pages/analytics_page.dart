@@ -315,20 +315,6 @@ class _DeliveryPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
 
-    if (report.suppressedByConsent) {
-      // Only reachable if an application deliberately opts into consent
-      // gating. This one does not.
-      return _panel(
-        colour: Colors.orange.shade800,
-        children: const <Widget>[
-          Text(
-            'Suppressed by consent gating, which this app does not use.',
-            style: TextStyle(fontSize: 12),
-          ),
-        ],
-      );
-    }
-
     return _panel(
       colour: report.isCompleteSuccess ? Colors.green.shade700 : scheme.error,
       children: <Widget>[

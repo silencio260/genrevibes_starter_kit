@@ -8,7 +8,6 @@ final class AnalyticsDeliveryReport {
     required this.attemptedSinks,
     required this.successfulSinks,
     required this.failures,
-    this.suppressedByConsent = false,
   });
 
   /// Operation name or event name represented by this report.
@@ -23,12 +22,8 @@ final class AnalyticsDeliveryReport {
   /// Failures keyed by sink identifier.
   final Map<String, KitError> failures;
 
-  /// Whether the pipeline deliberately skipped delivery because of consent.
-  final bool suppressedByConsent;
-
   /// Whether every attempted sink completed successfully.
   bool get isCompleteSuccess =>
-      !suppressedByConsent &&
       attemptedSinks.isNotEmpty &&
       successfulSinks.length == attemptedSinks.length;
 

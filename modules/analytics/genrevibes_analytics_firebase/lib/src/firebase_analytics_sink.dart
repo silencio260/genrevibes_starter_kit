@@ -7,20 +7,20 @@ import 'package:genrevibes_core/genrevibes_core.dart';
 import 'firebase_analytics_client.dart';
 
 /// Firebase implementation of the GenRevibes analytics sink contract.
+///
+/// Firebase Analytics always collects. It is the portfolio's baseline product
+/// measurement, it is disclosed in every app's privacy policy, and it costs
+/// nothing to run, so this sink has no way to turn it off: there is no
+/// configuration ceiling, and no code path can pass `false` to Firebase. An
+/// app that wants to hold back a provider's traffic uses a paid provider's
+/// remote kill switch (`SwitchableAnalyticsSink`) instead.
 final class FirebaseAnalyticsSink implements AnalyticsSink {
   /// Creates a Firebase Analytics sink.
-  ///
-  /// [collectionEnabled] is a ceiling, not a switch. Left at its default the
-  /// sink collects whenever the pipeline says it may; set to false the sink
-  /// stays off no matter what the pipeline asks for. An application uses it to
-  /// keep its own development traffic out of its Firebase project.
   FirebaseAnalyticsSink({
     FirebaseAnalyticsClient? client,
-    bool collectionEnabled = true,
     KitClock clock = const SystemKitClock(),
     KitLogger logger = const NoopKitLogger(),
   })  : _client = client ?? DefaultFirebaseAnalyticsClient(),
-        _collectionAllowed = collectionEnabled,
         _clock = clock,
         _logger = logger,
         _health = ModuleHealth(
@@ -31,7 +31,6 @@ final class FirebaseAnalyticsSink implements AnalyticsSink {
         );
 
   final FirebaseAnalyticsClient _client;
-  final bool _collectionAllowed;
   final KitClock _clock;
   final KitLogger _logger;
   final StreamController<ModuleHealth> _healthChanges =
@@ -68,23 +67,20 @@ final class FirebaseAnalyticsSink implements AnalyticsSink {
 
     // Firebase persists this flag in its own preferences and honours it on
     // every later launch, so a sink that never states its position inherits
-    // one. Stating it here means a build configured to collect always does,
-    // even after an earlier build — or an earlier version of the application —
-    // turned collection off and left it that way on disk.
-    if (!_collectionAllowed) {
-      return setCollectionEnabled(false);
-    }
-    return const KitSuccess<void>(null);
+    // one. Stating it here repairs an install that an older build — one that
+    // still had an off switch — left disabled on disk.
+    return _guard(_client.enableCollection);
   }
 
+  /// Keeps collection on, whatever is asked.
+  ///
+  /// The contract requires this method and the pipeline calls it whenever a
+  /// host changes consent. Firebase collection is not a per-user choice in
+  /// this portfolio, so the request is answered by asserting collection is
+  /// enabled rather than by honouring `false`.
   @override
   Future<KitResult<void>> setCollectionEnabled(bool enabled) {
-    // `_collectionAllowed` clamps rather than overrides: the pipeline may
-    // always turn collection off, and may only turn it on if configuration
-    // permits it.
-    return _guard(
-      () => _client.setCollectionEnabled(enabled && _collectionAllowed),
-    );
+    return _guard(_client.enableCollection);
   }
 
   @override

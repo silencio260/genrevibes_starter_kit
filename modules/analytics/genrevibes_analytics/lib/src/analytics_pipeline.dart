@@ -5,33 +5,28 @@ import 'package:genrevibes_core/genrevibes_core.dart';
 import 'analytics_delivery_observer.dart';
 import 'analytics_event_names.dart';
 import 'analytics_sink.dart';
-import 'model/analytics_consent.dart';
 import 'model/analytics_delivery_report.dart';
 import 'model/analytics_event.dart';
 import 'model/analytics_user.dart';
 
-/// Consent-aware analytics dispatcher with per-sink failure isolation.
+/// Analytics dispatcher with per-sink failure isolation.
+///
+/// There is no consent gate here, by portfolio decision: product analytics is
+/// a condition of using these apps and is disclosed in their privacy policies.
+/// The only supported way to hold a provider back is the developer's own
+/// remote kill switch on a paid sink (`SwitchableAnalyticsSink`); Firebase
+/// cannot be turned off at all. Consent forms in this portfolio belong to ad
+/// networks and talk to the ad SDKs, not to this pipeline.
 final class AnalyticsPipeline implements StarterModule {
   /// Creates an analytics pipeline.
   AnalyticsPipeline({
     required Iterable<AnalyticsSink> sinks,
-    // Granted unless an application says otherwise.
-    //
-    // Consent gating is opt-in. Defaulting to `unknown` meant every pipeline
-    // started silenced and stayed silenced until somebody remembered to call
-    // setConsent, so the failure mode of forgetting was "no analytics at all,
-    // with no error anywhere" — which is exactly what happened in production.
-    // Product analytics is a core function for most applications; the ones
-    // that genuinely gate it on a consent decision pass `unknown` here and
-    // drive it themselves.
-    AnalyticsConsent initialConsent = AnalyticsConsent.granted,
     AnalyticsEventNames names = const CanonicalAnalyticsEventNames(),
     AnalyticsDeliveryObserver? observer,
     KitClock clock = const SystemKitClock(),
     KitLogger logger = const NoopKitLogger(),
   })  : _sinks = List<AnalyticsSink>.unmodifiable(sinks),
         _observer = observer,
-        _consent = initialConsent,
         _names = names,
         _clock = clock,
         _logger = logger,
@@ -52,12 +47,8 @@ final class AnalyticsPipeline implements StarterModule {
       StreamController<ModuleHealth>.broadcast();
   final Set<String> _activeSinkIds = <String>{};
   late ModuleHealth _health;
-  AnalyticsConsent _consent;
   bool _initialized = false;
   bool _disposed = false;
-
-  /// Current application-level consent state.
-  AnalyticsConsent get consent => _consent;
 
   @override
   ModuleHealth get health => _health;
@@ -82,53 +73,12 @@ final class AnalyticsPipeline implements StarterModule {
         ),
       );
     }
-    if (_sinks.isEmpty || _consent != AnalyticsConsent.granted) {
+    if (_sinks.isEmpty) {
       _initialized = true;
       _setHealth(ModuleState.disabled);
       return const KitSuccess<void>(null);
     }
     return _initializeSinks();
-  }
-
-  /// Updates consent and enables or disables all configured sinks.
-  Future<KitResult<AnalyticsDeliveryReport>> setConsent(
-    AnalyticsConsent consent,
-  ) async {
-    if (_disposed) return _notReady<AnalyticsDeliveryReport>();
-    _consent = consent;
-    if (consent == AnalyticsConsent.granted) {
-      if (!_initialized || _health.state == ModuleState.disabled) {
-        final initialized = await _initializeSinks();
-        if (initialized.isFailure) {
-          return initialized.map(
-            (_) => const AnalyticsDeliveryReport(
-              operation: 'consent.granted',
-              attemptedSinks: <String>{},
-              successfulSinks: <String>{},
-              failures: <String, KitError>{},
-            ),
-          );
-        }
-      }
-      return _dispatch('consent.granted', (sink) {
-        return sink.setCollectionEnabled(true);
-      });
-    }
-
-    if (!_initialized || _health.state == ModuleState.disabled) {
-      _initialized = true;
-      _setHealth(ModuleState.disabled);
-      return KitSuccess<AnalyticsDeliveryReport>(
-        _suppressedReport('consent.${consent.name}'),
-      );
-    }
-    final report = await _dispatch('consent.${consent.name}', (sink) async {
-      final disabled = await sink.setCollectionEnabled(false);
-      if (disabled.isFailure) return disabled;
-      return sink.resetIdentity();
-    });
-    _setHealth(ModuleState.disabled);
-    return report;
   }
 
   /// Sends [event] to every configured sink concurrently.
@@ -137,15 +87,6 @@ final class AnalyticsPipeline implements StarterModule {
   /// remote or per-app rename applies to every sink and every kit emitter.
   Future<KitResult<AnalyticsDeliveryReport>> track(AnalyticsEvent event) {
     final outgoing = _resolveName(event);
-    if (_consent != AnalyticsConsent.granted) {
-      // Reported too: a suppressed event is exactly what a diagnostics screen
-      // needs to see when someone asks why nothing reached the dashboard.
-      final suppressed = _suppressedReport(outgoing.name);
-      _notifyEvent(outgoing, suppressed);
-      return Future<KitResult<AnalyticsDeliveryReport>>.value(
-        KitSuccess<AnalyticsDeliveryReport>(suppressed),
-      );
-    }
     return _dispatch(outgoing.name, (sink) => sink.track(outgoing))
         .then((result) {
       result.fold(
@@ -186,11 +127,6 @@ final class AnalyticsPipeline implements StarterModule {
 
   /// Identifies [user] in every configured sink.
   Future<KitResult<AnalyticsDeliveryReport>> identify(AnalyticsUser user) {
-    if (_consent != AnalyticsConsent.granted) {
-      return Future<KitResult<AnalyticsDeliveryReport>>.value(
-        KitSuccess<AnalyticsDeliveryReport>(_suppressedReport('identify')),
-      );
-    }
     return _dispatch('identify', (sink) => sink.identify(user));
   }
 
@@ -198,13 +134,6 @@ final class AnalyticsPipeline implements StarterModule {
   Future<KitResult<AnalyticsDeliveryReport>> setUserProperties(
     Map<String, Object?> properties,
   ) {
-    if (_consent != AnalyticsConsent.granted) {
-      return Future<KitResult<AnalyticsDeliveryReport>>.value(
-        KitSuccess<AnalyticsDeliveryReport>(
-          _suppressedReport('set_user_properties'),
-        ),
-      );
-    }
     return _dispatch(
       'set_user_properties',
       (sink) => sink.setUserProperties(properties),
@@ -244,22 +173,19 @@ final class AnalyticsPipeline implements StarterModule {
       delivery.isCompleteSuccess ? ModuleState.ready : ModuleState.degraded,
     );
 
-    // Assert this pipeline's consent onto every sink that just came up.
+    // Turn collection on in every sink that just came up.
     //
-    // Provider-side collection flags are durable in a way consent is not.
-    // Firebase writes `setAnalyticsCollectionEnabled` to its own preferences
+    // Provider-side collection flags are durable. Firebase writes
+    // `setAnalyticsCollectionEnabled` to its own preferences
     // (`measurement_enabled_from_api`) and honours it on every later launch,
     // logging `Event not sent since app measurement is disabled` and dropping
-    // everything. Setting collection only on a consent *transition* therefore
-    // inherits whatever the last run — or a previous version of the
-    // application — left behind. A pipeline that starts already granted makes
-    // no transition, so nothing ever turns collection back on and analytics
-    // stays silently dark with every sink reporting healthy.
-    //
-    // In-memory consent is the authority here; the provider's memory is not.
+    // everything, so an install an older build left disabled stays dark with
+    // every sink reporting healthy unless startup asserts its position. A
+    // paid sink switched off by the developer's remote kill switch ignores
+    // this and stays off.
     await _dispatch(
       'set_collection_enabled',
-      (sink) => sink.setCollectionEnabled(_consent == AnalyticsConsent.granted),
+      (sink) => sink.setCollectionEnabled(true),
     );
 
     return const KitSuccess<void>(null);
@@ -329,16 +255,6 @@ final class AnalyticsPipeline implements StarterModule {
     );
   }
 
-  AnalyticsDeliveryReport _suppressedReport(String operation) {
-    return AnalyticsDeliveryReport(
-      operation: operation,
-      attemptedSinks: const <String>{},
-      successfulSinks: const <String>{},
-      failures: const <String, KitError>{},
-      suppressedByConsent: true,
-    );
-  }
-
   KitFailure<T> _notReady<T>() {
     return KitFailure<T>(
       const KitError(
@@ -382,10 +298,7 @@ final class AnalyticsPipeline implements StarterModule {
       state: state,
       observedAt: _clock.now(),
       error: error,
-      details: <String, Object?>{
-        'sink_count': _sinks.length,
-        'consent': _consent.name,
-      },
+      details: <String, Object?>{'sink_count': _sinks.length},
     );
     if (!_healthChanges.isClosed) _healthChanges.add(_health);
   }
