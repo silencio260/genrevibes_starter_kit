@@ -1,6 +1,7 @@
 import 'package:genrevibes_core/genrevibes_core.dart';
 
 import '../model/ad_placement.dart';
+import '../model/ad_format.dart';
 
 /// Reason an otherwise valid ad request must not be displayed.
 enum AdPolicyBlockReason {
@@ -184,7 +185,12 @@ final class AdPolicyController {
     if (_suppressionCounts.isNotEmpty) {
       return const AdPolicyDecision.blocked(AdPolicyBlockReason.suppressed);
     }
-    if (_showingPlacement != null) {
+    // This lock prevents overlapping full-screen presentations. Embedded views
+    // stay in their owning route, behind any full-screen ad; tearing them down
+    // here loses creatives and leaves slots stranded after the lock is released.
+    if (_showingPlacement != null &&
+        placement.format != AdFormat.banner &&
+        placement.format != AdFormat.native) {
       return const AdPolicyDecision.blocked(
         AdPolicyBlockReason.anotherAdShowing,
       );
@@ -204,7 +210,11 @@ final class AdPolicyController {
   /// Acquires the full-screen lock when policy allows [placement].
   AdPolicyDecision beginShow(AdPlacement placement) {
     final decision = evaluate(placement);
-    if (decision.isAllowed) _showingPlacement = placement;
+    if (decision.isAllowed &&
+        placement.format != AdFormat.banner &&
+        placement.format != AdFormat.native) {
+      _showingPlacement = placement;
+    }
     return decision;
   }
 

@@ -1,0 +1,27 @@
+name: genrevibes_ads_yodo1
+description: Yodo1 MAS mediation adapter for the GenRevibes ads contract.
+version: 0.1.0-dev.1
+publish_to: none
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+  flutter: ">=3.19.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  genrevibes_ads: ^0.1.0-dev.4
+  genrevibes_core: ^0.1.0-dev.1
+  yodo1_mas_flutter_plugin: ">=1.0.1 <2.0.0"
+
+flutter:
+  plugin:
+    platforms:
+      android:
+        package: com.genrevibes.ads.yodo1
+        pluginClass: Yodo1AdViewsPlugin
+
+dev_dependencies:
+  flutter_lints: ^4.0.0
+  flutter_test:
+    sdk: flutter
