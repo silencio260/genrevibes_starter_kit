@@ -14,6 +14,7 @@ the prompt keeps for it.
 | `features_sheet` | Tall sheet: feature carousel, native ad when given, the exit question, Exit and Cancel | `features` |
 | `offer_sheet` | Sheet: one offer, such as premium, with Exit under it | `offer` |
 | `confirm_dialog` | Dialog: title, message, Exit and Cancel | — |
+| `confirm_sheet` | Compact ad-free bottom sheet, drag handle and full-width Stay/Exit actions | — |
 | `double_tap` | A hint on the first Back, exit on a second within `doubleTapWindow` | — |
 | `none` | Back closes the app | — |
 
@@ -63,6 +64,9 @@ ExitGuard(
 - **Only the guarded route.** Back on any screen above it pops as usual.
 - **Built per press.** `config` runs on every Back, so premium, remote config
   and ad eligibility are current.
+- **Optional host check.** `beforePrompt` can asynchronously check a system
+  role or consume Back in an editor. Return false to stay without prompting.
+  Repeated presses are ignored while the check or dialog is pending.
 - **Results.** Dismissing a sheet or dialog is `stay`. `feature` and `offer`
   run their callback with the guard's context after the prompt closes. `exit`
   calls `onExit`, which defaults to `SystemNavigator.pop`.

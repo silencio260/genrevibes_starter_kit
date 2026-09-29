@@ -36,6 +36,7 @@ abstract final class ExitPrompt {
       case ExitPromptStyle.adSheet:
       case ExitPromptStyle.featuresSheet:
       case ExitPromptStyle.offerSheet:
+      case ExitPromptStyle.confirmSheet:
         final chosen = await showModalBottomSheet<ExitPromptResult>(
           context: context,
           isScrollControlled: true,
@@ -44,6 +45,8 @@ abstract final class ExitPrompt {
             void choose(ExitPromptResult result) =>
                 Navigator.of(sheetContext).pop(result);
             return switch (style) {
+              ExitPromptStyle.confirmSheet =>
+                _ConfirmSheet(config: config, style: style, onChoose: choose),
               ExitPromptStyle.adSheet =>
                 _AdSheet(config: config, style: style, onChoose: choose),
               ExitPromptStyle.featuresSheet =>
@@ -58,6 +61,118 @@ abstract final class ExitPrompt {
 }
 
 typedef _Choose = void Function(ExitPromptResult result);
+
+/// Compact confirmation with accessible, full-width actions. It deliberately
+/// doesn't read config.ad: root exit confirmation is not an ad placement.
+class _ConfirmSheet extends StatelessWidget {
+  const _ConfirmSheet(
+      {required this.config, required this.style, required this.onChoose});
+
+  final ExitPromptConfig config;
+  final ExitPromptStyle style;
+  final _Choose onChoose;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final accent = config.theme.accentColor ?? colors.primary;
+    final onAccent =
+        ThemeData.estimateBrightnessForColor(accent) == Brightness.dark
+            ? Colors.white
+            : Colors.black;
+    void choose(ExitPromptAction action) =>
+        onChoose(ExitPromptResult(style: style, action: action));
+
+    return Material(
+      color: config.theme.surfaceColor,
+      clipBehavior: Clip.antiAlias,
+      borderRadius: BorderRadius.vertical(
+        top: Radius.circular(config.theme.cornerRadius),
+      ),
+      child: SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                  child: Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: colors.outlineVariant,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              )),
+              const SizedBox(height: 28),
+              Center(
+                  child: Container(
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: colors.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: Icon(Icons.logout_rounded,
+                    size: 30, color: colors.onSurface),
+              )),
+              const SizedBox(height: 24),
+              Text(
+                config.labels.title,
+                textAlign: TextAlign.center,
+                style: config.theme.titleStyle ??
+                    theme.textTheme.headlineSmall
+                        ?.copyWith(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                config.labels.message,
+                textAlign: TextAlign.center,
+                style: config.theme.messageStyle ??
+                    theme.textTheme.bodyLarge
+                        ?.copyWith(color: colors.onSurfaceVariant, height: 1.5),
+              ),
+              const SizedBox(height: 28),
+              FilledButton(
+                onPressed: () => choose(ExitPromptAction.stay),
+                style: FilledButton.styleFrom(
+                  backgroundColor: accent,
+                  foregroundColor: onAccent,
+                  minimumSize: Size.fromHeight(config.theme.buttonHeight),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  textStyle: theme.textTheme.titleMedium
+                      ?.copyWith(fontWeight: FontWeight.w700),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18)),
+                ),
+                child: Text(config.labels.cancel, textAlign: TextAlign.center),
+              ),
+              const SizedBox(height: 12),
+              OutlinedButton(
+                onPressed: () => choose(ExitPromptAction.exit),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: colors.onSurface,
+                  minimumSize: Size.fromHeight(config.theme.buttonHeight),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  side: BorderSide(color: colors.outline),
+                  textStyle: theme.textTheme.titleMedium
+                      ?.copyWith(fontWeight: FontWeight.w600),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18)),
+                ),
+                child: Text(config.labels.exit, textAlign: TextAlign.center),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 Color _accentOf(BuildContext context, ExitPromptConfig config) =>
     config.theme.accentColor ?? Theme.of(context).colorScheme.primary;

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:yodo1_mas_flutter_plugin/constants.dart';
@@ -69,6 +70,7 @@ final class DefaultYodo1MasClient implements Yodo1MasClient {
       : _plugin = plugin ?? Yodo1MasFlutterPlugin();
 
   final Yodo1MasFlutterPlugin _plugin;
+  static const _androidEvents = MethodChannel(Yodo1MasConstants.channel);
 
   @override
   Future<void> initialize(
@@ -117,6 +119,31 @@ final class DefaultYodo1MasClient implements Yodo1MasClient {
     required Yodo1AdCallback onBanner,
     required Yodo1AdCallback onNative,
   }) {
+    if (Platform.isAndroid) {
+      // Android initializes through our process-aware native bridge, bypassing
+      // plugin.initSdk(), which otherwise installs this incoming event handler.
+      // Register it separately so loaded/opened/closed events reach the provider.
+      final callbacks = <int, Yodo1AdCallback>{
+        Yodo1MasConstants.adTypeInterstitial: onInterstitial,
+        Yodo1MasConstants.adTypeReward: onRewarded,
+        Yodo1MasConstants.adTypeAppOpen: onAppOpen,
+        Yodo1MasConstants.adTypeBanner: onBanner,
+        Yodo1MasConstants.adTypeNative: onNative,
+      };
+      _androidEvents.setMethodCallHandler((call) async {
+        if (call.method != Yodo1MasConstants.methodFlutterAdEvent) return true;
+        final Object? payload = call.arguments is String
+            ? jsonDecode(call.arguments as String)
+            : call.arguments;
+        if (payload is! Map) return false;
+        final type = payload['type'];
+        final code = payload['code'];
+        if (type is! int || code is! int) return false;
+        callbacks[type]?.call(code, payload['message']?.toString() ?? '');
+        return true;
+      });
+      return;
+    }
     _plugin.setInterstitialListener(onInterstitial);
     _plugin.setRewardListener(onRewarded);
     _plugin.setAppOpenListener(onAppOpen);
@@ -126,6 +153,10 @@ final class DefaultYodo1MasClient implements Yodo1MasClient {
 
   @override
   void stopListening() {
+    if (Platform.isAndroid) {
+      _androidEvents.setMethodCallHandler(null);
+      return;
+    }
     _plugin.setInterstitialListener(null);
     _plugin.setRewardListener(null);
     _plugin.setAppOpenListener(null);

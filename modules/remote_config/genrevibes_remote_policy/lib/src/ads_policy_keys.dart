@@ -42,7 +42,7 @@ abstract final class AdsPolicyKeys {
   /// Minimum seconds between interstitials.
   static const minInterstitialInterval = RemoteConfigKey<int>(
     name: 'min_insta_ad_interval',
-    defaultValue: 5,
+    defaultValue: 10,
     codec: _int,
     isValid: _nonNegative,
   );

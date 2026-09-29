@@ -13,7 +13,7 @@ void main() {
 
       expect(config.enabled, isTrue);
       expect(config.firstInterstitialDelay, const Duration(seconds: 3));
-      expect(config.interstitialInterval, const Duration(seconds: 5));
+      expect(config.interstitialInterval, const Duration(seconds: 10));
       expect(config.bannerInterval, const Duration(seconds: 3));
       expect(config.showAppOpenAd, isTrue);
       expect(config.unitOverride(AdFormat.banner), isNull);
@@ -40,7 +40,7 @@ void main() {
         _snapshot(<String, Object?>{'min_insta_ad_interval': -1}),
       );
 
-      expect(config.interstitialInterval, const Duration(seconds: 5));
+      expect(config.interstitialInterval, const Duration(seconds: 10));
     });
 
     test('maps formats to placement policies', () {
@@ -50,7 +50,7 @@ void main() {
 
       final interstitial = config.policyFor(AdFormat.interstitial);
       expect(interstitial.initialDelay, const Duration(seconds: 3));
-      expect(interstitial.minimumInterval, const Duration(seconds: 5));
+      expect(interstitial.minimumInterval, const Duration(seconds: 10));
       expect(config.policyFor(AdFormat.appOpen).enabled, isFalse);
       expect(config.policyFor(AdFormat.banner).enabled, isTrue);
     });

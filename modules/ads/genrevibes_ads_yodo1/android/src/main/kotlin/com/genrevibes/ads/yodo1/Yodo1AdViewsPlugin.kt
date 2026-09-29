@@ -2,6 +2,10 @@ package com.genrevibes.ads.yodo1
 
 import android.content.Context
 import android.app.Activity
+import android.graphics.Color
+import android.os.Handler
+import android.os.Looper
+import android.os.SystemClock
 import android.util.Log
 import android.view.View
 import android.view.ViewGroup
@@ -50,14 +54,36 @@ class Yodo1AdViewsPlugin : FlutterPlugin, ActivityAware {
     private var activity: Activity? = null
     private var control: MethodChannel? = null
     private var attached = false
-    private var banners: Yodo1AdViewFactory? = null
-    private val nativeViews = mutableListOf<Yodo1NativePlatformView>()
+    private val views = mutableSetOf<InlinePlatformView>()
+    private val preloads = InlineAdPreloads()
 
     override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         attached = true
         val messenger = binding.binaryMessenger
         control = MethodChannel(messenger, "genrevibes.ads.yodo1/control").also { channel ->
             channel.setMethodCallHandler { call, result ->
+                if (call.method == "clearPreloads") {
+                    preloads.clear()
+                    result.success(null)
+                    return@setMethodCallHandler
+                }
+                if (call.method == "preloadInline") {
+                    val host = activity
+                    val params = call.arguments as? Map<*, *>
+                    val placement = params?.get("placementId") as? String
+                    val format = params?.get("format") as? String
+                    if (host == null || initializedAppKey == null || placement.isNullOrBlank() ||
+                        (format != "native" && format != "banner")) {
+                        result.success(false)
+                    } else {
+                        @Suppress("UNCHECKED_CAST")
+                        val arguments = params as Map<String, Any?>
+                        preloads.load(arguments, result) {
+                            createView(host, arguments, format == "native")
+                        }
+                    }
+                    return@setMethodCallHandler
+                }
                 if (call.method != "initialize") {
                     result.notImplemented()
                     return@setMethodCallHandler
@@ -108,11 +134,11 @@ class Yodo1AdViewsPlugin : FlutterPlugin, ActivityAware {
         }
         binding.platformViewRegistry.registerViewFactory(
             BANNER_VIEW_TYPE,
-            Yodo1AdViewFactory(messenger, native = false).also { banners = it },
+            Yodo1AdViewFactory(messenger, native = false, preloads = preloads, createView = ::createView),
         )
         binding.platformViewRegistry.registerViewFactory(
             NATIVE_VIEW_TYPE,
-            Yodo1AdViewFactory(messenger, native = true, nativeViews = nativeViews),
+            Yodo1AdViewFactory(messenger, native = true, preloads = preloads, createView = ::createView),
         )
     }
 
@@ -120,9 +146,16 @@ class Yodo1AdViewsPlugin : FlutterPlugin, ActivityAware {
         attached = false
         control?.setMethodCallHandler(null)
         control = null
-        nativeViews.toList().forEach { it.dispose() }
-        nativeViews.clear()
-        banners = null
+        preloads.clear()
+        views.toList().forEach { it.dispose() }
+        views.clear()
+    }
+
+    private fun createView(context: Context, params: Map<String, Any?>, native: Boolean): InlinePlatformView {
+        val view = if (native) Yodo1NativePlatformView(context, params) { views.remove(it) }
+            else Yodo1BannerPlatformView(context, params) { views.remove(it) }
+        views.add(view)
+        return view
     }
 
     companion object {
@@ -132,36 +165,161 @@ class Yodo1AdViewsPlugin : FlutterPlugin, ActivityAware {
     }
 
     override fun onAttachedToActivity(binding: ActivityPluginBinding) { activity = binding.activity }
-    override fun onDetachedFromActivityForConfigChanges() { activity = null }
+    override fun onDetachedFromActivityForConfigChanges() { preloads.clear(); activity = null }
     override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) { activity = binding.activity }
-    override fun onDetachedFromActivity() { activity = null }
+    override fun onDetachedFromActivity() { preloads.clear(); activity = null }
 }
 
 /** Creates one ad view per Flutter widget instance. */
 internal class Yodo1AdViewFactory(
     private val messenger: BinaryMessenger,
     private val native: Boolean,
-    private val nativeViews: MutableList<Yodo1NativePlatformView>? = null,
+    private val preloads: InlineAdPreloads,
+    private val createView: (Context, Map<String, Any?>, Boolean) -> InlinePlatformView,
 ) : PlatformViewFactory(StandardMessageCodec.INSTANCE) {
 
     override fun create(context: Context, viewId: Int, args: Any?): PlatformView {
         @Suppress("UNCHECKED_CAST")
         val params = args as? Map<String, Any?> ?: emptyMap()
         val channel = MethodChannel(messenger, "genrevibes.ads.yodo1/view_$viewId")
-        return if (native) {
-            Yodo1NativePlatformView(context, params, channel, viewId) { view ->
-                nativeViews?.remove(view)
-            }.also { nativeViews?.add(it) }
-        } else {
-            Yodo1BannerPlatformView(context, params, channel, viewId)
+        val view = preloads.take(params + ("format" to if (native) "native" else "banner"))
+            ?: createView(context, params, native)
+        view.attach(channel)
+        return view
+    }
+}
+
+/** Detached views only: no hidden window and no app impression event on preload. */
+internal class InlineAdPreloads {
+    private data class Entry(val view: InlinePlatformView, val waiters: MutableList<MethodChannel.Result>)
+    private val entries = linkedMapOf<String, Entry>()
+    private val handler = Handler(Looper.getMainLooper())
+    private fun key(params: Map<String, Any?>) = listOf(
+        params["format"], params["placementId"], params["size"], params["backgroundColor"],
+        params["widthPx"], params["heightPx"],
+    ).joinToString("|")
+
+    fun load(params: Map<String, Any?>, result: MethodChannel.Result, create: () -> InlinePlatformView) {
+        val key = key(params)
+        entries[key]?.let {
+            if (it.view.loaded) result.success(true) else it.waiters.add(result)
+            return
         }
+        // Keep one creative per placement, with a small, bounded memory budget.
+        if (entries.size >= 6) remove(entries.keys.first())
+        val view = create()
+        val entry = Entry(view, mutableListOf(result))
+        entries[key] = entry
+        view.onPreloadResult = { ready ->
+            if (entries[key] === entry) {
+                entry.waiters.toList().forEach { it.success(ready) }
+                entry.waiters.clear()
+                if (!ready) remove(key)
+            }
+        }
+        handler.postAtTime({
+            if (entries[key] === entry && !view.loaded) remove(key)
+        }, entry, SystemClock.uptimeMillis() + 30_000)
+        handler.postAtTime({ if (entries[key] === entry) remove(key) }, entry,
+            SystemClock.uptimeMillis() + 120_000)
+        Log.d(TAG, "preload: requesting $key")
+        view.start()
+    }
+
+    fun take(params: Map<String, Any?>): InlinePlatformView? {
+        val key = key(params)
+        val entry = entries.remove(key) ?: return null
+        handler.removeCallbacksAndMessages(entry)
+        entry.view.onPreloadResult = null
+        entry.waiters.forEach { it.success(entry.view.loaded) }
+        // Transfer even an in-flight request; the destination must not reload it.
+        Log.d(TAG, "preload: consumed $key ready=${entry.view.loaded}")
+        return entry.view
+    }
+
+    private fun remove(key: String) {
+        val entry = entries.remove(key) ?: return
+        handler.removeCallbacksAndMessages(entry)
+        entry.view.onPreloadResult = null
+        entry.waiters.forEach { it.success(false) }
+        entry.view.dispose()
+    }
+
+    fun clear() {
+        entries.keys.toList().forEach(::remove)
+        handler.removeCallbacksAndMessages(null)
+    }
+}
+
+/** A single request whose ownership transfers from the cache to one widget. */
+internal abstract class InlinePlatformView(private val onDisposed: (InlinePlatformView) -> Unit) : PlatformView {
+    protected var channel: MethodChannel? = null
+    protected var destroyed = false
+    private var started = false
+    private var failureMessage: String? = null
+    var loaded = false
+        private set
+    var onPreloadResult: ((Boolean) -> Unit)? = null
+    private var listening = false
+    protected val events = AdViewEvents(channel = { if (listening) channel else null })
+
+    fun attach(channel: MethodChannel) {
+        this.channel = channel
+        channel.setMethodCallHandler { call, result ->
+            if (call.method != "load") result.notImplemented()
+            else if (destroyed) result.error("disposed", "Ad view already disposed", null)
+            else {
+                // Dart installs its event listener before invoking load.
+                listening = true
+                val failure = failureMessage
+                if (failure != null) channel.invokeMethod("failed", failure)
+                else if (loaded) renderLoaded() else start()
+                result.success(null)
+            }
+        }
+    }
+
+    fun start() {
+        if (started || destroyed) return
+        started = true
+        try { requestAd() } catch (error: Exception) { failed(error.message ?: "load_exception") }
+    }
+
+    protected fun didLoad() {
+        if (destroyed) return
+        loaded = true
+        onPreloadResult?.invoke(true)
+        if (listening) renderLoaded()
+    }
+
+    protected fun failed(message: String) {
+        if (destroyed) return
+        failureMessage = message
+        Log.w(TAG, "inline load failed: $message")
+        if (listening) channel?.invokeMethod("failed", message)
+        onPreloadResult?.invoke(false)
+    }
+
+    protected abstract fun requestAd()
+    protected abstract fun renderLoaded()
+    protected abstract fun destroyAd()
+
+    override fun dispose() {
+        if (destroyed) return
+        destroyed = true
+        onPreloadResult = null
+        events.dispose()
+        channel?.setMethodCallHandler(null)
+        channel = null
+        destroyAd()
+        onDisposed(this)
     }
 }
 
 /** Reports one ad view's lifecycle to its Dart widget. */
 internal class AdViewEvents(
-    private val channel: MethodChannel,
-    private val label: String = "banner",
+    private val channel: () -> MethodChannel?,
+    private val label: String = "inline",
 ) {
     private var disposed = false
 
@@ -170,23 +328,16 @@ internal class AdViewEvents(
     fun loaded() {
         if (disposed) return
         Log.d(TAG, "$label: Ad view loaded")
-        channel.invokeMethod("loaded", null)
+        channel()?.invokeMethod("loaded", null)
     }
 
-    fun failed(error: Yodo1MasError?) {
-        if (disposed) return
-        Log.w(TAG, "$label: Ad view failed: code=${error?.code} ${error?.message}")
-        channel.invokeMethod("failed", "code=${error?.code} ${error?.message}")
-    }
-
-
-    fun clicked() { if (!disposed) channel.invokeMethod("clicked", null) }
+    fun clicked() { if (!disposed) channel()?.invokeMethod("clicked", null) }
 
     fun paid(value: Yodo1MasAdValue?) {
         if (disposed || value == null) return
         // Only the fields every network reports; anything richer differs per
         // adapter and would be wrong more often than useful.
-        channel.invokeMethod(
+        channel()?.invokeMethod(
             "paid",
             mapOf(
                 "value" to value.revenue,
@@ -202,82 +353,61 @@ internal class AdViewEvents(
 internal class Yodo1BannerPlatformView(
     context: Context,
     params: Map<String, Any?>,
-    private val channel: MethodChannel,
-    viewId: Int,
-) : PlatformView {
+    onDisposed: (InlinePlatformView) -> Unit,
+) : InlinePlatformView(onDisposed) {
 
-    private val label = "banner placement=${params["placementId"]} view=$viewId"
-    private val events = AdViewEvents(channel, label)
+    private val label = "banner placement=${params["placementId"]}"
     private val banner = Yodo1MasBannerAdView(context)
-    private var destroyed = false
-    private var started = false
 
     init {
+        banner.setBackgroundColor(Color.TRANSPARENT)
         banner.setAdSize(sizeFrom(params["size"] as? String))
         (params["placementId"] as? String)?.let(banner::setAdPlacement)
         banner.setAdListener(object : Yodo1MasBannerAdListener {
             override fun onBannerAdLoaded(view: Yodo1MasBannerAdView?) {
-                banner.post {
-                    if (destroyed) return@post
-                    banner.requestLayout()
-                    if (banner.width > 0 && banner.height > 0) {
-                        banner.measure(
-                            View.MeasureSpec.makeMeasureSpec(banner.width, View.MeasureSpec.EXACTLY),
-                            View.MeasureSpec.makeMeasureSpec(banner.height, View.MeasureSpec.EXACTLY),
-                        )
-                        banner.layout(banner.left, banner.top, banner.right, banner.bottom)
-                    }
-                    banner.invalidate()
-                    Log.d(TAG, "$label: layout ${banner.width}x${banner.height}, attached=${banner.isAttachedToWindow}")
-                    events.loaded()
-                }
+                didLoad()
             }
 
             override fun onBannerAdFailedToLoad(
                 view: Yodo1MasBannerAdView?,
                 error: Yodo1MasError,
-            ) = events.failed(error)
+            ) = failed("code=${error.code} ${error.message}")
 
             override fun onBannerAdOpened(view: Yodo1MasBannerAdView?) = events.clicked()
 
             override fun onBannerAdFailedToOpen(
                 view: Yodo1MasBannerAdView?,
                 error: Yodo1MasError,
-            ) = events.failed(error)
+            ) = failed("code=${error.code} ${error.message}")
 
             override fun onBannerAdClosed(view: Yodo1MasBannerAdView?) {}
         })
         banner.setAdRevenueListener(
             Yodo1MasBannerAdRevenueListener { _, value -> events.paid(value) },
         )
-        channel.setMethodCallHandler { call, result ->
-            if (call.method != "load") {
-                result.notImplemented()
-            } else if (destroyed) {
-                result.error("disposed", "Banner view already disposed", null)
-            } else {
-                try {
-                    if (!started) {
-                        started = true
-                        Log.d(TAG, "$label: requesting creative")
-                        banner.loadAd()
-                    }
-                    result.success(null)
-                } catch (error: Exception) {
-                    result.error("banner_load", error.message, null)
-                }
-            }
-        }
     }
 
     override fun getView(): View = banner
 
-    override fun dispose() {
-        if (destroyed) return
-        destroyed = true
-        events.dispose()
-        channel.setMethodCallHandler(null)
-        banner.destroy()
+    override fun requestAd() { banner.loadAd() }
+    override fun destroyAd() { banner.destroy() }
+
+    override fun renderLoaded() {
+        banner.post {
+            if (destroyed) return@post
+            banner.setBackgroundColor(Color.TRANSPARENT)
+            banner.requestLayout()
+            if (banner.width > 0 && banner.height > 0) {
+                banner.measure(
+                    View.MeasureSpec.makeMeasureSpec(banner.width, View.MeasureSpec.EXACTLY),
+                    View.MeasureSpec.makeMeasureSpec(banner.height, View.MeasureSpec.EXACTLY),
+                )
+                banner.layout(banner.left, banner.top, banner.right, banner.bottom)
+            }
+            banner.invalidate()
+            Log.d(TAG, "$label: layout ${banner.width}x${banner.height}, attached=${banner.isAttachedToWindow}")
+            events.loaded()
+        }
     }
 
     private fun sizeFrom(name: String?): Yodo1MasBannerAdSize = when (name) {
@@ -299,77 +429,54 @@ internal class Yodo1BannerPlatformView(
 internal class Yodo1NativePlatformView(
     context: Context,
     params: Map<String, Any?>,
-    private val channel: MethodChannel,
-    viewId: Int,
-    private val onDisposed: (Yodo1NativePlatformView) -> Unit,
-) : PlatformView {
+    onDisposed: (InlinePlatformView) -> Unit,
+) : InlinePlatformView(onDisposed) {
 
-    private val label = "native placement=${params["placementId"]} view=$viewId"
-    private val events = AdViewEvents(channel, label)
+    private val label = "native placement=${params["placementId"]}"
     private val native = Yodo1MasNativeAdView(context)
-    private var destroyed = false
-    private var started = false
+    private var verifying = false
 
     init {
         native.layoutParams = FrameLayout.LayoutParams(
-            FrameLayout.LayoutParams.MATCH_PARENT,
-            FrameLayout.LayoutParams.WRAP_CONTENT,
+            (params["widthPx"] as? Number)?.toInt() ?: FrameLayout.LayoutParams.MATCH_PARENT,
+            (params["heightPx"] as? Number)?.toInt() ?: FrameLayout.LayoutParams.WRAP_CONTENT,
         )
         native.setLayoutId(R.layout.genrevibes_yodo1_native_ad, builder())
         (params["placementId"] as? String)?.let(native::setAdPlacement)
         (params["backgroundColor"] as? String)?.let(native::setAdBackgroundColor)
         native.setAdListener(object : Yodo1MasNativeAdListener {
             override fun onNativeAdLoaded(view: Yodo1MasNativeAdView?) {
-                if (destroyed) return
-                // The SDK inserts children asynchronously. Ask the platform-view
-                // host to lay them out after that insertion, not just at creation.
-                native.post {
-                    if (destroyed) return@post
-                    native.requestLayout()
-                    if (native.width > 0 && native.height > 0) {
-                        native.measure(
-                            View.MeasureSpec.makeMeasureSpec(native.width, View.MeasureSpec.EXACTLY),
-                            View.MeasureSpec.makeMeasureSpec(native.height, View.MeasureSpec.EXACTLY),
-                        )
-                        native.layout(native.left, native.top, native.right, native.bottom)
-                    }
-                    native.invalidate()
-                    Log.d(TAG, "$label: layout ${native.width}x${native.height}, children=${native.childCount}, attached=${native.isAttachedToWindow}")
-                    verifyContent(0)
-                }
+                // SDK-ready is separate from destination layout readiness.
+                didLoad()
             }
 
             override fun onNativeAdFailedToLoad(
                 view: Yodo1MasNativeAdView?,
                 error: Yodo1MasError,
-            ) = events.failed(error)
+            ) = failed("code=${error.code} ${error.message}")
         })
         native.setAdRevenueListener(
             // Spelled "onNativedAdPayRevenue" in the SDK; SAM conversion keeps
             // that typo out of this file.
             Yodo1MasNativeAdRevenueListener { _, value -> events.paid(value) },
         )
-        channel.setMethodCallHandler { call, result ->
-            if (call.method != "load") {
-                result.notImplemented()
-            } else if (destroyed) {
-                result.error("disposed", "Native view already disposed", null)
-            } else {
-                try {
-                    if (!started) {
-                        started = true
-                        Log.d(TAG, "$label: requesting creative")
-                        native.loadAd()
-                    }
-                    result.success(null)
-                } catch (error: Exception) {
-                    result.error("native_load", error.message, null)
-                }
-            }
-        }
     }
 
     override fun getView(): View = native
+
+    override fun requestAd() { native.loadAd() }
+    override fun destroyAd() { native.destroy() }
+
+    override fun renderLoaded() {
+        if (verifying || destroyed) return
+        verifying = true
+        // Do not post layout checks while cached: an unattached view has no size.
+        native.post {
+            if (destroyed) return@post
+            native.requestLayout()
+            verifyContent(0)
+        }
+    }
 
     // A load callback alone is not enough: some adapters report it before
     // adding their asset views. Do not report an empty container as ready.
@@ -385,23 +492,25 @@ internal class Yodo1NativePlatformView(
 
     private fun verifyContent(check: Int) {
         if (destroyed) return
+        if (native.width > 0 && native.height > 0) {
+            native.measure(
+                View.MeasureSpec.makeMeasureSpec(native.width, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(native.height, View.MeasureSpec.EXACTLY),
+            )
+            native.layout(native.left, native.top, native.right, native.bottom)
+            native.invalidate()
+        }
         if (native.width > 0 && native.height > 0 && hasText(native)) {
+            verifying = false
+            Log.d(TAG, "$label: rendered ${native.width}x${native.height}")
             events.loaded()
         } else if (check < 20) {
             native.postDelayed({ verifyContent(check + 1) }, 500)
         } else {
             Log.w(TAG, "$label: loaded callback without text assets or usable layout")
-            channel.invokeMethod("failed", "native_content_missing_after_load")
+            verifying = false
+            failed("native_content_missing_after_load")
         }
-    }
-
-    override fun dispose() {
-        if (destroyed) return
-        destroyed = true
-        events.dispose()
-        channel.setMethodCallHandler(null)
-        native.destroy()
-        onDisposed(this)
     }
 
     private fun builder(): Yodo1MasNativeAdViewBuilder =

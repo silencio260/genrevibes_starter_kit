@@ -40,11 +40,13 @@ final class Yodo1MasAdProvider implements AdProvider {
     KitClock clock = const SystemKitClock(),
     KitLogger logger = const NoopKitLogger(),
     bool Function()? canRequestAds,
+    bool Function(AdPlacement placement)? canShowAd,
   })  : _configuration = configuration,
         _client = client ?? DefaultYodo1MasClient(),
         _clock = clock,
         _logger = logger,
         _canRequestAds = canRequestAds,
+        _canShowAd = canShowAd,
         _health = ModuleHealth(
           moduleId: 'ads.yodo1',
           provider: 'yodo1',
@@ -69,6 +71,8 @@ final class Yodo1MasAdProvider implements AdProvider {
 
   /// Consent gate supplied by the app: false withholds every request.
   final bool Function()? _canRequestAds;
+  // Recheck after async SDK readiness: the destination may have been popped.
+  final bool Function(AdPlacement placement)? _canShowAd;
 
   final StreamController<ModuleHealth> _healthChanges =
       StreamController<ModuleHealth>.broadcast();
@@ -79,7 +83,8 @@ final class Yodo1MasAdProvider implements AdProvider {
   /// reported under the placement the app actually asked for.
   final Map<AdFormat, AdPlacement> _active = <AdFormat, AdPlacement>{};
   final Map<AdFormat, bool> _ready = <AdFormat, bool>{};
-  final Map<AdFormat, DateTime> _lastLoadAt = <AdFormat, DateTime>{};
+  final Map<AdFormat, Completer<KitResult<void>>> _loading = {};
+  final Map<AdFormat, Timer> _loadDeadlines = {};
   final Map<AdFormat, Completer<KitResult<AdShowResult>>> _showing =
       <AdFormat, Completer<KitResult<AdShowResult>>>{};
   final Map<AdFormat, AdReward> _rewards = <AdFormat, AdReward>{};
@@ -184,49 +189,99 @@ final class Yodo1MasAdProvider implements AdProvider {
     final unavailable = _unavailable<void>(placement);
     if (unavailable != null) return unavailable;
     if (_ready[placement.format] == true) return const KitSuccess<void>(null);
-    final lastLoad = _lastLoadAt[placement.format];
-    if (lastLoad != null &&
-        _clock.now().difference(lastLoad) < const Duration(seconds: 30)) {
-      return const KitSuccess<void>(null);
-    }
-    _lastLoadAt[placement.format] = _clock.now();
-    _active[placement.format] = placement;
+    final format = placement.format;
+    final pending = _loading[format];
+    if (pending != null) return pending.future;
+    final completer = Completer<KitResult<void>>();
+    _loading[format] = completer;
+    _active[format] = placement;
+    // A submitted SDK request is not a loaded ad. Wait for its actual outcome,
+    // coalescing callers per format. The host owns retry delay after failure.
+    _loadDeadlines[format] = Timer(const Duration(seconds: 30), () {
+      if (_loading[format] != completer) return;
+      _logFailure('load', format, 'No load result within 30 seconds');
+      _completeLoad(
+          format,
+          const KitFailure<void>(KitError(
+            code: KitErrorCode.provider,
+            message: 'MAS did not report an ad load result within 30 seconds.',
+          )));
+    });
+    unawaited(_requestLoad(format, completer));
+    return completer.future;
+  }
+
+  Future<void> _requestLoad(
+    AdFormat format,
+    Completer<KitResult<void>> request,
+  ) async {
     try {
-      await _client.load(_adTypeFor(placement.format));
+      await _client
+          .load(_adTypeFor(format))
+          .timeout(const Duration(seconds: 30));
+      if (_disposed || _loading[format] != request) return;
       // Readiness is reported by callback; ask as well, because a creative
-      // cached from an earlier load fires no new event.
-      _ready[placement.format] =
-          await _client.isLoaded(_adTypeFor(placement.format));
-      return const KitSuccess<void>(null);
+      // cached from an earlier load fires no new event. A stale false result
+      // must never overwrite a loaded callback received while awaiting it.
+      final ready = await _client
+          .isLoaded(_adTypeFor(format))
+          .timeout(const Duration(seconds: 30));
+      if (_disposed || _loading[format] != request) return;
+      if (ready) {
+        _ready[format] = true;
+        _completeLoad(format, const KitSuccess<void>(null));
+      }
     } on Object catch (error, stackTrace) {
+      if (_disposed || _loading[format] != request) return;
       final mapped = _error('load', error, stackTrace);
       _degrade(mapped);
-      return KitFailure<void>(mapped);
+      _completeLoad(format, KitFailure<void>(mapped));
     }
+  }
+
+  void _completeLoad(AdFormat format, KitResult<void> result) {
+    _loadDeadlines.remove(format)?.cancel();
+    final pending = _loading.remove(format);
+    if (pending != null && !pending.isCompleted) pending.complete(result);
   }
 
   @override
   Future<KitResult<AdShowResult>> show(AdPlacement placement) async {
     final unavailable = _unavailable<AdShowResult>(placement);
     if (unavailable != null) return unavailable;
+    if (_canShowAd?.call(placement) == false) {
+      return const KitSuccess<AdShowResult>(
+          AdShowResult(status: AdShowStatus.notReady));
+    }
     final format = placement.format;
     if (_unconfirmed.isNotEmpty) {
       return const KitSuccess<AdShowResult>(
           AdShowResult(status: AdShowStatus.notReady));
     }
+    // A loaded callback or positive load check already confirmed this slot.
+    // Rechecking through the method channel can consume the entire tap window.
+    // The SDK reports failedToOpen if its cached creative is no longer valid.
     final bool loaded;
-    try {
-      loaded = await _client
-          .isLoaded(_adTypeFor(format))
-          .timeout(const Duration(seconds: 5));
-    } on Object catch (error, stackTrace) {
-      return KitFailure<AdShowResult>(_error('readiness', error, stackTrace));
+    if (_ready[format] == true) {
+      loaded = true;
+    } else {
+      try {
+        loaded = await _client
+            .isLoaded(_adTypeFor(format))
+            .timeout(const Duration(seconds: 5));
+      } on Object catch (error, stackTrace) {
+        return KitFailure<AdShowResult>(_error('readiness', error, stackTrace));
+      }
     }
     if (!loaded) {
       _ready[format] = false;
       return const KitSuccess<AdShowResult>(
         AdShowResult(status: AdShowStatus.notReady),
       );
+    }
+    if (_disposed || _canShowAd?.call(placement) == false) {
+      return const KitSuccess<AdShowResult>(
+          AdShowResult(status: AdShowStatus.notReady));
     }
     _active[format] = placement;
     _rewards.remove(format);
@@ -308,7 +363,9 @@ final class Yodo1MasAdProvider implements AdProvider {
     _opened.clear();
     _unconfirmed.clear();
     _ready.clear();
-    _lastLoadAt.clear();
+    for (final format in _loading.keys.toList()) {
+      _completeLoad(format, _notReady<void>());
+    }
     _active.clear();
     _rewards.clear();
     try {
@@ -332,13 +389,30 @@ final class Yodo1MasAdProvider implements AdProvider {
     if (_disposed) return;
     final placement =
         _active[format] ?? AdPlacement(id: format.name, format: format);
+    _logger.log(
+      KitLogLevel.debug,
+      'MAS ad callback received.',
+      moduleId: moduleId,
+      fields: <String, Object?>{
+        'format': format.name,
+        'placement': placement.id,
+        'code': code,
+      },
+    );
     switch (code) {
       case Yodo1AdEventCodes.loaded:
         _ready[format] = true;
+        _completeLoad(format, const KitSuccess<void>(null));
         _emit(AdEventType.loaded, placement);
       case Yodo1AdEventCodes.failedToLoad:
         _ready[format] = false;
         _logFailure('load', format, message);
+        _completeLoad(
+            format,
+            KitFailure<void>(KitError(
+              code: KitErrorCode.provider,
+              message: 'Yodo1 MAS could not load ${format.name}: $message',
+            )));
       case Yodo1AdEventCodes.opened:
         _opened.add(format);
         _openDeadlines.remove(format)?.cancel();

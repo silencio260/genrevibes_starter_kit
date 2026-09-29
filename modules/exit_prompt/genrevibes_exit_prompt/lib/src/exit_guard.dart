@@ -20,6 +20,7 @@ class ExitGuard extends StatefulWidget {
     this.onResult,
     this.onExit,
     this.enabled = true,
+    this.beforePrompt,
   });
 
   /// Built on every Back, so remote config, premium and ad eligibility are
@@ -41,6 +42,11 @@ class ExitGuard extends StatefulWidget {
   /// Whether Back is intercepted.
   final bool enabled;
 
+  /// Optional asynchronous root-back check. Return false when the host handled
+  /// Back itself (for example closing an editor or staying on Android Home).
+  /// Concurrent presses are ignored while this check or a prompt is pending.
+  final Future<bool> Function()? beforePrompt;
+
   @override
   State<ExitGuard> createState() => _ExitGuardState();
 }
@@ -59,7 +65,22 @@ class _ExitGuardState extends State<ExitGuard> {
       );
 
   Future<void> _onBack() async {
-    if (_prompting) return;
+    if (_prompting || !widget.enabled) return;
+    _prompting = true;
+    try {
+      if (widget.beforePrompt != null && !await widget.beforePrompt!()) return;
+      if (!mounted ||
+          !widget.enabled ||
+          ModalRoute.of(context)?.isCurrent == false) {
+        return;
+      }
+      await _handleBack();
+    } finally {
+      _prompting = false;
+    }
+  }
+
+  Future<void> _handleBack() async {
     final config = widget.config(context);
     final style = config.resolvedStyle;
 
@@ -95,14 +116,8 @@ class _ExitGuardState extends State<ExitGuard> {
       return;
     }
 
-    _prompting = true;
     widget.onShown?.call(style);
-    final ExitPromptResult result;
-    try {
-      result = await ExitPrompt.show(context, config);
-    } finally {
-      _prompting = false;
-    }
+    final result = await ExitPrompt.show(context, config);
     if (!mounted) return;
     widget.onResult?.call(result);
     switch (result.action) {

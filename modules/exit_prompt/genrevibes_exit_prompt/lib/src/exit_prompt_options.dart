@@ -27,7 +27,10 @@ enum ExitPromptStyle {
   doubleTap('double_tap'),
 
   /// Back closes the app at once.
-  none('none');
+  none('none'),
+
+  /// A compact, ad-free bottom sheet with a confirmation and two clear actions.
+  confirmSheet('confirm_sheet');
 
   const ExitPromptStyle(
     this.wireName, {

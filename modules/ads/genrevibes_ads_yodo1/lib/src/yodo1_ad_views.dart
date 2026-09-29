@@ -145,26 +145,34 @@ class _Yodo1NativeViewState extends State<Yodo1NativeView> {
   Widget build(BuildContext context) {
     return SizedBox(
       height: widget.height,
-      child: Stack(
-        fit: StackFit.expand,
-        children: <Widget>[
-          if (!_loaded) widget.placeholder ?? const SizedBox.shrink(),
-          _Yodo1AdPlatformView(
-            viewType: 'genrevibes.ads.yodo1/native',
-            creationParams: <String, Object?>{
-              'placementId': widget.placement?.id,
-              'backgroundColor': widget.backgroundColor,
-            },
-            placement: widget.placement ??
-                const AdPlacement(id: 'native', format: AdFormat.native),
-            onEvent: widget.onEvent,
-            onLoadFailed: widget.onLoadFailed,
-            onLoadedChanged: (loaded) {
-              if (mounted) setState(() => _loaded = loaded);
-            },
-          ),
-        ],
-      ),
+      child: LayoutBuilder(
+          builder: (context, constraints) => Stack(
+                fit: StackFit.expand,
+                children: <Widget>[
+                  if (!_loaded) widget.placeholder ?? const SizedBox.shrink(),
+                  _Yodo1AdPlatformView(
+                    viewType: 'genrevibes.ads.yodo1/native',
+                    creationParams: <String, Object?>{
+                      'placementId': widget.placement?.id,
+                      'backgroundColor': widget.backgroundColor,
+                      'widthPx': (constraints.maxWidth *
+                              View.of(context).devicePixelRatio)
+                          .round(),
+                      'heightPx':
+                          (widget.height * View.of(context).devicePixelRatio)
+                              .round(),
+                    },
+                    placement: widget.placement ??
+                        const AdPlacement(
+                            id: 'native', format: AdFormat.native),
+                    onEvent: widget.onEvent,
+                    onLoadFailed: widget.onLoadFailed,
+                    onLoadedChanged: (loaded) {
+                      if (mounted) setState(() => _loaded = loaded);
+                    },
+                  ),
+                ],
+              )),
     );
   }
 }
