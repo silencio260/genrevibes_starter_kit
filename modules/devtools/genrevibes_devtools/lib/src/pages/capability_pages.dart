@@ -20,6 +20,18 @@ import '../dev_tools_host.dart';
 import '../widgets/action_row.dart';
 import '../widgets/dev_scaffold.dart';
 
+/// What the "Real ads" switch means right now, in plain words.
+String _liveSubtitle(DeveloperAdSwitches switches) {
+  final state = switches.liveInventoryForced
+      ? 'On for this run (started with the live-ads flag)'
+      : switches.liveInventory
+          ? 'On: this phone gets real ads'
+          : 'Off: this phone gets test ads';
+  return switches.restartRequired
+      ? '$state · restart the app to apply'
+      : state;
+}
+
 /// Ads: what the policy currently permits, and the provider's own operations.
 class DevAdsPage extends StatelessWidget {
   /// Creates the page.
@@ -70,6 +82,21 @@ class DevAdsPage extends StatelessWidget {
                 : 'Developer access is not granted on this phone, so these '
                     'switches do not apply right now.',
           ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Ads'),
+            subtitle: Text(
+              switches.allSwitchedOff
+                  ? 'Off: no ads on this phone'
+                  : 'On: ads show on this phone',
+              style: const TextStyle(fontSize: 11),
+            ),
+            value: !switches.allSwitchedOff,
+            onChanged: (enabled) async {
+              await switches.setAllEnabled(enabled);
+              refresh();
+            },
+          ),
           for (final format in _switchableFormats)
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
@@ -82,8 +109,8 @@ class DevAdsPage extends StatelessWidget {
               }),
               subtitle: Text(
                 switches.isSwitchedOff(format)
-                    ? 'Off on this phone'
-                    : 'Loads and shows normally',
+                    ? 'Off: not shown on this phone'
+                    : 'On: shown on this phone',
                 style: const TextStyle(fontSize: 11),
               ),
               value: !switches.isSwitchedOff(format),
@@ -92,6 +119,40 @@ class DevAdsPage extends StatelessWidget {
                 refresh();
               },
             ),
+        ],
+        if (switches != null) ...<Widget>[
+          const DevHeading('Real or test ads'),
+          DevFact(
+            'Running now',
+            switch (switches.servedTestAdsAtLaunch) {
+              true => 'test ads',
+              false => 'real ads',
+              null => 'unknown',
+            },
+          ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Real ads'),
+            subtitle: Text(
+              _liveSubtitle(switches),
+              style: const TextStyle(fontSize: 11),
+            ),
+            value: switches.liveInventory,
+            // A run that forces real ads can't be switched to test ads here.
+            onChanged: switches.liveInventoryForced
+                ? null
+                : (live) async {
+                    await switches.setLiveInventory(live);
+                    refresh();
+                  },
+          ),
+          const DevNote(
+            'On: this phone gets real ads, to check live fill. Off: test ads. '
+            'The ad SDK picks one when the app starts, so after changing it '
+            'fully close and reopen the app; until then no ads load. Do not '
+            'tap real ads or watch them over and over on your own phone: '
+            'networks count that as invalid traffic. Turn it off when done.',
+          ),
         ],
         if (policy != null) ...<Widget>[
           const DevHeading('Policy'),

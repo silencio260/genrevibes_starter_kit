@@ -38,8 +38,12 @@ class DevDeveloperAccessPage extends StatelessWidget {
           const DevHeading('This device'),
           DevFact('Access', describeDeveloperAccess(access.reason)),
           DevFact(
-            'Ads',
+            'Ads by access',
             access.servesTestAds ? 'test inventory' : 'live inventory',
+          ),
+          const DevNote(
+            'What developer access alone gives. Ads › Live ads on this phone '
+            'can ask for live inventory anyway.',
           ),
           DevFact(
             'Listed in',

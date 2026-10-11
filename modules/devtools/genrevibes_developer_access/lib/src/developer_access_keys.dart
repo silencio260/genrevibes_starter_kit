@@ -17,4 +17,8 @@ abstract final class DeveloperAccessKeys {
   /// Ad formats a developer turned off on this device, by `AdFormat.name`.
   static const disabledAdFormats =
       'genrevibes.developer_access.disabled_ad_formats.v1';
+
+  /// Whether a developer asked for live ad inventory on this device.
+  static const liveAdInventory =
+      'genrevibes.developer_access.live_ad_inventory.v1';
 }
