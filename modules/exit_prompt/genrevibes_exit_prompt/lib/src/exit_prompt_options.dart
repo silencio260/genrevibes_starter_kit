@@ -80,13 +80,14 @@ enum ExitButtonEmphasis {
 /// The ad a prompt shows.
 final class ExitPromptAd {
   /// Creates an ad slot.
-  const ExitPromptAd({required this.builder, required this.height});
+  const ExitPromptAd({required this.builder, this.height});
 
-  /// Builds the ad, with its own placeholder until it loads.
+  /// Builds the ad. Return a collapsed widget while no ad is available.
   final WidgetBuilder builder;
 
-  /// The space kept for the ad, so nothing moves when it loads.
-  final double height;
+  /// Optional reserved height. Null lets the builder determine the height,
+  /// so an unavailable ad can take no space.
+  final double? height;
 }
 
 /// One of the app's features, on the features sheet.

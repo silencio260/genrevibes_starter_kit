@@ -2,8 +2,8 @@
 
 What Android Back does on a GenRevibes app's root screen. The style is chosen
 at runtime, normally from remote config, so it can be A/B tested without a
-release. The package knows nothing about ads: an ad is a builder and the height
-the prompt keeps for it.
+release. The package knows nothing about ads: an ad is a builder with an
+optional reserved height.
 
 ## Styles
 
@@ -66,9 +66,10 @@ ExitGuard(
 - **Results.** Dismissing a sheet or dialog is `stay`. `feature` and `offer`
   run their callback with the guard's context after the prompt closes. `exit`
   calls `onExit`, which defaults to `SystemNavigator.pop`.
-- **Ad space is kept** at `ExitPromptAd.height`, so the prompt does not move
-  when the ad loads. Preload the ad before Back is pressed, or the first prompt
-  shows the placeholder.
+- **Ad space.** Set `ExitPromptAd.height` to reserve space while the ad loads.
+  Omit it and leave the native view's `placeholder` unset to collapse the ad
+  area until inventory is ready. Preloading can make the next prompt's ad ready
+  sooner.
 - **Exit button.** `standard` is readable like any secondary button; `dimmed`
   is muted grey, still labeled and working.
 

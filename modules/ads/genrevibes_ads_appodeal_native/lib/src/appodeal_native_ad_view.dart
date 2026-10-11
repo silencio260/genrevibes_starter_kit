@@ -37,7 +37,10 @@ final class AppodealNativeAdView extends StatefulWidget {
     super.key,
     this.style = const AppodealNativeAdStyle(),
     this.placeholder,
+    this.adBuilder,
     this.preloadNext = false,
+    this.logger = const NoopKitLogger(),
+    this.retryDelay,
   });
 
   /// The provider that initialized the SDK, with [placement] configured.
@@ -55,6 +58,11 @@ final class AppodealNativeAdView extends StatefulWidget {
   /// Shown instead of an ad. Null shows nothing.
   final Widget? placeholder;
 
+  /// Wraps the sized ad only when inventory is available and eligible.
+  /// Use this for padding or safe areas that must collapse with an empty slot.
+  /// Keep [ad] mounted in the returned widget so it can register with the SDK.
+  final Widget Function(BuildContext context, Widget ad)? adBuilder;
+
   /// Whether to load the next ad as soon as this view shows one.
   ///
   /// A view takes its ad out of the SDK's cache, so a view built next — the
@@ -62,6 +70,13 @@ final class AppodealNativeAdView extends StatefulWidget {
   /// would otherwise wait for a load and appear late. Costs a load that may go
   /// unused if no further view is built.
   final bool preloadNext;
+
+  /// Optional diagnostics for slot eligibility, requests and view registration.
+  final KitLogger logger;
+
+  /// Delay after a failed load before retrying without an attempt limit.
+  /// Null disables automatic retries. Eligibility and disposal stop retries.
+  final Duration? retryDelay;
 
   @override
   State<AppodealNativeAdView> createState() => _AppodealNativeAdViewState();
@@ -76,6 +91,70 @@ class _AppodealNativeAdViewState extends State<AppodealNativeAdView> {
   bool _loadRequested = false;
   int _generation = 0;
   int? _viewId;
+  String? _lastEligibility;
+  int? _lastCount;
+  Timer? _retryTimer;
+
+  void _cancelRetry() {
+    _retryTimer?.cancel();
+    _retryTimer = null;
+  }
+
+  void _scheduleRetry() {
+    _loadRequested = false;
+    final delay = widget.retryDelay;
+    if (!mounted || !_eligible || delay == null || _retryTimer != null) return;
+    if (_available && !widget.preloadNext) return;
+    _log('retry scheduled in ${delay.inMilliseconds}ms');
+    _retryTimer = Timer(delay, () {
+      _retryTimer = null;
+      if (!mounted || !_eligible) return;
+      if (_available && widget.preloadNext) {
+        unawaited(_requestLoad(reason: 'retry preload'));
+      } else {
+        unawaited(_refresh());
+      }
+    });
+  }
+
+  void _log(String message, {KitLogLevel level = KitLogLevel.debug}) {
+    widget.logger.log(
+      level,
+      'Native ${widget.placement.id}: $message',
+      moduleId: 'ads.appodeal.native',
+    );
+  }
+
+  void _logEligibility() {
+    if (!_eligible) _cancelRetry();
+    final state = 'supported=${_ads.isSupported}, enabled=${widget.enabled}, '
+        'eligible=$_eligible, inventory=${widget.provider.servesInventory}, '
+        'testMode=${widget.provider.isTestMode}';
+    if (state == _lastEligibility) return;
+    _lastEligibility = state;
+    _log(state);
+  }
+
+  Future<void> _requestLoad({required String reason}) async {
+    if (!mounted || !_eligible) return;
+    _loadRequested = true;
+    _ads.noteLoadRequested(widget.placement);
+    _log('cache request ($reason)');
+    final result = await widget.provider.load(widget.placement);
+    result.fold<void>(
+      // An accepted cache request does not mean native inventory loaded.
+      // The SDK's app-wide loaded/failedToLoad callback confirms that.
+      onSuccess: (_) => _log('cache request accepted; awaiting SDK callback'),
+      onFailure: (error) {
+        _log(
+          'cache request rejected: ${error.code.name}, '
+          'providerCode=${error.providerCode}',
+          level: KitLogLevel.warning,
+        );
+        _scheduleRetry();
+      },
+    );
+  }
 
   @override
   void initState() {
@@ -105,6 +184,7 @@ class _AppodealNativeAdViewState extends State<AppodealNativeAdView> {
 
   @override
   void dispose() {
+    _cancelRetry();
     unawaited(_nativeEvents?.cancel());
     unawaited(_viewEvents?.cancel());
     super.dispose();
@@ -114,31 +194,46 @@ class _AppodealNativeAdViewState extends State<AppodealNativeAdView> {
       widget.enabled && widget.provider.canShowInline(widget.placement);
 
   Future<void> _refresh() async {
-    if (!_ads.isSupported || !_eligible || _available) return;
+    _logEligibility();
+    if (!_ads.isSupported || !_eligible || _available || _retryTimer != null) {
+      return;
+    }
     final count = await _ads.availableCount();
-    if (!mounted) return;
+    if (!mounted || !_eligible || _retryTimer != null) return;
+    if (count != _lastCount) {
+      _lastCount = count;
+      _log('available inventory=$count');
+    }
     if (count > 0) {
+      _cancelRetry();
+      _loadRequested = false;
       setState(() => _available = true);
     } else if (!_loadRequested) {
       _loadRequested = true;
-      _ads.noteLoadRequested(widget.placement);
-      unawaited(widget.provider.load(widget.placement));
+      unawaited(_requestLoad(reason: 'empty slot'));
     }
   }
 
   void _onNative(AppodealNativeEventType type) {
-    if (type == AppodealNativeEventType.loaded) unawaited(_refresh());
+    if (!mounted) return;
+    if (type == AppodealNativeEventType.loaded) {
+      _cancelRetry();
+      _loadRequested = false;
+      unawaited(_refresh());
+    } else if (type == AppodealNativeEventType.failedToLoad && _loadRequested) {
+      _scheduleRetry();
+    }
   }
 
   void _onView(({int viewId, AppodealNativeViewEvent event}) update) {
     if (update.viewId != _viewId || !mounted) return;
+    _log('view ${update.viewId}: ${update.event.name}');
     switch (update.event) {
       case AppodealNativeViewEvent.registered:
         // The ad left the cache; the next view needs a fresh load.
         _loadRequested = false;
         if (widget.preloadNext && _eligible) {
-          _ads.noteLoadRequested(widget.placement);
-          unawaited(widget.provider.load(widget.placement));
+          unawaited(_requestLoad(reason: 'preload next'));
         }
       case AppodealNativeViewEvent.unavailable:
       case AppodealNativeViewEvent.refused:
@@ -154,19 +249,21 @@ class _AppodealNativeAdViewState extends State<AppodealNativeAdView> {
 
   @override
   Widget build(BuildContext context) {
+    _logEligibility();
     final placeholder = widget.placeholder ?? const SizedBox.shrink();
     if (!_ads.isSupported || !widget.enabled) return placeholder;
     return StreamBuilder<ModuleHealth>(
       stream: widget.provider.healthChanges,
       initialData: widget.provider.health,
       builder: (context, _) {
+        _logEligibility();
         final name = widget.provider.placementNameFor(widget.placement);
         if (name == null || !_eligible) return placeholder;
         if (!_available) {
           unawaited(_refresh());
           return placeholder;
         }
-        return SizedBox(
+        final ad = SizedBox(
           height: widget.style.resolvedHeight,
           child: _NativePlatformView(
             key: ValueKey<int>(_generation),
@@ -176,11 +273,13 @@ class _AppodealNativeAdViewState extends State<AppodealNativeAdView> {
             },
             onCreated: (id) {
               _viewId = id;
+              _log('creating Android view $id');
               // Before the ad registers, so its impression is attributed here.
               _ads.noteViewCreated(widget.placement);
             },
           ),
         );
+        return widget.adBuilder?.call(context, ad) ?? ad;
       },
     );
   }

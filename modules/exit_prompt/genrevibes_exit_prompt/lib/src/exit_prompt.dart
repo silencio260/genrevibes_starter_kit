@@ -75,7 +75,7 @@ TextStyle? _messageStyle(BuildContext context, ExitPromptConfig config) =>
           color: const Color(0xFF5F6368),
         );
 
-/// The space kept for the ad, with the ad in it.
+/// The ad, optionally constrained to a reserved height.
 class _AdSlot extends StatelessWidget {
   const _AdSlot({required this.ad, required this.color});
 

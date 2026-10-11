@@ -56,7 +56,11 @@ AppodealNativeAds.instance
   it when disposed. Keep the same view on screen across page changes to show
   one ad; build a new one to show another. With `preloadNext`, a view loads the
   next ad as soon as it shows its own, so the next view appears at once.
-- **Reserving the space.** Put the view in a space
+- **Collapsing an empty slot.** Leave `placeholder` unset and avoid an outer
+  fixed-height box. The view takes no space until eligible inventory is ready.
+  Use `adBuilder: (context, ad) => Padding(padding: ..., child: ad)` for spacing
+  that should appear only with the loaded ad.
+- **Reserving the space (optional).** Put the view in a space
   `AppodealNativeAdStyle.resolvedHeight` tall and pass
   `placeholder: AppodealNativeAdPlaceholder(style: style)`. The screen is laid
   out with the ad's space from the start, shows a quiet, text-free card until
