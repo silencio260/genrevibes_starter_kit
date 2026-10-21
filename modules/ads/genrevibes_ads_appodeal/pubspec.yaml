@@ -1,6 +1,6 @@
 name: genrevibes_ads_appodeal
 description: Appodeal mediation adapter for the GenRevibes ads contract.
-version: 0.1.0-dev.3
+version: 0.1.0-dev.4
 publish_to: none
 
 environment:
@@ -10,7 +10,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  genrevibes_ads: ^0.1.0-dev.4
+  genrevibes_ads: ^0.1.0-dev.5
   genrevibes_core: ^0.1.0-dev.1
   stack_appodeal_flutter: ">=4.2.0 <5.0.0"
 

@@ -118,6 +118,10 @@ abstract interface class AppodealClient {
   /// Shows [format] under [placementName]. False when the SDK refuses.
   Future<bool> show(AdFormat format, String placementName);
 
+  /// Sets the user id Appodeal reports in server-to-server reward callbacks.
+  /// An empty string clears it.
+  Future<void> setUserId(String userId);
+
   /// Stops reporting callbacks and releases resources.
   Future<void> dispose();
 }
@@ -223,6 +227,12 @@ final class DefaultAppodealClient
   @override
   Future<bool> show(AdFormat format, String placementName) =>
       Appodeal.show(_requireAdType(format), placementName);
+
+  @override
+  Future<void> setUserId(String userId) async {
+    // The plugin's setter takes a non-null String; empty is the cleared value.
+    Appodeal.setUserId(userId);
+  }
 
   @override
   Future<void> dispose() async {

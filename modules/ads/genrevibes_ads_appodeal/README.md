@@ -50,6 +50,26 @@ as a developer device mid-session therefore sees no ads rather than a live one.
 `servesInventory` and the health details `testMode` / `sdkTestMode` show which
 state the provider is in.
 
+## User id for server-to-server rewards
+
+`AppodealAdProvider` implements `AdUserIdProvider`. Call `setUserId` with an
+opaque account id (a Firebase Auth uid, never an email or name) once the user
+is signed in, and `setUserId(null)` on sign-out. Appodeal sends that id back as
+`user_id` in its encrypted server-to-server reward callback, so the backend can
+credit the account that watched the ad:
+
+```dart
+await ads.setUserId(firebaseUser.uid); // after sign-in
+await ads.setUserId(null);             // after sign-out
+```
+
+Appodeal's callback carries `data1` (the IV) and `data2` (the AES-256-CBC
+ciphertext, keyed with SHA-256 of the dashboard encryption key). The decrypted
+query string holds `user_id`, `amount`, `currency`, `impression_id`,
+`timestamp` and `hash`, a SHA-1 of the first five fields. The backend checks the
+hash and keeps `impression_id` unique. The callback URL and encryption key are
+set per app in the Appodeal dashboard.
+
 ## Full-screen inventory
 
 Auto-cache is off for interstitials and rewarded video, so nothing loads until

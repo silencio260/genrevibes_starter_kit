@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.0-dev.5
+
+- Add `AdUserIdProvider`, an optional capability for telling the ad network
+  which app user is watching, so server-to-server reward callbacks can credit
+  the right account.
+
 ## 0.1.0-dev.4
 
 - Add optional `AdRevenue.adUnitName` and `AdRevenue.precision`, for mediation
