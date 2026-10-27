@@ -1,0 +1,20 @@
+name: genrevibes_localization
+description: App-configured locale resolution, preferences, and language and region pickers.
+version: 0.1.0-dev.1
+publish_to: none
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+  flutter: ">=3.19.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  intl: ">=0.18.1 <0.21.0"
+  genrevibes_core: ^0.1.0-dev.1
+  genrevibes_storage: ^0.1.0-dev.1
+
+dev_dependencies:
+  flutter_lints: ^4.0.0

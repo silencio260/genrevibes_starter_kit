@@ -39,6 +39,7 @@ modules/<capability>/genrevibes_<package>
 | `feedback/` | 3 | feedback, feedback_ui, feedbacknest |
 | `foundation/` | 2 | core, starter_kit |
 | `iap/` | 4 | iap, iap_revenuecat, iap_revenuecat_ui, iap_test |
+| `localization/` | 1 | localization |
 | `notifications/` | 3 | notifications, notifications_local, notifications_onesignal |
 | `onboarding/` | 1 | onboarding |
 | `permissions/` | 2 | permissions, permissions_handler |
@@ -47,6 +48,7 @@ modules/<capability>/genrevibes_<package>
 | `splash/` | 1 | splash |
 | `storage/` | 2 | storage, storage_shared_preferences |
 | `system_ui/` | 1 | system_ui |
+| `tooling/` | 1 | screenshot_tools (development dependency only) |
 
 Package names are unchanged and independent of the folder: `genrevibes_ads_admob`
 is imported as `package:genrevibes_ads_admob/...` wherever it lives. The folder
@@ -84,7 +86,11 @@ Current capabilities include:
 - Push contracts and OneSignal diagnostics.
 - Persistent local notification campaigns with bundled or remotely supplied
   schedules.
+- App-configured [language and country selection](modules/localization/genrevibes_localization/README.md),
+  with script-aware matching, persistence and supplemental Flutter/intl support.
 - A provider-neutral, instance-based lifecycle coordinator.
+- Development-only [localized screenshot and promotion tooling](modules/tooling/genrevibes_screenshot_tools/README.md),
+  with real screen registration, editable text, reusable AI artwork and explicit Play uploads.
 
 ## Consuming packages from this repository
 
