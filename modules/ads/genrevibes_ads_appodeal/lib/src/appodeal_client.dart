@@ -125,6 +125,10 @@ abstract interface class AppodealClient {
   /// Zero when it has none or cannot predict one.
   Future<double> predictedEcpm(AdFormat format);
 
+  /// Sets the user id Appodeal reports in server-to-server reward callbacks.
+  /// An empty string clears it.
+  Future<void> setUserId(String userId);
+
   /// Stops reporting callbacks and releases resources.
   Future<void> dispose();
 }
@@ -252,6 +256,12 @@ final class DefaultAppodealClient
   @override
   Future<double> predictedEcpm(AdFormat format) =>
       Appodeal.getPredictedEcpm(_requireAdType(format));
+
+  @override
+  Future<void> setUserId(String userId) async {
+    // The plugin's setter takes a non-null String; empty is the cleared value.
+    Appodeal.setUserId(userId);
+  }
 
   @override
   Future<void> dispose() async {

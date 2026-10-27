@@ -246,6 +246,9 @@ final class _FakeAppodealClient implements AppodealClient {
   }
 
   @override
+  Future<void> setUserId(String userId) async {}
+
+  @override
   Future<void> dispose() async {
     await _callbacks.close();
     await _revenue.close();

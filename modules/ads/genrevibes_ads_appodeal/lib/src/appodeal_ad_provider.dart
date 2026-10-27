@@ -40,7 +40,16 @@ import 'appodeal_configuration.dart';
 /// lost to a process the system freezes or kills. A full-screen ad hides the
 /// app too, while it stays in the foreground, so that case keeps waiting; an
 /// app killed while an ad is on screen still loses that impression's revenue.
-final class AppodealAdProvider implements AdProvider, AdTestModeProvider {
+///
+/// ## User id for server-to-server rewards
+///
+/// [setUserId] passes an opaque account id to the SDK. Appodeal returns it as
+/// `user_id` in the encrypted S2S reward callback, so the app's backend can
+/// credit the right account. Appodeal documents setting it before
+/// [initialize]; the SDK also accepts it later, for an account that signs in
+/// after launch.
+final class AppodealAdProvider
+    implements AdProvider, AdTestModeProvider, AdUserIdProvider {
   /// Creates an Appodeal provider.
   ///
   /// [testMode] is the mode to start in; see the class documentation for
@@ -425,6 +434,22 @@ final class AppodealAdProvider implements AdProvider, AdTestModeProvider {
     }
     _setHealth(_health.state);
     return const KitSuccess<void>(null);
+  }
+
+  /// Sets the id Appodeal reports as `user_id` in S2S reward callbacks; null
+  /// clears it.
+  ///
+  /// Works before and after [initialize]; set it as soon as the account is
+  /// known so the next rewarded impression carries it.
+  @override
+  Future<KitResult<void>> setUserId(String? userId) async {
+    if (_disposed) return _notReady<void>();
+    try {
+      await _client.setUserId(userId ?? '');
+      return const KitSuccess<void>(null);
+    } on Object catch (error, stackTrace) {
+      return KitFailure<void>(_mapError(error, stackTrace));
+    }
   }
 
   @override

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.0-dev.4
+
+- `AppodealAdProvider` implements `AdUserIdProvider`: `setUserId` passes the id
+  to `Appodeal.setUserId`, which Appodeal returns as `user_id` in its
+  server-to-server reward callback. Null clears it. `AppodealClient` gains
+  `setUserId`. Requires `genrevibes_ads` 0.1.0-dev.5.
+
 ## 0.1.0-dev.3
 
 - Native placements. The SDK initializes the native ad type with the rest and
