@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/widgets.dart' show AppLifecycleListener;
 import 'package:genrevibes_ads/genrevibes_ads.dart';
 import 'package:genrevibes_core/genrevibes_core.dart';
 
@@ -22,6 +23,23 @@ import 'appodeal_configuration.dart';
 /// banner view renders nothing — until the app is relaunched and starts in the
 /// new mode. A phone recognised as a developer device mid-session sees no ads
 /// rather than a live one.
+///
+/// ## Revenue estimated from predicted eCPM
+///
+/// Appodeal holds its impression-level revenue report until its analytics
+/// services are ready, and an app with none configured may never get one. So
+/// every impression waits [GenRevibesAppodealConfiguration.revenueReportWait]
+/// for the report; without one, its revenue is reported as the predicted eCPM
+/// of the inventory shown, divided by 1,000, with precision
+/// [estimatedRevenuePrecision]. A report that arrives after its impression was
+/// estimated is dropped, so no impression is counted twice. Test inventory
+/// earns nothing and is never estimated.
+///
+/// The wait lives only in memory, so when the app is hidden with no full-screen
+/// ad on screen, every waiting impression is estimated at once rather than
+/// lost to a process the system freezes or kills. A full-screen ad hides the
+/// app too, while it stays in the foreground, so that case keeps waiting; an
+/// app killed while an ad is on screen still loses that impression's revenue.
 final class AppodealAdProvider implements AdProvider, AdTestModeProvider {
   /// Creates an Appodeal provider.
   ///
@@ -35,7 +53,7 @@ final class AppodealAdProvider implements AdProvider, AdTestModeProvider {
     bool testMode = false,
     bool Function()? canRequestAds,
   })  : _configuration = configuration,
-        _client = client ?? DefaultAppodealClient(),
+        _client = client ?? DefaultAppodealClient(logger: logger),
         _clock = clock,
         _logger = logger,
         _testMode = testMode,
@@ -59,6 +77,10 @@ final class AppodealAdProvider implements AdProvider, AdTestModeProvider {
     AdFormat.rewarded,
   };
 
+  /// [AdRevenue.precision] of revenue estimated from the predicted eCPM rather
+  /// than reported by Appodeal.
+  static const String estimatedRevenuePrecision = 'predicted_ecpm';
+
   final GenRevibesAppodealConfiguration _configuration;
   final AppodealClient _client;
   final bool Function()? _canRequestAds;
@@ -79,8 +101,22 @@ final class AppodealAdProvider implements AdProvider, AdTestModeProvider {
   final Map<AdFormat, AdPlacement> _showing = <AdFormat, AdPlacement>{};
   final Map<AdFormat, AdReward?> _rewards = <AdFormat, AdReward?>{};
 
+  /// Predicted eCPM read just before a full-screen show, while the inventory
+  /// about to be shown is still the inventory the SDK holds.
+  final Map<AdFormat, Future<double>> _ecpmAtShow =
+      <AdFormat, Future<double>>{};
+
+  /// Impressions waiting for Appodeal's revenue report, oldest first.
+  final Map<AdFormat, List<_AwaitedRevenue>> _awaitingRevenue =
+      <AdFormat, List<_AwaitedRevenue>>{};
+
+  /// When each recent impression's revenue was estimated, oldest first.
+  final Map<AdFormat, List<DateTime>> _estimatedAt =
+      <AdFormat, List<DateTime>>{};
+
   StreamSubscription<AppodealCallback>? _callbackSubscription;
   StreamSubscription<AppodealRevenueReport>? _revenueSubscription;
+  AppLifecycleListener? _lifecycle;
   Future<KitResult<void>>? _initialization;
   ModuleHealth _health;
   List<String> _initializationWarnings = const <String>[];
@@ -156,6 +192,7 @@ final class AppodealAdProvider implements AdProvider, AdTestModeProvider {
     _setHealth(ModuleState.initializing);
     _callbackSubscription ??= _client.callbacks.listen(_onCallback);
     _revenueSubscription ??= _client.revenue.listen(_onRevenue);
+    _lifecycle ??= AppLifecycleListener(onHide: _onAppHidden);
 
     final testMode = _testMode;
     try {
@@ -196,7 +233,10 @@ final class AppodealAdProvider implements AdProvider, AdTestModeProvider {
       // whose adapter is not in the build reports a non-critical one, and an
       // app with no analytics services configured in the dashboard reports
       // `InternalError: SdkConfigurationError`. They are kept in health for the
-      // Starter Kit Lab rather than failing the module.
+      // Starter Kit Lab rather than failing the module. That one is not
+      // harmless for revenue: SDK 4.3 holds every revenue report until its
+      // analytics services are ready, so with it no report may ever arrive,
+      // and the predicted-eCPM estimate is all that is counted.
       _initializationWarnings = List<String>.unmodifiable(errors);
       if (errors.isNotEmpty) {
         _logger.log(
@@ -310,6 +350,7 @@ final class AppodealAdProvider implements AdProvider, AdTestModeProvider {
     _showing[format] = placement;
     _rewards.remove(format);
     _ready[format] = false;
+    _ecpmAtShow[format] = _predictedEcpm(format);
     try {
       if (!await _client.show(format, name)) {
         return const AdShowResult(status: AdShowStatus.notReady);
@@ -321,6 +362,7 @@ final class AppodealAdProvider implements AdProvider, AdTestModeProvider {
         _showCompleters.remove(format);
       }
       _showing.remove(format);
+      _ecpmAtShow.remove(format);
     }
   }
 
@@ -392,6 +434,14 @@ final class AppodealAdProvider implements AdProvider, AdTestModeProvider {
     _initialized = false;
     await _callbackSubscription?.cancel();
     await _revenueSubscription?.cancel();
+    _lifecycle?.dispose();
+    _lifecycle = null;
+    for (final awaited in _awaitingRevenue.values.expand((list) => list)) {
+      awaited.timer?.cancel();
+    }
+    _awaitingRevenue.clear();
+    _estimatedAt.clear();
+    _ecpmAtShow.clear();
     for (final completer in _loadCompleters.values) {
       if (!completer.isCompleted) completer.complete();
     }
@@ -436,6 +486,7 @@ final class AppodealAdProvider implements AdProvider, AdTestModeProvider {
         }
       case AppodealCallbackType.shown:
         _emit(AdEventType.impression, format);
+        _awaitRevenue(format);
       case AppodealCallbackType.clicked:
         _emit(AdEventType.clicked, format);
       case AppodealCallbackType.closed:
@@ -489,6 +540,18 @@ final class AppodealAdProvider implements AdProvider, AdTestModeProvider {
       );
       return;
     }
+    final awaiting = _awaitingRevenue[format];
+    if (awaiting != null && awaiting.isNotEmpty) {
+      awaiting.removeAt(0).timer?.cancel();
+    } else if (_takeRecentEstimate(format)) {
+      _logger.log(
+        KitLogLevel.info,
+        'Appodeal revenue report arrived after its impression was counted '
+        'from predicted eCPM, so it is not counted again: $described.',
+        moduleId: moduleId,
+      );
+      return;
+    }
     _logger.log(
       KitLogLevel.info,
       'Appodeal revenue report received: $described.',
@@ -511,6 +574,127 @@ final class AppodealAdProvider implements AdProvider, AdTestModeProvider {
         ),
       ),
     );
+  }
+
+  /// Starts waiting for the revenue report of the [format] impression just
+  /// shown. Registered synchronously, so a report that arrives while the eCPM
+  /// is still being read already finds it.
+  void _awaitRevenue(AdFormat format) {
+    if (format == AdFormat.native) return;
+    final placement = _showing[format] ??
+        _configuration.placementReportedAs(format)?.placement;
+    if (placement == null) return;
+    // Full-screen inventory is gone once shown, so its eCPM was read before
+    // the show. A banner's is read now, from the banner on screen.
+    final awaited = _AwaitedRevenue(
+      placement: placement,
+      ecpm: _ecpmAtShow.remove(format) ?? _predictedEcpm(format),
+    );
+    _awaitingRevenue.putIfAbsent(format, () => <_AwaitedRevenue>[]).add(awaited);
+    awaited.timer = Timer(
+      _configuration.revenueReportWait,
+      () => unawaited(
+        _estimateRevenue(
+          format,
+          awaited,
+          because: 'No Appodeal revenue report within '
+              '${_configuration.revenueReportWait.inSeconds} s',
+        ),
+      ),
+    );
+  }
+
+  /// The app went to the background. Unless a full-screen ad is what hid it,
+  /// the process may be frozen or killed before any wait ends, so every
+  /// impression still waiting is estimated now.
+  void _onAppHidden() {
+    if (_disposed || _showing.isNotEmpty) return;
+    for (final MapEntry(key: format, value: awaiting)
+        in _awaitingRevenue.entries.toList()) {
+      for (final awaited in List<_AwaitedRevenue>.of(awaiting)) {
+        awaited.timer?.cancel();
+        unawaited(
+          _estimateRevenue(
+            format,
+            awaited,
+            because: 'The app went to the background before Appodeal reported '
+                'revenue',
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _estimateRevenue(
+    AdFormat format,
+    _AwaitedRevenue awaited, {
+    required String because,
+  }) async {
+    if (_disposed) return;
+    if (!(_awaitingRevenue[format]?.remove(awaited) ?? false)) return;
+    final ecpm = await awaited.ecpm;
+    if (_disposed) return;
+    if (ecpm <= 0) {
+      _logger.log(
+        KitLogLevel.debug,
+        '$because, and the ${format.name} impression has no predicted eCPM; '
+        'its revenue is not tracked.',
+        moduleId: moduleId,
+      );
+      return;
+    }
+    _estimatedAt.putIfAbsent(format, () => <DateTime>[]).add(_clock.now());
+    final valueMicros = (ecpm * 1000).round();
+    _logger.log(
+      KitLogLevel.info,
+      '$because; the ${format.name} impression is counted at '
+      '${valueMicros / 1000000} USD from predicted eCPM $ecpm.',
+      moduleId: moduleId,
+    );
+    _add(
+      AdEvent(
+        type: AdEventType.paid,
+        placement: awaited.placement,
+        provider: providerId,
+        occurredAt: _clock.now(),
+        revenue: AdRevenue(
+          valueMicros: valueMicros,
+          currencyCode: 'USD',
+          provider: providerId,
+          precision: estimatedRevenuePrecision,
+        ),
+      ),
+    );
+  }
+
+  /// Claims the oldest estimate for [format] still inside the dedupe window.
+  bool _takeRecentEstimate(AdFormat format) {
+    final estimated = _estimatedAt[format];
+    if (estimated == null) return false;
+    final cutoff =
+        _clock.now().subtract(_configuration.estimatedRevenueDedupeWindow);
+    estimated.removeWhere((at) => at.isBefore(cutoff));
+    if (estimated.isEmpty) return false;
+    estimated.removeAt(0);
+    return true;
+  }
+
+  /// The predicted eCPM in USD, or zero for test inventory, none or a failure.
+  Future<double> _predictedEcpm(AdFormat format) async {
+    if (_sdkTestMode ?? true) return 0;
+    try {
+      final ecpm = await _client.predictedEcpm(format);
+      return ecpm.isFinite && ecpm > 0 ? ecpm : 0;
+    } on Object catch (error, stackTrace) {
+      _logger.log(
+        KitLogLevel.warning,
+        'Appodeal predicted eCPM could not be read for ${format.name}.',
+        moduleId: moduleId,
+        error: error,
+        stackTrace: stackTrace,
+      );
+      return 0;
+    }
   }
 
   void _emit(AdEventType type, AdFormat format) {
@@ -563,6 +747,13 @@ final class AppodealAdProvider implements AdProvider, AdTestModeProvider {
       return const KitError(
         code: KitErrorCode.invalidConfiguration,
         message: 'Appodeal timeouts must be positive.',
+      );
+    }
+    if (_configuration.revenueReportWait < Duration.zero ||
+        _configuration.estimatedRevenueDedupeWindow < Duration.zero) {
+      return const KitError(
+        code: KitErrorCode.invalidConfiguration,
+        message: 'Appodeal revenue waits must not be negative.',
       );
     }
     for (final configured in _configuration.placements.values) {
@@ -662,4 +853,17 @@ final class AppodealAdProvider implements AdProvider, AdTestModeProvider {
     );
     if (!_healthChanges.isClosed) _healthChanges.add(_health);
   }
+}
+
+/// An impression shown whose Appodeal revenue report has not arrived yet.
+final class _AwaitedRevenue {
+  _AwaitedRevenue({required this.placement, required this.ecpm});
+
+  final AdPlacement placement;
+
+  /// Predicted eCPM in USD of the inventory shown, zero when unknown.
+  final Future<double> ecpm;
+
+  /// Fires the estimate when the report is late.
+  Timer? timer;
 }

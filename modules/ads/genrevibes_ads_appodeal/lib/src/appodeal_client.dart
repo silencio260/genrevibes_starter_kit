@@ -1,6 +1,9 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show visibleForTesting;
+import 'package:flutter/services.dart';
 import 'package:genrevibes_ads/genrevibes_ads.dart';
+import 'package:genrevibes_core/genrevibes_core.dart';
 import 'package:stack_appodeal_flutter/stack_appodeal_flutter.dart';
 
 /// Callback kinds Appodeal reports for an ad format.
@@ -118,6 +121,10 @@ abstract interface class AppodealClient {
   /// Shows [format] under [placementName]. False when the SDK refuses.
   Future<bool> show(AdFormat format, String placementName);
 
+  /// Predicted eCPM, in USD, of the [format] inventory the SDK holds now.
+  /// Zero when it has none or cannot predict one.
+  Future<double> predictedEcpm(AdFormat format);
+
   /// Stops reporting callbacks and releases resources.
   Future<void> dispose();
 }
@@ -139,10 +146,28 @@ final class DefaultAppodealClient
   }
 
   /// Creates the production client.
-  DefaultAppodealClient({this.manualBannerCaching = false});
+  DefaultAppodealClient({
+    this.manualBannerCaching = false,
+    KitLogger logger = const NoopKitLogger(),
+  }) : _logger = logger;
 
   /// Host requests banner inventory explicitly after checking access.
   final bool manualBannerCaching;
+
+  final KitLogger _logger;
+
+  // The plugin's own revenue handler (`Appodeal.setAdRevenueCallbacks`) parses
+  // each report with unchecked casts, and Flutter answers a channel handler
+  // that throws with an error envelope the SDK ignores, so a report it could
+  // not parse vanished without a log or a crash report. This client reads the
+  // plugin's channel itself, so every report is logged on arrival and one it
+  // cannot read is logged instead of lost.
+  static const MethodChannel _revenueChannel =
+      MethodChannel('appodeal_flutter/adrevenue');
+
+  /// Android's `Appodeal.BANNER_VIEW`. Revenue from a banner view arrives
+  /// under this code, which the plugin maps to [AppodealAdType.None].
+  static const int _androidBannerViewCode = 64;
 
   final StreamController<AppodealCallback> _callbacks =
       StreamController<AppodealCallback>.broadcast();
@@ -225,12 +250,16 @@ final class DefaultAppodealClient
       Appodeal.show(_requireAdType(format), placementName);
 
   @override
+  Future<double> predictedEcpm(AdFormat format) =>
+      Appodeal.getPredictedEcpm(_requireAdType(format));
+
+  @override
   Future<void> dispose() async {
     if (_registered) {
       Appodeal.setInterstitialCallbacks();
       Appodeal.setRewardedVideoCallbacks();
       Appodeal.setBannerCallbacks();
-      Appodeal.setAdRevenueCallbacks();
+      _revenueChannel.setMethodCallHandler(null);
       _registered = false;
     }
     await _callbacks.close();
@@ -298,22 +327,58 @@ final class DefaultAppodealClient
       onBannerClicked: () => _report(AppodealCallbackType.clicked, banner),
       onBannerExpired: () => _report(AppodealCallbackType.expired, banner),
     );
-    Appodeal.setAdRevenueCallbacks(
-      onAdRevenueReceive: (revenue) {
-        if (_revenue.isClosed) return;
-        _revenue.add(
-          AppodealRevenueReport(
-            format: _formatFor(revenue.adType),
-            placementName: revenue.placement,
-            revenue: revenue.revenue,
-            currency: revenue.currency,
-            networkName: revenue.networkName,
-            adUnitName: revenue.adUnitName,
-            precision: revenue.revenuePrecision,
-          ),
-        );
-      },
+    _revenueChannel.setMethodCallHandler(_onRevenueCall);
+  }
+
+  Future<void> _onRevenueCall(MethodCall call) async {
+    if (call.method != 'onAdRevenueReceive') return;
+    final arguments = call.arguments;
+    _logger.log(
+      KitLogLevel.debug,
+      'Appodeal revenue callback arrived: $arguments.',
+      moduleId: 'ads.appodeal',
     );
+    final report = parseRevenueReport(arguments);
+    if (report == null) {
+      _logger.log(
+        KitLogLevel.warning,
+        'Appodeal revenue callback dropped, it has no numeric adType and '
+        'revenue: $arguments.',
+        moduleId: 'ads.appodeal',
+      );
+      return;
+    }
+    if (_revenue.isClosed) return;
+    _revenue.add(report);
+  }
+
+  /// Reads one revenue report from the plugin channel's arguments, or null
+  /// when they carry no numeric ad type and revenue. Missing text fields are
+  /// read as empty.
+  @visibleForTesting
+  static AppodealRevenueReport? parseRevenueReport(Object? arguments) {
+    if (arguments is! Map) return null;
+    final code = arguments['adType'];
+    final revenue = arguments['revenue'];
+    if (code is! int || revenue is! num) return null;
+    String text(String key) => arguments[key]?.toString() ?? '';
+    return AppodealRevenueReport(
+      format: _revenueFormatFor(code),
+      placementName: text('placement'),
+      revenue: revenue.toDouble(),
+      currency: text('currency'),
+      networkName: text('networkName'),
+      adUnitName: text('adUnitName'),
+      precision: text('revenuePrecision'),
+    );
+  }
+
+  static AdFormat? _revenueFormatFor(int code) {
+    final type = AppodealAdType.byPlatformType(code);
+    if (type == AppodealAdType.None && code == _androidBannerViewCode) {
+      return AdFormat.banner;
+    }
+    return _formatFor(type);
   }
 
   void _report(AppodealCallbackType type, AdFormat format) =>

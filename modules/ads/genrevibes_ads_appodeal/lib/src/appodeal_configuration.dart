@@ -29,6 +29,8 @@ final class GenRevibesAppodealConfiguration {
     this.initializationTimeout = const Duration(seconds: 30),
     this.loadTimeout = const Duration(seconds: 60),
     this.fullScreenShowTimeout = const Duration(minutes: 2),
+    this.revenueReportWait = const Duration(seconds: 15),
+    this.estimatedRevenueDedupeWindow = const Duration(minutes: 2),
     this.verboseLogging = false,
     this.childDirectedTreatment = false,
   }) : placements = _index(placements);
@@ -49,6 +51,18 @@ final class GenRevibesAppodealConfiguration {
 
   /// Maximum wait for a full-screen dismissal or failure callback.
   final Duration fullScreenShowTimeout;
+
+  /// How long after an impression the provider waits for Appodeal's revenue
+  /// report before reporting revenue estimated from the predicted eCPM.
+  ///
+  /// The SDK holds its report until its analytics services are ready, then
+  /// forwards it to them for up to 10 s before telling the app, so a report
+  /// can arrive this late or never.
+  final Duration revenueReportWait;
+
+  /// How long after an estimate a late Appodeal report for the same format is
+  /// taken to be that impression's, and dropped rather than counted twice.
+  final Duration estimatedRevenueDedupeWindow;
 
   /// Verbose SDK logging under the `Appodeal` logcat tag. Development only.
   final bool verboseLogging;
