@@ -1,4 +1,3 @@
-import 'package:genrevibes_app_rating/genrevibes_app_rating.dart';
 import 'package:genrevibes_onboarding/genrevibes_onboarding.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
@@ -972,29 +971,6 @@ class _DevStoragePageState extends State<DevStoragePage> {
 
 extension _EmptyFallback on String {
   String ifEmpty(String fallback) => isEmpty ? fallback : this;
-}
-
-class DevRatingPage extends StatelessWidget {
-  const DevRatingPage({required this.controller, super.key});
-  final RatingCoordinator controller;
-  @override
-  Widget build(BuildContext context) => DevScaffold(
-      title: 'Rating',
-      builder: (refresh) => [
-            DevFact('Service', controller.health.state.name),
-            ActionRow(
-                label: 'Check eligibility',
-                icon: Icons.star_outline,
-                run: () => controller.evaluate()),
-            ActionRow(
-                label: 'Reset rating history',
-                icon: Icons.restart_alt,
-                run: () async {
-                  final result = await controller.reset();
-                  refresh();
-                  return result;
-                }),
-          ]);
 }
 
 class DevOnboardingPage extends StatelessWidget {

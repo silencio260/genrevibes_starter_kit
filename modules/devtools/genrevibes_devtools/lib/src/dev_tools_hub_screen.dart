@@ -10,6 +10,7 @@ import 'pages/exit_prompt_page.dart';
 import 'pages/log_page.dart';
 import 'pages/modules_page.dart';
 import 'pages/navigation_bar_page.dart';
+import 'pages/rating_page.dart';
 import 'pages/remote_config_page.dart';
 import 'pages/session_replay_page.dart';
 
@@ -30,11 +31,16 @@ class StarterKitLabScreen extends StatelessWidget {
     final entries = <_Entry>[
       _Entry(
           title: 'Rating',
-          subtitle: 'Eligibility and reset',
+          subtitle: 'History, ask now, store sheet and reset',
           icon: Icons.star_outline,
           build: host.rating == null
               ? null
-              : () => DevRatingPage(controller: host.rating!),
+              : () => DevRatingPage(
+                    controller: host.rating!,
+                    storeReview: host.storeReview,
+                    tools: host.ratingTools,
+                    clock: host.clock,
+                  ),
           missing: 'rating controller wiring'),
       _Entry(
           title: 'Onboarding',

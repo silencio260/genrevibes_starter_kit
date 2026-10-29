@@ -6,6 +6,7 @@ import 'package:genrevibes_storage/genrevibes_storage.dart';
 import 'model/rating_criteria.dart';
 import 'model/rating_decision.dart';
 import 'model/rating_outcome.dart';
+import 'model/rating_snapshot.dart';
 import 'rating_keys.dart';
 import 'rating_observer.dart';
 import 'rating_outcome_router.dart';
@@ -107,6 +108,20 @@ final class RatingCoordinator implements StarterModule {
     return const KitSuccess<void>(null);
   }
 
+  /// Counts one more app open and returns the new total.
+  ///
+  /// [initialize] already counts each launch. Call this only to count opens
+  /// some other way, or from a diagnostics bench.
+  Future<KitResult<int>> recordAppOpen() async {
+    if (!_initialized || _disposed) return _notReady<int>();
+    final opens = await _readInt(RatingKeys.appOpens);
+    if (opens.isFailure) return KitFailure<int>(opens.errorOrThrow);
+    final next = (opens.valueOrNull ?? 0) + 1;
+    final written = await _store.setInt(RatingKeys.appOpens, next);
+    if (written.isFailure) return KitFailure<int>(written.errorOrThrow);
+    return KitSuccess<int>(next);
+  }
+
   /// Increments the counter named [name] and returns its new value.
   ///
   /// Use this for app-specific milestones, such as completed downloads, that an
@@ -129,13 +144,65 @@ final class RatingCoordinator implements StarterModule {
   /// be prompted is not asked again.
   Future<KitResult<RatingDecision>> evaluate({bool force = false}) async {
     if (!_initialized || _disposed) return _notReady<RatingDecision>();
+    final decision = await _decide(force: force);
+    _observer.onEvaluated(decision);
+    return KitSuccess<RatingDecision>(decision);
+  }
 
+  /// Reads every stored value, and what [evaluate] would answer, without
+  /// evaluating: nothing changes and the observer hears nothing.
+  ///
+  /// [triggers] names the counters to include, since the store cannot list
+  /// keys.
+  Future<KitResult<RatingSnapshot>> snapshot({
+    Iterable<String> triggers = const <String>[],
+  }) async {
+    if (!_initialized || _disposed) return _notReady<RatingSnapshot>();
+    final installedAt = await _readInt(RatingKeys.installedAt);
+    final appOpens = await _readInt(RatingKeys.appOpens);
+    final lastPromptedAt = await _readInt(RatingKeys.lastPromptedAt);
     final optedOut = await _store.getBool(RatingKeys.optedOut);
-    if (optedOut.isFailure) return _blocked(RatingBlockReason.stateUnavailable);
-    if (optedOut.fold(onSuccess: (v) => v, onFailure: (_) => null) ?? false) {
-      return _blocked(RatingBlockReason.optedOut);
+    final counts = <String, int>{};
+    for (final name in triggers) {
+      final count = await _readInt(RatingKeys.trigger(name));
+      if (count.isFailure) {
+        return KitFailure<RatingSnapshot>(count.errorOrThrow);
+      }
+      counts[name] = count.valueOrNull ?? 0;
     }
-    if (force) return _allowed();
+    for (final read in <KitResult<Object?>>[
+      installedAt,
+      appOpens,
+      lastPromptedAt,
+      optedOut,
+    ]) {
+      if (read.isFailure) return KitFailure<RatingSnapshot>(read.errorOrThrow);
+    }
+    final installedMs = installedAt.valueOrNull;
+    final promptedMs = lastPromptedAt.valueOrNull;
+    return KitSuccess<RatingSnapshot>(
+      RatingSnapshot(
+        now: _clock.now(),
+        criteria: criteria,
+        decision: await _decide(force: false),
+        installedAt: installedMs == null ? null : _at(installedMs),
+        appOpens: appOpens.valueOrNull ?? 0,
+        lastPromptedAt: promptedMs == null ? null : _at(promptedMs),
+        optedOut: optedOut.valueOrNull ?? false,
+        triggers: counts,
+      ),
+    );
+  }
+
+  Future<RatingDecision> _decide({required bool force}) async {
+    final optedOut = await _store.getBool(RatingKeys.optedOut);
+    if (optedOut.isFailure) {
+      return const RatingDecision.blocked(RatingBlockReason.stateUnavailable);
+    }
+    if (optedOut.valueOrNull ?? false) {
+      return const RatingDecision.blocked(RatingBlockReason.optedOut);
+    }
+    if (force) return const RatingDecision.allowed();
 
     final installedAt = await _readInt(RatingKeys.installedAt);
     final appOpens = await _readInt(RatingKeys.appOpens);
@@ -143,25 +210,25 @@ final class RatingCoordinator implements StarterModule {
     if (installedAt.isFailure ||
         appOpens.isFailure ||
         lastPromptedAt.isFailure) {
-      return _blocked(RatingBlockReason.stateUnavailable);
+      return const RatingDecision.blocked(RatingBlockReason.stateUnavailable);
     }
 
     final now = _clock.now();
     final installedMs = installedAt.valueOrNull;
     if (installedMs == null ||
         now.difference(_at(installedMs)) < criteria.minimumInstallAge) {
-      return _blocked(RatingBlockReason.installTooRecent);
+      return const RatingDecision.blocked(RatingBlockReason.installTooRecent);
     }
     if ((appOpens.valueOrNull ?? 0) < criteria.minimumAppOpens) {
-      return _blocked(RatingBlockReason.notEnoughAppOpens);
+      return const RatingDecision.blocked(RatingBlockReason.notEnoughAppOpens);
     }
     final promptedMs = lastPromptedAt.valueOrNull;
     if (promptedMs != null &&
         now.difference(_at(promptedMs)) <
             criteria.minimumIntervalBetweenPrompts) {
-      return _blocked(RatingBlockReason.promptedRecently);
+      return const RatingDecision.blocked(RatingBlockReason.promptedRecently);
     }
-    return _allowed();
+    return const RatingDecision.allowed();
   }
 
   /// Runs [present] with ads suppressed and records that a prompt was shown.
@@ -210,13 +277,21 @@ final class RatingCoordinator implements StarterModule {
     return KitSuccess<RatingFollowUp>(router.route(outcome, rating: rating));
   }
 
-  /// Clears all rating state. Intended for development and QA only.
-  Future<KitResult<void>> reset() async {
+  /// Clears prompt history. Intended for development and QA only.
+  ///
+  /// Removes the opt-out, the last prompt and the app-open count. The install
+  /// date stays. Trigger counters stay too unless named in [triggers], so an
+  /// app-chosen milestone such as "the 2nd download" can be replayed by naming
+  /// its counter.
+  Future<KitResult<void>> reset({
+    Iterable<String> triggers = const <String>[],
+  }) async {
     if (_disposed) return _notReady<void>();
     for (final key in <String>[
       RatingKeys.optedOut,
       RatingKeys.lastPromptedAt,
       RatingKeys.appOpens,
+      for (final name in triggers) RatingKeys.trigger(name),
     ]) {
       final removed = await _store.remove(key);
       if (removed.isFailure) return removed;
@@ -254,18 +329,6 @@ final class RatingCoordinator implements StarterModule {
 
   DateTime _at(int milliseconds) =>
       DateTime.fromMillisecondsSinceEpoch(milliseconds);
-
-  KitResult<RatingDecision> _allowed() {
-    const decision = RatingDecision.allowed();
-    _observer.onEvaluated(decision);
-    return const KitSuccess<RatingDecision>(decision);
-  }
-
-  KitResult<RatingDecision> _blocked(RatingBlockReason reason) {
-    final decision = RatingDecision.blocked(reason);
-    _observer.onEvaluated(decision);
-    return KitSuccess<RatingDecision>(decision);
-  }
 
   KitResult<void> _degrade(KitResult<Object?> failed) {
     final error = failed.errorOrThrow;

@@ -19,6 +19,8 @@ import 'package:genrevibes_storage/genrevibes_storage.dart';
 import 'package:genrevibes_system_ui/genrevibes_system_ui.dart';
 
 import 'dev_analytics_catalogue.dart';
+import 'dev_rating_tools.dart';
+import 'offset_kit_clock.dart';
 import 'recording_delivery_observer.dart';
 import 'recording_kit_logger.dart';
 
@@ -59,6 +61,9 @@ final class DevToolsHost {
     this.store,
     this.storageKeys = const <DevStorageGroup>[],
     this.rating,
+    this.storeReview,
+    this.ratingTools,
+    this.clock,
     this.onboarding,
     this.localNotifications,
     this.navigationBar,
@@ -145,6 +150,19 @@ final class DevToolsHost {
 
   /// Rating coordinator.
   final RatingCoordinator? rating;
+
+  /// Store review adapter, so the Rating page can request the store sheet and
+  /// open the listing directly.
+  final StoreReviewProvider? storeReview;
+
+  /// The app's prompt, counters and install source, for the Rating page.
+  final DevRatingTools? ratingTools;
+
+  /// The clock the app gave its time-based modules, when it is shiftable.
+  ///
+  /// Moving it moves only the modules built with it; pages show it so "wait
+  /// two days" can be tested in a minute.
+  final OffsetKitClock? clock;
 
   /// Onboarding state.
   final OnboardingController? onboarding;

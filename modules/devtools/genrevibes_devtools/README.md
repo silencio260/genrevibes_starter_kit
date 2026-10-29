@@ -9,6 +9,20 @@ the same provider/controller instances your app uses. Pass that host to
 connected. Connect `rating`, `onboarding` and `localNotifications` to enable their
 controls. The Modules page reports disabled, waiting and timed-out modules too.
 
+The Rating page shows the rating decision, why an ask is blocked and when the
+next one is allowed, the saved prompt state and counters, and who installed the
+build. It can request the store sheet, open the listing, count an app open,
+reset prompt history or everything, and move time. Give it:
+
+- `storeReview`: the store adapter the app uses;
+- `clock`: the `OffsetKitClock` the `RatingCoordinator` was built with;
+- `ratingTools`: a `DevRatingTools` with the app's counter names, `askNow` (the
+  app's real ask, shown over the Lab's context), `previewPrompt` and
+  `installSource`.
+
+`DevScaffold(onRefresh: ...)` runs a page's reload before the refresh button or
+pull to refresh redraws it.
+
 Pass `developerAccess`; the Lab checks `DeveloperAction.diagnostics` on each
 page and responds to revoked access. Apps providing another access mechanism
 can explicitly set `requireDeveloperAccess: false`. The shared unlock and

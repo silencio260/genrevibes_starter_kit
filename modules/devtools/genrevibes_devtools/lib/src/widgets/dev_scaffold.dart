@@ -13,6 +13,7 @@ class DevScaffold extends StatefulWidget {
     required this.builder,
     super.key,
     this.subtitle,
+    this.onRefresh,
   });
 
   /// App bar title.
@@ -24,6 +25,10 @@ class DevScaffold extends StatefulWidget {
   /// Builds the body. The callback re-reads live state.
   final List<Widget> Function(VoidCallback refresh) builder;
 
+  /// Re-reads state the page loads asynchronously, before the rebuild that
+  /// the refresh button and pull-to-refresh trigger.
+  final Future<void> Function()? onRefresh;
+
   @override
   State<DevScaffold> createState() => _DevScaffoldState();
 }
@@ -31,6 +36,11 @@ class DevScaffold extends StatefulWidget {
 class _DevScaffoldState extends State<DevScaffold> {
   void _refresh() {
     if (mounted) setState(() {});
+  }
+
+  Future<void> _pull() async {
+    await widget.onRefresh?.call();
+    _refresh();
   }
 
   @override
@@ -49,12 +59,12 @@ class _DevScaffoldState extends State<DevScaffold> {
           IconButton(
             tooltip: 'Re-read state',
             icon: const Icon(Icons.refresh),
-            onPressed: _refresh,
+            onPressed: _pull,
           ),
         ],
       ),
       body: RefreshIndicator(
-        onRefresh: () async => _refresh(),
+        onRefresh: _pull,
         child: ListView(
           padding: const EdgeInsets.fromLTRB(12, 12, 12, 96),
           children: widget.builder(_refresh),

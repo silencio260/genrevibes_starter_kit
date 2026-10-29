@@ -25,3 +25,8 @@ imports, so rating policy depends on neither an ad network nor a measurement
 provider. Persistence goes through `genrevibes_storage`; wrap the store in a
 `MigratingKeyValueStore` seeded with `RatingKeys.legacyKeys` so adopting this
 package does not reset eligibility for existing users.
+
+`snapshot()` reads every stored value and what `evaluate()` would answer, along
+with when the time rules next allow a prompt, without evaluating or notifying
+the observer. Kit Lab's Rating page is built on it. `reset(triggers: [...])`
+also clears named counters, so a milestone prompt can be replayed.

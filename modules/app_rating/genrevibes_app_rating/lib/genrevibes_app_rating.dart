@@ -4,6 +4,7 @@ library;
 export 'src/model/rating_criteria.dart';
 export 'src/model/rating_decision.dart';
 export 'src/model/rating_outcome.dart';
+export 'src/model/rating_snapshot.dart';
 export 'src/rating_coordinator.dart';
 export 'src/rating_keys.dart';
 export 'src/rating_observer.dart';

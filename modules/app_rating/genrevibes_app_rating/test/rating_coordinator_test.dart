@@ -175,6 +175,59 @@ void main() {
     });
   });
 
+  group('RatingCoordinator snapshot', () {
+    test('reports stored state without notifying the observer', () async {
+      final observer = _RecordingObserver();
+      final clock = _FixedClock(DateTime.utc(2026, 2, 1));
+      final coordinator = await _eligible(clock: clock, observer: observer);
+      await _trigger(coordinator, 'download');
+      final before = observer.evaluated;
+
+      final snapshot = (await coordinator.snapshot(triggers: ['download']))
+          .fold(onSuccess: (v) => v, onFailure: (e) => throw StateError('$e'));
+
+      expect(snapshot.decision.isAllowed, isTrue);
+      expect(snapshot.triggers, {'download': 1});
+      expect(snapshot.optedOut, isFalse);
+      expect(snapshot.now, clock.value);
+      expect(observer.evaluated, before);
+    });
+
+    test('names when the interval next allows a prompt', () async {
+      final clock = _FixedClock(DateTime.utc(2026, 2, 1));
+      final coordinator = await _eligible(clock: clock);
+      await coordinator.present(() async {});
+
+      final snapshot = (await coordinator.snapshot())
+          .fold(onSuccess: (v) => v, onFailure: (e) => throw StateError('$e'));
+
+      expect(
+        snapshot.decision.blockReason,
+        RatingBlockReason.promptedRecently,
+      );
+      expect(
+        snapshot.eligibleFrom,
+        clock.value.add(const RatingCriteria().minimumIntervalBetweenPrompts),
+      );
+    });
+  });
+
+  group('RatingCoordinator reset', () {
+    test('keeps trigger counters unless they are named', () async {
+      final store = MemoryKeyValueStore();
+      final coordinator = await _eligible(store: store);
+      await _trigger(coordinator, 'download');
+      await _trigger(coordinator, 'share');
+
+      await coordinator.reset(triggers: ['download']);
+
+      expect(store.values.containsKey(RatingKeys.trigger('download')), isFalse);
+      expect(store.values[RatingKeys.trigger('share')], 1);
+      expect(store.values.containsKey(RatingKeys.appOpens), isFalse);
+      expect(store.values.containsKey(RatingKeys.installedAt), isTrue);
+    });
+  });
+
   group('RatingCoordinator outcomes', () {
     test('a high rating routes to the store', () async {
       final coordinator = await _eligible();
