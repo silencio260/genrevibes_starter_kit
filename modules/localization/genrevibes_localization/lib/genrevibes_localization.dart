@@ -6,6 +6,7 @@ export 'src/localization_configuration.dart';
 export 'src/localization_controller.dart';
 export 'src/localization_preferences.dart';
 export 'src/localization_picker.dart';
+export 'src/localization_picker_page.dart';
 
 export 'src/cldr_locale_data.dart';
 export 'src/supplemental_localizations.dart';

@@ -28,10 +28,16 @@ final class LocalizationPickerItem {
       {required this.value,
       required this.title,
       this.subtitle,
+      this.leading,
+      this.titleDirection,
+      this.subtitleDirection,
       this.searchTerms = ''});
   final String value;
   final String title;
   final String? subtitle;
+  final Widget? leading;
+  final TextDirection? titleDirection;
+  final TextDirection? subtitleDirection;
   final String searchTerms;
 
   factory LocalizationPickerItem.locale(LocaleOption locale) =>
@@ -122,8 +128,12 @@ class _LocalizationPickerState extends State<LocalizationPicker> {
               }
               final item = matches[index - 1];
               return ListTile(
-                title: Text(item.title),
-                subtitle: item.subtitle == null ? null : Text(item.subtitle!),
+                leading: item.leading,
+                title: Text(item.title, textDirection: item.titleDirection),
+                subtitle: item.subtitle == null
+                    ? null
+                    : Text(item.subtitle!,
+                        textDirection: item.subtitleDirection),
                 selected: widget.selected == item.value,
                 trailing: widget.selected == item.value
                     ? const Icon(Icons.check)

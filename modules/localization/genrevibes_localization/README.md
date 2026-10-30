@@ -16,6 +16,27 @@ identity and handles legacy language/region aliases.
 `LocalizationPickerItem` values. A cancelled dialog differs from selecting the
 device default. Account/profile delivery remains the host's responsibility.
 
+`showLocalizationPickerPage` opens a full-screen route with rounded, searchable
+rows and a centered header. It holds a draft selection until the top-right
+checkmark is pressed; Back cancels without returning a choice. Supply a localized
+`confirmLabel`, an optional translated `description`, and optional item `leading`
+widgets and `titleDirection` values. The page uses the host's current theme and
+supports device defaults independently of cancellation. The dialog API remains
+available for compact pickers.
+
+For a fixed layout across languages, pass `layoutDirection` to the page. This
+controls row order, label alignment, search-icon placement and navigation actions;
+localized page labels and search input retain the surrounding reading direction.
+Item `titleDirection` and `subtitleDirection` control their text independently.
+For example, a left-to-right layout can keep Arabic names left-aligned while
+preserving their right-to-left reading order.
+
+`LocalizationPickerPage` can also be embedded as a startup step: supply
+`onConfirmed` to handle the choice without popping a route. In this mode the
+page omits its automatic Back button. Set `isSaving` during persistence to show
+progress and disable repeated confirmation, searching and selection changes.
+The host decides when a successful save advances to its next startup step.
+
 ## Languages missing from Flutter or intl
 
 Register an app-owned `SupplementalLocalizations` instance with loaders keyed by
