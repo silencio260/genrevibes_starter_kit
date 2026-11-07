@@ -1,5 +1,5 @@
 name: genrevibes_onboarding
-description: Onboarding completion state and optional presentation templates for GenRevibes apps.
+description: Onboarding presentation and reusable in-app tutorials with saved progress and spotlight guidance.
 version: 0.1.0-dev.3
 publish_to: none
 

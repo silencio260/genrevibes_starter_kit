@@ -76,6 +76,9 @@ fast architecture check.
 - `genrevibes_onboarding`: onboarding completion state with legacy-key adoption,
   an optional theme-driven presentation template, and `OnboardingFlow` — any
   number of pages, an ad-agnostic ad slot, and finish and skip action sequences.
+  It also provides independent `TutorialController`/`TutorialOverlay` feature
+  guides with saved steps, spotlight targets, skip/replay and app-defined actions;
+  see the [tutorial guide](onboarding/genrevibes_onboarding/README.md#in-app-tutorials).
 - `genrevibes_splash`: the launch screen — a loading bar bounded by one wait
   budget, then the full-screen ad the app resolves, then the app's routing.
 - `genrevibes_exit_prompt`: what Back does on the root screen — native ad

@@ -50,6 +50,10 @@ modules/<capability>/genrevibes_<package>
 | `system_ui/` | 1 | system_ui |
 | `tooling/` | 1 | screenshot_tools (development dependency only) |
 
+The onboarding package also contains [reusable in-app tutorials](modules/onboarding/genrevibes_onboarding/README.md#in-app-tutorials):
+independent saved guides, spotlight targets, shared controls and app-supplied
+instructions/actions. See the [editor/search example](modules/onboarding/genrevibes_onboarding/example/tutorial_example.dart).
+
 Package names are unchanged and independent of the folder: `genrevibes_ads_admob`
 is imported as `package:genrevibes_ads_admob/...` wherever it lives. The folder
 is navigation, not identity.

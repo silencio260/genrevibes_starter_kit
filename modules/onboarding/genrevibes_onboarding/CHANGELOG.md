@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- Add reusable in-app tutorials: named controllers, stable step IDs, atomic progress,
+  legacy adoption, pause/resume, skip/replay and shared spotlight controls.
+- Add provider-neutral persistent and memory progress stores, customizable cards,
+  target interaction policies and a complete editor/search integration example.
+- Keep tutorial completion separate from introductory onboarding completion.
+
 ## 0.1.0-dev.3
 
 - **Changed default:** `OnboardingPresentation.screens`. Every page is a

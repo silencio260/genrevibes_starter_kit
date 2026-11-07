@@ -8,8 +8,8 @@ import 'onboarding_keys.dart';
 /// Tracks whether a user has completed onboarding.
 ///
 /// Deliberately small. Onboarding content, wording, imagery, and navigation are
-/// application concerns; only the completion flag is portfolio-reusable, and
-/// getting its persistence wrong is what shows onboarding twice.
+/// application concerns; this controller owns only the intro completion flag.
+/// Independent feature guides use the package's TutorialController.
 final class OnboardingController implements StarterModule {
   /// Creates a controller over [store].
   ///
