@@ -179,6 +179,36 @@ final class AppodealAdProvider
   String? placementNameFor(AdPlacement placement) =>
       _configuration.placementFor(placement)?.name;
 
+  /// Hides an existing Android inline banner without destroying its creative,
+  /// or resumes it after the host has made the retained view visible again.
+  /// The host must hide the Flutter platform view as well and gate visibility
+  /// using its own policy. [discard] still tears down banner inventory.
+  Future<KitResult<void>> setEmbeddedBannerVisible(
+    AdPlacement placement, {
+    required bool visible,
+  }) {
+    final name = placementNameFor(placement);
+    if (placement.format != AdFormat.banner || name == null) {
+      return Future.value(_unknownPlacement<void>(placement));
+    }
+    if (visible && !canShowInline(placement)) {
+      return Future.value(_notReady<void>());
+    }
+    return _guard(() async {
+      final client = _client;
+      if (client is! AppodealEmbeddedBannerControl) {
+        throw UnsupportedError('Embedded banner visibility is not supported.');
+      }
+      if (visible && !await _client.canShow(AdFormat.banner, name)) {
+        throw StateError('Appodeal refused the banner placement.');
+      }
+      await (client as AppodealEmbeddedBannerControl).setEmbeddedBannerVisible(
+        visible: visible,
+        placementName: name,
+      );
+    });
+  }
+
   @override
   Future<KitResult<void>> initialize() {
     if (_initialized) {
@@ -615,7 +645,9 @@ final class AppodealAdProvider
       placement: placement,
       ecpm: _ecpmAtShow.remove(format) ?? _predictedEcpm(format),
     );
-    _awaitingRevenue.putIfAbsent(format, () => <_AwaitedRevenue>[]).add(awaited);
+    _awaitingRevenue
+        .putIfAbsent(format, () => <_AwaitedRevenue>[])
+        .add(awaited);
     awaited.timer = Timer(
       _configuration.revenueReportWait,
       () => unawaited(

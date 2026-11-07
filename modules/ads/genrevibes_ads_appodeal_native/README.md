@@ -56,6 +56,13 @@ AppodealNativeAds.instance
   it when disposed. Keep the same view on screen across page changes to show
   one ad; build a new one to show another. With `preloadNext`, a view loads the
   next ad as soon as it shows its own, so the next view appears at once.
+- **Composition and motion.** Uses Flutter's `initSurfaceAndroidView`, preferring
+  texture-layer composition with automatic hybrid fallback. The SDK's real
+  `NativeAdView` still registers and measures the ad. `deferPresentation: true`
+  postpones new requests and first platform-view creation during host motion;
+  it retains an already presented view. The host decides viewport admission and
+  when scrolling has settled. Inventory checks are coalesced per view, and a
+  dashboard refusal waits for new inventory instead of retrying immediately.
 - **Reserving the space.** Put the view in a space
   `AppodealNativeAdStyle.resolvedHeight` tall and pass
   `placeholder: AppodealNativeAdPlaceholder(style: style)`. The screen is laid

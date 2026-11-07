@@ -74,8 +74,19 @@ set per app in the Appodeal dashboard.
 
 Auto-cache is off for interstitials and rewarded video, so nothing loads until
 `load` is called and a premium user never requests an ad. Banners keep
-auto-caching. Appodeal cannot drop a loaded full-screen ad: `discard` makes the
+auto-caching unless `DefaultAppodealClient(manualBannerCaching: true)` is used.
+In that mode the host explicitly loads eligible banner inventory and Android
+banner auto-resume is disabled. Appodeal cannot drop a loaded full-screen ad: `discard` makes the
 provider forget it, and the coordinator's premium policy keeps it off screen.
+
+Android hosts can retain an embedded banner platform view during short page
+visits and use `provider.setEmbeddedBannerVisible(placement, visible: ...)` to
+hide/resume it without destroying the creative. Hide the Flutter view as well;
+an invisible SDK banner must not remain painted or interactive. Resume only
+after the host view is visible and app eligibility has been checked. Resuming
+rechecks SDK placement eligibility and uses `BANNER_VIEW`, not the screen-edge
+banner. This capability is optional on injected clients. `discard` still hides
+and destroys banner inventory when the host releases the view or loses access.
 
 ## Impression revenue
 

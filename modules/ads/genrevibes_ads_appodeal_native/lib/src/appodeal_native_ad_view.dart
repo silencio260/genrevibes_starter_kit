@@ -38,6 +38,7 @@ final class AppodealNativeAdView extends StatefulWidget {
     this.style = const AppodealNativeAdStyle(),
     this.placeholder,
     this.preloadNext = false,
+    this.deferPresentation = false,
   });
 
   /// The provider that initialized the SDK, with [placement] configured.
@@ -63,6 +64,12 @@ final class AppodealNativeAdView extends StatefulWidget {
   /// unused if no further view is built.
   final bool preloadNext;
 
+  /// Delays first platform-view creation while the host is moving.
+  ///
+  /// Loading can finish in the background. An already presented view stays
+  /// mounted when this becomes true, retaining its creative during scrolling.
+  final bool deferPresentation;
+
   @override
   State<AppodealNativeAdView> createState() => _AppodealNativeAdViewState();
 }
@@ -74,6 +81,9 @@ class _AppodealNativeAdViewState extends State<AppodealNativeAdView> {
       _viewEvents;
   bool _available = false;
   bool _loadRequested = false;
+  bool _refreshing = false;
+  bool _refreshAgain = false;
+  bool _presented = false;
   int _generation = 0;
   int? _viewId;
 
@@ -96,9 +106,14 @@ class _AppodealNativeAdViewState extends State<AppodealNativeAdView> {
       widget.style.toCreationParams(),
     )) {
       _generation++;
+      _presented = false;
     }
     if (oldWidget.enabled != widget.enabled ||
         oldWidget.placement != widget.placement) {
+      _loadRequested = false;
+      _presented = false;
+      unawaited(_refresh());
+    } else if (oldWidget.deferPresentation && !widget.deferPresentation) {
       unawaited(_refresh());
     }
   }
@@ -114,20 +129,45 @@ class _AppodealNativeAdViewState extends State<AppodealNativeAdView> {
       widget.enabled && widget.provider.canShowInline(widget.placement);
 
   Future<void> _refresh() async {
-    if (!_ads.isSupported || !_eligible || _available) return;
-    final count = await _ads.availableCount();
-    if (!mounted) return;
-    if (count > 0) {
-      setState(() => _available = true);
-    } else if (!_loadRequested) {
-      _loadRequested = true;
-      _ads.noteLoadRequested(widget.placement);
-      unawaited(widget.provider.load(widget.placement));
+    if (!mounted ||
+        !_ads.isSupported ||
+        !_eligible ||
+        _available ||
+        _refreshing ||
+        _loadRequested ||
+        widget.deferPresentation) {
+      return;
+    }
+    _refreshing = true;
+    try {
+      final count = await _ads.availableCount();
+      if (!mounted || !_eligible || _available) return;
+      if (count > 0) {
+        setState(() => _available = true);
+      } else if (!_loadRequested && !widget.deferPresentation) {
+        _loadRequested = true;
+        _ads.noteLoadRequested(widget.placement);
+        unawaited(widget.provider.load(widget.placement));
+      }
+    } finally {
+      _refreshing = false;
+      if (_refreshAgain) {
+        _refreshAgain = false;
+        _loadRequested = false;
+        unawaited(_refresh());
+      }
     }
   }
 
   void _onNative(AppodealNativeEventType type) {
-    if (type == AppodealNativeEventType.loaded) unawaited(_refresh());
+    if (type == AppodealNativeEventType.loaded) {
+      if (_refreshing) {
+        _refreshAgain = true;
+        return;
+      }
+      _loadRequested = false;
+      unawaited(_refresh());
+    }
   }
 
   void _onView(({int viewId, AppodealNativeViewEvent event}) update) {
@@ -142,12 +182,13 @@ class _AppodealNativeAdViewState extends State<AppodealNativeAdView> {
         }
       case AppodealNativeViewEvent.unavailable:
       case AppodealNativeViewEvent.refused:
-        // Wait for the next load rather than retrying at once, which would
-        // loop on an ad a dashboard rule keeps refusing.
+        // Cache contention can request another ad. A dashboard refusal waits
+        // for new inventory instead of looping cache/show attempts.
         setState(() {
           _available = false;
-          _loadRequested = false;
+          _loadRequested = update.event == AppodealNativeViewEvent.refused;
           _generation++;
+          _presented = false;
         });
     }
   }
@@ -166,6 +207,8 @@ class _AppodealNativeAdViewState extends State<AppodealNativeAdView> {
           unawaited(_refresh());
           return placeholder;
         }
+        if (!_presented && widget.deferPresentation) return placeholder;
+        _presented = true;
         return SizedBox(
           height: widget.style.resolvedHeight,
           child: _NativePlatformView(
@@ -186,8 +229,8 @@ class _AppodealNativeAdViewState extends State<AppodealNativeAdView> {
   }
 }
 
-/// Hybrid composition, which ad SDKs need to measure visibility and take
-/// clicks the way they do in a native app.
+/// Uses Flutter's texture-layer composition with automatic hybrid fallback.
+/// The SDK's real NativeAdView still owns layout, impressions and clicks.
 class _NativePlatformView extends StatelessWidget {
   const _NativePlatformView({
     required this.creationParams,
@@ -210,7 +253,7 @@ class _NativePlatformView extends StatelessWidget {
       ),
       onCreatePlatformView: (params) {
         onCreated(params.id);
-        return PlatformViewsService.initExpensiveAndroidView(
+        return PlatformViewsService.initSurfaceAndroidView(
           id: params.id,
           viewType: _viewType,
           layoutDirection: direction,

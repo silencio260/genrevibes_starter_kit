@@ -149,7 +149,7 @@ final class DefaultAdMobClient implements AdMobClient {
     final previous = _loaded[placement.id];
     if (previous != null) unawaited(previous.dispose());
     _loaded[placement.id] = ad;
-    ad.onPaidEvent = (paidAd, valueMicros, _, currencyCode) {
+    ad.onPaidEvent = (paidAd, valueMicros, precision, currencyCode) {
       _emit(
         AdEvent(
           type: AdEventType.paid,
@@ -161,6 +161,7 @@ final class DefaultAdMobClient implements AdMobClient {
             currencyCode: currencyCode,
             provider: 'admob',
             mediationNetwork: paidAd.responseInfo?.mediationAdapterClassName,
+            precision: _precisionName(precision),
           ),
         ),
       );
@@ -333,3 +334,13 @@ final class DefaultAdMobClient implements AdMobClient {
     await _events.close();
   }
 }
+
+/// Google's own term for how exact a paid value is, in the snake_case form
+/// the analytics contract uses. Reported so an estimated value is never read
+/// as a precise one.
+String _precisionName(PrecisionType precision) => switch (precision) {
+      PrecisionType.precise => 'precise',
+      PrecisionType.estimated => 'estimated',
+      PrecisionType.publisherProvided => 'publisher_provided',
+      PrecisionType.unknown => 'unknown',
+    };

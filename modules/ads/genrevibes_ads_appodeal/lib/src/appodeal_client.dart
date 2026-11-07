@@ -1,6 +1,7 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart' show visibleForTesting;
+import 'package:flutter/foundation.dart'
+    show defaultTargetPlatform, kIsWeb, TargetPlatform, visibleForTesting;
 import 'package:flutter/services.dart';
 import 'package:genrevibes_ads/genrevibes_ads.dart';
 import 'package:genrevibes_core/genrevibes_core.dart';
@@ -141,8 +142,47 @@ abstract interface class AppodealBannerControl {
   Future<void> stopBanner();
 }
 
+/// Visibility control for an embedded banner whose platform view is retained.
+abstract interface class AppodealEmbeddedBannerControl {
+  /// Hides or resumes an Android BANNER_VIEW without destroying inventory.
+  Future<void> setEmbeddedBannerVisible({
+    required bool visible,
+    required String placementName,
+  });
+}
+
 final class DefaultAppodealClient
-    implements AppodealClient, AppodealBannerControl {
+    implements
+        AppodealClient,
+        AppodealBannerControl,
+        AppodealEmbeddedBannerControl {
+  static const MethodChannel _sdkChannel = MethodChannel('appodeal_flutter');
+
+  @override
+  Future<void> setEmbeddedBannerVisible({
+    required bool visible,
+    required String placementName,
+  }) async {
+    if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) {
+      throw UnsupportedError('Retained embedded banners require Android.');
+    }
+    if (!visible) {
+      await _sdkChannel.invokeMethod<void>('hide', <String, Object?>{
+        'adType': AppodealAdType.Banner.platformShowType,
+      });
+      return;
+    }
+    // BANNER_VIEW is the Android inline view, not the SDK's screen-edge banner.
+    final shown =
+        await _sdkChannel.invokeMethod<bool>('show', <String, Object?>{
+      'adType': _androidBannerViewCode,
+      'placement': placementName,
+    });
+    if (shown != true) {
+      throw StateError('Appodeal refused the embedded banner.');
+    }
+  }
+
   @override
   Future<void> stopBanner() async {
     Appodeal.hide(AppodealAdType.Banner);
