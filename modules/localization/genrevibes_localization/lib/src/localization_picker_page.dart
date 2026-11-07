@@ -15,6 +15,8 @@ class LocalizationPickerPage extends StatefulWidget {
     this.layoutDirection,
     this.onConfirmed,
     this.isSaving = false,
+    this.bottom,
+    this.showBackButton,
   });
 
   final List<LocalizationPickerItem> items;
@@ -26,6 +28,10 @@ class LocalizationPickerPage extends StatefulWidget {
   /// For an embedded startup step. When absent, confirmation pops this route.
   final ValueChanged<LocalizationChoice>? onConfirmed;
   final bool isSaving;
+
+  /// App-owned content below the list, separate from selectable options.
+  final Widget? bottom;
+  final bool? showBackButton;
 
   /// Controls physical placement independently of each label's reading order.
   /// Null follows the surrounding layout direction.
@@ -61,7 +67,8 @@ class _LocalizationPickerPageState extends State<LocalizationPickerPage> {
       textDirection: layoutDirection,
       child: Scaffold(
         appBar: AppBar(
-          automaticallyImplyLeading: widget.onConfirmed == null,
+          automaticallyImplyLeading:
+              widget.showBackButton ?? widget.onConfirmed == null,
           centerTitle: true,
           title: Text(widget.labels.title,
               textDirection: textDirection,
@@ -250,6 +257,7 @@ class _LocalizationPickerPageState extends State<LocalizationPickerPage> {
                             ),
                           ),
                   ),
+                  if (widget.bottom case final bottom?) bottom,
                 ],
               ),
             ),
