@@ -57,6 +57,9 @@ final class DefaultMixpanelAnalyticsClient implements MixpanelAnalyticsClient {
     _mixpanel = mixpanel;
   }
 
+  /// The SDK's persisted anonymous or identified ID, shared with session replay.
+  Future<String> getDistinctId() => _readyMixpanel.getDistinctId();
+
   @override
   Future<void> setCollectionEnabled(bool enabled) async {
     if (enabled) {

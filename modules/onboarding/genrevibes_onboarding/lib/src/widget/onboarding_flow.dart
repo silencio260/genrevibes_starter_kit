@@ -156,9 +156,14 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
 
   void _goTo(int index) {
     if (!_controller.hasClients) return;
+    final target = index.clamp(0, _count - 1);
+    if (widget.style.pageTransitionDuration == Duration.zero) {
+      _controller.jumpToPage(target);
+      return;
+    }
     unawaited(
       _controller.animateToPage(
-        index.clamp(0, _count - 1),
+        target,
         duration: widget.style.pageTransitionDuration,
         curve: widget.style.pageTransitionCurve,
       ),

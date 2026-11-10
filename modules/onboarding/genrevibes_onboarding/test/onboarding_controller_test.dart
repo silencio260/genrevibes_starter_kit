@@ -43,6 +43,45 @@ void main() {
       expect(controller.isCompleted, isFalse);
     });
 
+    test('notifies the root gate after reset has been saved', () async {
+      final store = MemoryKeyValueStore(
+        initialValues: {OnboardingKeys.completed: true},
+      );
+      final controller = await _ready(store);
+      final reset = controller.completionChanges.first;
+
+      expect((await controller.reset()).isSuccess, isTrue);
+
+      expect(await reset, isFalse);
+      expect(store.values[OnboardingKeys.completed], isFalse);
+      expect(controller.health.details['completed'], isFalse);
+      await controller.dispose();
+    });
+
+    test('reset still requests replay when already incomplete', () async {
+      final controller = await _ready(MemoryKeyValueStore());
+      final reset = controller.completionChanges.first;
+
+      await controller.reset();
+
+      expect(await reset, isFalse);
+      await controller.dispose();
+    });
+
+    test('failed reset keeps completion and sends no replay request', () async {
+      final controller = await _ready(_FailedWriteStore());
+      final changes = <bool>[];
+      final subscription = controller.completionChanges.listen(changes.add);
+
+      expect((await controller.reset()).isFailure, isTrue);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(controller.isCompleted, isTrue);
+      expect(changes, isEmpty);
+      await subscription.cancel();
+      await controller.dispose();
+    });
+
     test('unreadable state treats the user as new rather than skipping',
         () async {
       // Showing onboarding twice is a much better failure than never showing
@@ -79,6 +118,26 @@ void main() {
   });
 
   group('legacy key adoption', () {
+    test('reset survives reopening a store with a legacy completion', () async {
+      final delegate = MemoryKeyValueStore(
+        initialValues: {'has_seen_onboarding': true},
+      );
+      KeyValueStore migratedStore() => MigratingKeyValueStore(
+            delegate: delegate,
+            legacyKeys: OnboardingKeys.legacyKeys,
+          );
+      final first = await _ready(migratedStore());
+      expect(first.isCompleted, isTrue);
+
+      await first.reset();
+      final reopened = await _ready(migratedStore());
+
+      expect(reopened.isCompleted, isFalse);
+      expect(delegate.values['has_seen_onboarding'], isTrue);
+      expect(delegate.values[OnboardingKeys.completed], isFalse);
+      await first.dispose();
+      await reopened.dispose();
+    });
     test('a user who already finished onboarding does not see it again',
         () async {
       // Without migration, adopting this package re-onboards the entire
@@ -121,6 +180,22 @@ void main() {
       );
     });
   });
+}
+
+class _FailedWriteStore implements KeyValueStore {
+  @override
+  Future<KitResult<bool?>> getBool(String key) async =>
+      const KitSuccess<bool?>(true);
+
+  @override
+  Future<KitResult<void>> setBool(String key, bool value) async =>
+      const KitFailure<void>(KitError(
+        code: KitErrorCode.provider,
+        message: 'Storage write failed.',
+      ));
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 Future<OnboardingController> _ready(KeyValueStore store) async {

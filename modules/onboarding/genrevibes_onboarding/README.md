@@ -12,6 +12,25 @@ user on the release that ships it.
 Unreadable state is treated as "not yet onboarded". Showing onboarding a second
 time is a far better failure than never showing it to a genuinely new user.
 
+## Reset and replay
+
+Listen to the initialized controller's `completionChanges` at the application's
+root gate and seed the initial view from `isCompleted`. After a successful
+`reset()`, the controller persists `false` and emits `false`, even if onboarding
+was already incomplete. The host must immediately reveal its introductory flow,
+close any Settings/Kit Lab/dialog routes covering that root, and create a fresh
+flow instance at page zero. Navigation and introductory content remain app-owned.
+A reset that fails to save emits nothing and leaves completion unchanged.
+
+`complete()` emits `true` after its save succeeds. When a visible flow has more
+finish actions, wait for `OnboardingFlow.onFinished` before replacing it with the
+app shell; do not cancel those actions by routing on `true` too early.
+Cancel the subscription with
+the root gate; do not dispose a borrowed runtime controller. Kit Lab's reset uses
+the same controller, so it automatically takes this route too. Keep feature
+tutorial progress independent. Reset writes a current `false` instead of removing
+the key so a migrating store cannot resurrect a legacy completion next launch.
+
 `OnboardingView` is theme-driven and embeddable. It renders no `Scaffold` and no
 `AppBar`, so a host can place it in its own route, a sheet, or a dialog, and it
 takes colors from the ambient `ThemeData` rather than a hardcoded palette.
