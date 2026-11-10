@@ -34,6 +34,8 @@ final class OnboardingController implements StarterModule {
   final KitLogger _logger;
   final StreamController<ModuleHealth> _healthChanges =
       StreamController<ModuleHealth>.broadcast();
+  final StreamController<bool> _completionChanges =
+      StreamController<bool>.broadcast();
   ModuleHealth _health;
   bool _completed = false;
   bool _initialized = false;
@@ -50,6 +52,13 @@ final class OnboardingController implements StarterModule {
 
   /// Whether onboarding has been completed, as of the last read.
   bool get isCompleted => _completed;
+
+  /// Successful completion/reset operations, emitted after persistence.
+  ///
+  /// Read [isCompleted] for the initial state. The host's root gate listens to
+  /// this stream and returns to its own onboarding flow on `false`, including
+  /// resets initiated from Kit Lab. Navigation stays with the host app.
+  Stream<bool> get completionChanges => _completionChanges.stream;
 
   @override
   Future<KitResult<void>> initialize() async {
@@ -87,16 +96,26 @@ final class OnboardingController implements StarterModule {
   Future<KitResult<void>> complete() async {
     if (!_initialized || _disposed) return _notReady<void>();
     final written = await _store.setBool(OnboardingKeys.completed, true);
-    if (written.isSuccess) _completed = true;
+    if (written.isSuccess) _publishCompletion(true);
     return written;
   }
 
-  /// Clears completion so onboarding runs again. Intended for QA.
+  /// Resets completion and notifies the host to show onboarding again.
+  ///
+  /// Persist `false` instead of removing the key: removing it would allow a
+  /// migrating store to restore an old legacy `true` on the next launch.
   Future<KitResult<void>> reset() async {
     if (!_initialized || _disposed) return _notReady<void>();
-    final removed = await _store.remove(OnboardingKeys.completed);
-    if (removed.isSuccess) _completed = false;
-    return removed;
+    final written = await _store.setBool(OnboardingKeys.completed, false);
+    if (written.isSuccess) _publishCompletion(false);
+    return written;
+  }
+
+  void _publishCompletion(bool completed) {
+    if (_disposed) return;
+    _completed = completed;
+    _setHealth(ModuleState.ready);
+    _completionChanges.add(completed);
   }
 
   @override
@@ -104,6 +123,7 @@ final class OnboardingController implements StarterModule {
     if (_disposed) return const KitSuccess<void>(null);
     _disposed = true;
     _setHealth(ModuleState.disposed);
+    await _completionChanges.close();
     await _healthChanges.close();
     return const KitSuccess<void>(null);
   }
