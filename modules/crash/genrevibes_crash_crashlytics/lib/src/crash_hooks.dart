@@ -18,11 +18,27 @@ final class CrashHooksHandle {
 /// Install once, from `main`, and let nothing else record errors on its own
 /// path: a second wiring double-reports every crash.
 abstract final class CrashHooks {
+  /// Sources reported with the reporter's `fatal` flag.
+  ///
+  /// None of these paths terminates a Flutter process. `fatal` is a claim
+  /// that the app died, and it is what drives the crash-free users metric,
+  /// so it is reserved for framework errors, which at least leave the user
+  /// looking at broken UI. An uncaught asynchronous error — a failed
+  /// `Future` nobody awaited, a dead host behind a fire-and-forget request —
+  /// arrives at `PlatformDispatcher.onError` or the guarded zone while the
+  /// app carries on normally. Reporting those as fatal buries real crashes
+  /// underneath them and makes crash-free users meaningless.
+  static const Set<CrashSource> defaultFatalSources = {CrashSource.flutter};
+
   /// Sets `FlutterError.onError` and `PlatformDispatcher.onError`.
   ///
   /// Previous handlers are chained so a debugger or test binding still sees
-  /// the error. Returns a handle that restores them.
-  static CrashHooksHandle install(CrashCoordinator coordinator) {
+  /// the error. Returns a handle that restores them. Pass [fatalSources] to
+  /// widen or narrow what counts as fatal; see [defaultFatalSources].
+  static CrashHooksHandle install(
+    CrashCoordinator coordinator, {
+    Set<CrashSource> fatalSources = defaultFatalSources,
+  }) {
     final previousFlutter = FlutterError.onError;
     final previousPlatform = PlatformDispatcher.instance.onError;
 
@@ -34,7 +50,7 @@ abstract final class CrashHooks {
             error: details,
             stackTrace: details.stack,
             reason: details.context?.toDescription(),
-            fatal: true,
+            fatal: fatalSources.contains(CrashSource.flutter),
             source: CrashSource.flutter,
           ),
         ),
@@ -47,7 +63,7 @@ abstract final class CrashHooks {
           CrashReport(
             error: error,
             stackTrace: stack,
-            fatal: true,
+            fatal: fatalSources.contains(CrashSource.platform),
             source: CrashSource.platform,
           ),
         ),
@@ -66,14 +82,18 @@ abstract final class CrashHooks {
   ///
   /// Wrap the whole of `main` in this so errors the framework hooks never see,
   /// such as a failed `Future` nobody awaited, still reach the reporter.
-  static R? runGuarded<R>(R Function() body, CrashCoordinator coordinator) {
+  static R? runGuarded<R>(
+    R Function() body,
+    CrashCoordinator coordinator, {
+    Set<CrashSource> fatalSources = defaultFatalSources,
+  }) {
     return runZonedGuarded<R>(body, (error, stack) {
       unawaited(
         coordinator.report(
           CrashReport(
             error: error,
             stackTrace: stack,
-            fatal: true,
+            fatal: fatalSources.contains(CrashSource.zone),
             source: CrashSource.zone,
           ),
         ),
