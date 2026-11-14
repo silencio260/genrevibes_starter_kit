@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:feedbacknest_core/feedbacknest.dart';
@@ -29,7 +30,34 @@ final class DefaultFeedbackNestClient implements FeedbackNestClient {
 
   @override
   Future<void> initialize(String apiKey, {String userIdentifier = ''}) {
-    return Feedbacknest.init(apiKey, userIdentifier: userIdentifier);
+    // feedbacknest_core 0.0.8 fires its "/user/submit/log" telemetry POST
+    // without awaiting or catching it (lib/src/feedbacknest.dart:44), and
+    // ApiClient.post rethrows every failure. An offline device or a non-2xx
+    // response therefore completes a future nobody listens to, and that error
+    // surfaces in the host application's root zone -- where a Crashlytics
+    // handler records an ordinary network hiccup as a fatal crash on startup.
+    //
+    // An unhandled async error is delivered to the zone its future was created
+    // in, so running init inside a child zone keeps the stray POST contained.
+    // Initialization's own failures still reach the caller: they travel through
+    // the await below rather than through the zone.
+    final completer = Completer<void>();
+    runZonedGuarded(
+      () async {
+        try {
+          await Feedbacknest.init(apiKey, userIdentifier: userIdentifier);
+          if (!completer.isCompleted) completer.complete();
+        } on Object catch (error, stackTrace) {
+          if (!completer.isCompleted) completer.completeError(error, stackTrace);
+        }
+      },
+      (error, stackTrace) {
+        // Reached only by the stray telemetry POST, which lands after init has
+        // already settled the completer. Dropping it is the point of the zone.
+        if (!completer.isCompleted) completer.completeError(error, stackTrace);
+      },
+    );
+    return completer.future;
   }
 
   @override
