@@ -90,13 +90,27 @@ and destroys banner inventory when the host releases the view or loses access.
 
 ## Impression revenue
 
+For portfolio Appodeal + Firebase integrations, use Appodeal's native Firebase
+service adapter for automatic Firebase `ad_impression` delivery. Declare the
+vendor adapter in the host app alongside its native network SDKs, enable
+Firebase Tracking and event `ad_impression` in that Appodeal app's Attribution
+Settings, and use
+`FirebaseAnalyticsSink(sdkManagedAdPlatforms: const {'appodeal'})` from
+`genrevibes_analytics_firebase`. See that package's
+[revenue setup](../../analytics/genrevibes_analytics_firebase/README.md#revenue-forwarded-by-a-native-sdk).
+The option keeps this provider's callback stream available to Mixpanel and
+local diagnostics while excluding duplicate manual copies and predicted-eCPM
+estimates from Firebase revenue. Do not infer native forwarding success from
+the callback fallback described below; verify it in Firebase on a rebuilt app.
+
 Appodeal SDK 4.3 hands its revenue report (`AdRevenueCallbacks`) to the app
 only after its analytics services are ready, and it waits on that with no
 timeout. An app with no analytics services configured in the dashboard starts
 with `InternalError: SdkConfigurationError`, and then no report ever reaches the
 app, although the SDK logs `[Ad Revenue]` and the dashboard shows the earnings.
 
-So the provider does not rely on the report. Each impression waits
+For callback consumers, the provider does not rely solely on the report. Each
+impression waits
 `revenueReportWait` (15 s) for it; without one, the provider reports a `paid`
 event valued at the predicted eCPM of the inventory shown divided by 1,000, in
 USD, with `AdRevenue.precision` set to

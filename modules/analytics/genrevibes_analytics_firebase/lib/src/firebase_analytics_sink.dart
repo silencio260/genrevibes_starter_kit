@@ -18,9 +18,12 @@ final class FirebaseAnalyticsSink implements AnalyticsSink {
   /// Creates a Firebase Analytics sink.
   FirebaseAnalyticsSink({
     FirebaseAnalyticsClient? client,
+    Iterable<String> sdkManagedAdPlatforms = const <String>[],
     KitClock clock = const SystemKitClock(),
     KitLogger logger = const NoopKitLogger(),
   })  : _client = client ?? DefaultFirebaseAnalyticsClient(),
+        _sdkManagedAdPlatforms =
+            Set<String>.unmodifiable(sdkManagedAdPlatforms),
         _clock = clock,
         _logger = logger,
         _health = ModuleHealth(
@@ -31,6 +34,13 @@ final class FirebaseAnalyticsSink implements AnalyticsSink {
         );
 
   final FirebaseAnalyticsClient _client;
+
+  /// Platforms whose native SDK already logs `ad_impression` to Firebase.
+  ///
+  /// Opt in only after configuring that SDK's automatic Firebase forwarding.
+  /// Match the pipeline's `ad_platform` values exactly. This suppresses only
+  /// manual copies at this sink; other sinks and Firebase collection stay on.
+  final Set<String> _sdkManagedAdPlatforms;
   final KitClock _clock;
   final KitLogger _logger;
   final StreamController<ModuleHealth> _healthChanges =
@@ -94,10 +104,24 @@ final class FirebaseAnalyticsSink implements AnalyticsSink {
       );
     }
     return _guard(
-      () => _client.logEvent(
-        event.name.trim(),
-        sanitizeFirebaseParameters(event.properties),
-      ),
+      () async {
+        final name = event.name.trim();
+        final platform = event.properties['ad_platform'];
+        if (name == 'ad_impression' &&
+            _sdkManagedAdPlatforms.contains(platform)) {
+          _logger.log(
+            KitLogLevel.debug,
+            'Skipped manual ad_impression for $platform: '
+            'its native SDK owns Firebase revenue forwarding.',
+            moduleId: moduleId,
+          );
+          return;
+        }
+        await _client.logEvent(
+          name,
+          sanitizeFirebaseParameters(event.properties),
+        );
+      },
     );
   }
 
