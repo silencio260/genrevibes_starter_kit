@@ -17,6 +17,7 @@ class LocalizationPickerPage extends StatefulWidget {
     this.isSaving = false,
     this.bottom,
     this.showBackButton,
+    this.confirmAtBottom = false,
   });
 
   final List<LocalizationPickerItem> items;
@@ -33,6 +34,9 @@ class LocalizationPickerPage extends StatefulWidget {
   final Widget? bottom;
   final bool? showBackButton;
 
+  /// Keep a labelled action below the list for first-run language selection.
+  final bool confirmAtBottom;
+
   /// Controls physical placement independently of each label's reading order.
   /// Null follows the surrounding layout direction.
   final TextDirection? layoutDirection;
@@ -44,6 +48,16 @@ class LocalizationPickerPage extends StatefulWidget {
 class _LocalizationPickerPageState extends State<LocalizationPickerPage> {
   late String? _selected = widget.selected;
   String _query = '';
+
+  void _confirm() {
+    final choice = LocalizationChoice(_selected);
+    final onConfirmed = widget.onConfirmed;
+    if (onConfirmed != null) {
+      onConfirmed(choice);
+    } else {
+      Navigator.of(context).pop(choice);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -75,26 +89,18 @@ class _LocalizationPickerPageState extends State<LocalizationPickerPage> {
               style: theme.textTheme.titleMedium
                   ?.copyWith(fontWeight: FontWeight.w600)),
           actions: [
-            IconButton(
-              tooltip: widget.confirmLabel,
-              onPressed: widget.isSaving
-                  ? null
-                  : () {
-                      final choice = LocalizationChoice(_selected);
-                      final onConfirmed = widget.onConfirmed;
-                      if (onConfirmed != null) {
-                        onConfirmed(choice);
-                      } else {
-                        Navigator.of(context).pop(choice);
-                      }
-                    },
-              icon: widget.isSaving
-                  ? const SizedBox.square(
-                      dimension: 22,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : Icon(Icons.check_rounded, color: colors.primary, size: 28),
-            ),
+            if (!widget.confirmAtBottom)
+              IconButton(
+                tooltip: widget.confirmLabel,
+                onPressed: widget.isSaving ? null : _confirm,
+                icon: widget.isSaving
+                    ? const SizedBox.square(
+                        dimension: 22,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Icon(Icons.check_rounded,
+                        color: colors.primary, size: 28),
+              ),
             const SizedBox(width: 8),
           ],
         ),
@@ -258,6 +264,21 @@ class _LocalizationPickerPageState extends State<LocalizationPickerPage> {
                           ),
                   ),
                   if (widget.bottom case final bottom?) bottom,
+                  if (widget.confirmAtBottom)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 12, 24, 16),
+                      child: FilledButton(
+                        style: FilledButton.styleFrom(
+                            minimumSize: const Size.fromHeight(52)),
+                        onPressed: widget.isSaving ? null : _confirm,
+                        child: widget.isSaving
+                            ? const SizedBox.square(
+                                dimension: 22,
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2))
+                            : Text(widget.confirmLabel),
+                      ),
+                    ),
                 ],
               ),
             ),
