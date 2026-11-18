@@ -127,6 +127,7 @@ final class AppodealAdProvider
   StreamSubscription<AppodealRevenueReport>? _revenueSubscription;
   AppLifecycleListener? _lifecycle;
   Future<KitResult<void>>? _initialization;
+  Future<List<String>>? _sdkStart;
   ModuleHealth _health;
   List<String> _initializationWarnings = const <String>[];
   bool _testMode;
@@ -234,17 +235,70 @@ final class AppodealAdProvider
     _lifecycle ??= AppLifecycleListener(onHide: _onAppHidden);
 
     final testMode = _testMode;
+    // The SDK is started once. A retry after a timeout waits on the same
+    // native start instead of calling Appodeal.initialize a second time.
+    final sdkStart = _sdkStart ??= _client.initialize(
+      appKey: _configuration.appKey.trim(),
+      formats: _configuration.formats,
+      testMode: testMode,
+      verboseLogging: _configuration.verboseLogging,
+      childDirectedTreatment: _configuration.childDirectedTreatment,
+    );
     try {
-      final errors = await _client
-          .initialize(
-            appKey: _configuration.appKey.trim(),
-            formats: _configuration.formats,
-            testMode: testMode,
-            verboseLogging: _configuration.verboseLogging,
-            childDirectedTreatment: _configuration.childDirectedTreatment,
-          )
-          .timeout(_configuration.initializationTimeout);
+      final errors = await sdkStart.timeout(
+        _configuration.initializationTimeout,
+      );
+      return await _completeInitialization(errors, testMode);
+    } on TimeoutException catch (error, stackTrace) {
+      // Appodeal can take far longer than the timeout to start, for example
+      // while its consent server is unreachable and it retries. The native
+      // start keeps going, so finish initialization when it reports back
+      // rather than leaving ads off for the life of the process.
+      final failure = _mapError(error, stackTrace);
+      _setHealth(ModuleState.failed, error: failure);
+      _finishLateStart(sdkStart, testMode);
+      return KitFailure<void>(failure);
+    } on Object catch (error, stackTrace) {
+      _sdkStart = null;
+      final failure = _mapError(error, stackTrace);
+      _setHealth(ModuleState.failed, error: failure);
+      return KitFailure<void>(failure);
+    }
+  }
+
+  void _finishLateStart(Future<List<String>> sdkStart, bool testMode) {
+    unawaited(
+      sdkStart.then<void>(
+        (errors) async {
+          if (_disposed || _initialized) return;
+          final result = await _completeInitialization(errors, testMode);
+          if (result.isSuccess) {
+            _logger.log(
+              KitLogLevel.info,
+              'Appodeal finished initializing after the timeout.',
+              moduleId: moduleId,
+            );
+          }
+        },
+        onError: (Object error, StackTrace stackTrace) {
+          _sdkStart = null;
+          if (_disposed || _initialized) return;
+          _setHealth(
+            ModuleState.failed,
+            error: _mapError(error, stackTrace),
+          );
+        },
+      ),
+    );
+  }
+
+  Future<KitResult<void>> _completeInitialization(
+    List<String> errors,
+    bool testMode,
+  ) async {
+    try {
       if (_disposed) return _notReady<void>();
+      if (_initialized) return const KitSuccess<void>(null);
 
       final critical = errors.where(_isCritical).toList(growable: false);
       final started = critical.isEmpty && await _anyFormatInitialized();
