@@ -1,5 +1,7 @@
 import 'package:genrevibes_core/genrevibes_core.dart';
 
+import 'model/review_flow_report.dart';
+
 /// Contract implemented by store review adapters.
 ///
 /// Presenting a review request is provider work; deciding whether to present one
@@ -22,4 +24,13 @@ abstract interface class StoreReviewProvider implements StarterModule {
 
   /// Opens the public store listing as a fallback.
   Future<KitResult<void>> openStoreListing();
+
+  /// The path for a user who agreed to rate: requests the in-app review
+  /// sheet, waits for it to close, then always opens the store listing.
+  ///
+  /// Platforms quota-limit the sheet and decline silently, and never report
+  /// whether it appeared, so the listing is opened every time to guarantee the
+  /// user a place to rate. Succeeds when either step worked; fails only when
+  /// neither did.
+  Future<KitResult<ReviewFlowReport>> requestReviewThenOpenListing();
 }
