@@ -113,6 +113,51 @@ final class InAppReviewStoreProvider implements StoreReviewProvider {
   }
 
   @override
+  Future<KitResult<ReviewFlowReport>> requestReviewThenOpenListing() async {
+    if (!_initialized || _disposed) return _notReady<ReviewFlowReport>();
+    var sheetRequested = false;
+    Duration? sheetDuration;
+    try {
+      if (await _client.isAvailable()) {
+        final startedAt = _clock.now();
+        // A shown sheet keeps this open until the user closes it, so the
+        // listing below never opens on top of it.
+        await _client.requestReview();
+        sheetDuration = _clock.now().difference(startedAt);
+        sheetRequested = true;
+      }
+    } on Object catch (error, stackTrace) {
+      _logger.log(
+        KitLogLevel.warning,
+        'In-app review request failed. Opening the store listing.',
+        moduleId: moduleId,
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
+
+    final listing = await openStoreListing();
+    final listingOpened = listing.isSuccess;
+    final report = ReviewFlowReport(
+      sheetRequested: sheetRequested,
+      sheetDuration: sheetDuration,
+      listingOpened: listingOpened,
+    );
+    _logger.log(
+      KitLogLevel.info,
+      'Review flow finished: $report',
+      moduleId: moduleId,
+    );
+    if (!sheetRequested && !listingOpened) {
+      return listing.fold(
+        onSuccess: (_) => KitSuccess<ReviewFlowReport>(report),
+        onFailure: (error) => KitFailure<ReviewFlowReport>(error),
+      );
+    }
+    return KitSuccess<ReviewFlowReport>(report);
+  }
+
+  @override
   Future<KitResult<void>> openStoreListing() async {
     if (!_initialized || _disposed) return _notReady<void>();
     final url =

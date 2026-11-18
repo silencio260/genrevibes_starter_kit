@@ -47,6 +47,72 @@ void main() {
       expect(client.openStoreListingCount, 1);
     });
 
+    group('requestReviewThenOpenListing', () {
+      test('shows the sheet, then always opens the listing', () async {
+        final client = _FakeReviewClient();
+        final provider = await _ready(client);
+
+        final result = await provider.requestReviewThenOpenListing();
+
+        final report = result.fold(
+          onSuccess: (report) => report,
+          onFailure: (error) => fail('unexpected failure: $error'),
+        );
+        expect(report.sheetRequested, isTrue);
+        expect(report.sheetDuration, isNotNull);
+        expect(report.listingOpened, isTrue);
+        expect(client.requestReviewCount, 1);
+        expect(client.openStoreListingCount, 1);
+      });
+
+      test('opens the listing once when the sheet is unavailable', () async {
+        final client = _FakeReviewClient()..available = false;
+        final provider = await _ready(client);
+
+        final result = await provider.requestReviewThenOpenListing();
+
+        expect(result.isSuccess, isTrue);
+        expect(client.requestReviewCount, 0);
+        expect(client.openStoreListingCount, 1);
+      });
+
+      test('opens the listing once when the sheet throws', () async {
+        final client = _FakeReviewClient()..requestError = StateError('no ui');
+        final provider = await _ready(client);
+
+        final result = await provider.requestReviewThenOpenListing();
+
+        expect(result.isSuccess, isTrue);
+        expect(client.openStoreListingCount, 1);
+      });
+
+      test('succeeds when the sheet worked but the listing failed', () async {
+        final client = _FakeReviewClient()
+          ..listingError = StateError('no store');
+        final provider = await _ready(client);
+
+        final result = await provider.requestReviewThenOpenListing();
+
+        final report = result.fold(
+          onSuccess: (report) => report,
+          onFailure: (error) => fail('unexpected failure: $error'),
+        );
+        expect(report.sheetRequested, isTrue);
+        expect(report.listingOpened, isFalse);
+      });
+
+      test('fails only when neither step worked', () async {
+        final client = _FakeReviewClient()
+          ..requestError = StateError('no ui')
+          ..listingError = StateError('no store');
+        final provider = await _ready(client);
+
+        final result = await provider.requestReviewThenOpenListing();
+
+        expect(result.isFailure, isTrue);
+      });
+    });
+
     test('prefers the configured Android URL on Android', () async {
       final client = _FakeReviewClient();
       final provider = await _ready(

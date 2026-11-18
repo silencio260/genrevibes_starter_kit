@@ -61,6 +61,12 @@ void runStoreReviewProviderContractTests({
       expect((await provider.openStoreListing()).isSuccess, isTrue);
     });
 
+    test('sends a user who agreed to rate to the store', () async {
+      await provider.initialize();
+
+      expect((await provider.requestReviewThenOpenListing()).isSuccess, isTrue);
+    });
+
     test('disposal is idempotent and reports disposed health', () async {
       await provider.initialize();
 

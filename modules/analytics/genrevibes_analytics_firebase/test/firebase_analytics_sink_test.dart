@@ -42,6 +42,7 @@ void main() {
       'name': 'starter kit',
       'count': 2,
       'enabled': true,
+      'disabled': false,
       'at': DateTime.utc(2026, 9, 5),
       'ignored': null,
     });
@@ -49,7 +50,8 @@ void main() {
     expect(result, <String, Object>{
       'name': 'starter kit',
       'count': 2,
-      'enabled': 1,
+      'enabled': 'true',
+      'disabled': 'false',
       'at': '2026-09-05T00:00:00.000Z',
     });
   });
