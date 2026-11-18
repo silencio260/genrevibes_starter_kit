@@ -250,7 +250,9 @@ Map<String, Object>? sanitizeFirebaseParameters(
 Object _firebaseValue(Object value) {
   return switch (value) {
     String() || int() || double() => value,
-    bool() => value ? 1 : 0,
+    // GA4 custom dimensions show integer values as "(not set)", so a bool sent
+    // as 1/0 can never be broken down in a report. Send it as text instead.
+    bool() => value ? 'true' : 'false',
     DateTime() => value.toUtc().toIso8601String(),
     _ => jsonEncode(value),
   };
