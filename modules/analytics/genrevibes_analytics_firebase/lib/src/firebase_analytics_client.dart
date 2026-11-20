@@ -15,6 +15,11 @@ abstract interface class FirebaseAnalyticsClient {
   /// in Firebase's own preferences.
   Future<void> enableCollection();
 
+  /// Turns analytics collection off on one of Google's automated test phones
+  /// (see `GoogleTestDevice`). The sink calls it for nothing else: those
+  /// phones are robots, not users, and must not reach the reports.
+  Future<void> disableCollectionOnTestDevice();
+
   /// Logs an event with Firebase-compatible parameters.
   Future<void> logEvent(String name, Map<String, Object>? parameters);
 
@@ -50,6 +55,11 @@ final class DefaultFirebaseAnalyticsClient implements FirebaseAnalyticsClient {
   @override
   Future<void> enableCollection() {
     return _analytics.setAnalyticsCollectionEnabled(true);
+  }
+
+  @override
+  Future<void> disableCollectionOnTestDevice() {
+    return _analytics.setAnalyticsCollectionEnabled(false);
   }
 
   @override

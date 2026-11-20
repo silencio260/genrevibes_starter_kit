@@ -5,6 +5,7 @@ import 'package:genrevibes_analytics/genrevibes_analytics.dart';
 import 'package:genrevibes_core/genrevibes_core.dart';
 
 import 'firebase_analytics_client.dart';
+import 'google_test_device.dart';
 
 /// Firebase implementation of the GenRevibes analytics sink contract.
 ///
@@ -14,6 +15,12 @@ import 'firebase_analytics_client.dart';
 /// configuration ceiling, and no code path can pass `false` to Firebase. An
 /// app that wants to hold back a provider's traffic uses a paid provider's
 /// remote kill switch (`SwitchableAnalyticsSink`) instead.
+///
+/// The one exception is Google's automated test phones (Firebase Test Lab,
+/// which runs Play's pre-launch and review checks). On those the sink turns
+/// Firebase collection off and sends nothing, so robots never reach the
+/// reports. Their `first_open` may still arrive: Firebase logs it natively
+/// before any Dart code runs.
 final class FirebaseAnalyticsSink implements AnalyticsSink {
   /// Creates a Firebase Analytics sink.
   FirebaseAnalyticsSink({
@@ -21,7 +28,9 @@ final class FirebaseAnalyticsSink implements AnalyticsSink {
     Iterable<String> sdkManagedAdPlatforms = const <String>[],
     KitClock clock = const SystemKitClock(),
     KitLogger logger = const NoopKitLogger(),
+    Future<bool> Function() isGoogleTestDevice = GoogleTestDevice.check,
   })  : _client = client ?? DefaultFirebaseAnalyticsClient(),
+        _isGoogleTestDevice = isGoogleTestDevice,
         _sdkManagedAdPlatforms =
             Set<String>.unmodifiable(sdkManagedAdPlatforms),
         _clock = clock,
@@ -41,6 +50,12 @@ final class FirebaseAnalyticsSink implements AnalyticsSink {
   /// Match the pipeline's `ad_platform` values exactly. This suppresses only
   /// manual copies at this sink; other sinks and Firebase collection stay on.
   final Set<String> _sdkManagedAdPlatforms;
+  final Future<bool> Function() _isGoogleTestDevice;
+  bool _testDevice = false;
+
+  /// Whether [initialize] found one of Google's automated test phones, on
+  /// which this sink sends nothing.
+  bool get onGoogleTestDevice => _testDevice;
   final KitClock _clock;
   final KitLogger _logger;
   final StreamController<ModuleHealth> _healthChanges =
@@ -72,8 +87,21 @@ final class FirebaseAnalyticsSink implements AnalyticsSink {
         updateHealth: true,
       );
     }
+    try {
+      _testDevice = await _isGoogleTestDevice();
+    } on Object {
+      _testDevice = false;
+    }
     _initialized = true;
     _setHealth(ModuleState.ready);
+    if (_testDevice) {
+      _logger.log(
+        KitLogLevel.info,
+        "Google test device (Firebase Test Lab): Firebase Analytics is off.",
+        moduleId: moduleId,
+      );
+      return _guard(_client.disableCollectionOnTestDevice);
+    }
 
     // Firebase persists this flag in its own preferences and honours it on
     // every later launch, so a sink that never states its position inherits
@@ -90,6 +118,7 @@ final class FirebaseAnalyticsSink implements AnalyticsSink {
   /// enabled rather than by honouring `false`.
   @override
   Future<KitResult<void>> setCollectionEnabled(bool enabled) {
+    if (_testDevice) return _guard(_client.disableCollectionOnTestDevice);
     return _guard(_client.enableCollection);
   }
 
@@ -105,6 +134,7 @@ final class FirebaseAnalyticsSink implements AnalyticsSink {
     }
     return _guard(
       () async {
+        if (_testDevice) return;
         final name = event.name.trim();
         final platform = event.properties['ad_platform'];
         if (name == 'ad_impression' &&
@@ -133,6 +163,7 @@ final class FirebaseAnalyticsSink implements AnalyticsSink {
         'Analytics user IDs must not be empty.',
       );
     }
+    if (_testDevice) return _guard(() async {});
     final identified = await _guard(() => _client.setUserId(user.id.trim()));
     if (identified.isFailure) return identified;
     return setUserProperties(user.properties);
@@ -143,6 +174,7 @@ final class FirebaseAnalyticsSink implements AnalyticsSink {
     Map<String, Object?> properties,
   ) {
     return _guard(() async {
+      if (_testDevice) return;
       for (final entry in properties.entries) {
         await _client.setUserProperty(
           entry.key,
