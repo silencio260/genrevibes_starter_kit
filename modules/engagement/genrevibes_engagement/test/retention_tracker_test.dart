@@ -125,10 +125,50 @@ void main() {
           await _ready(MemoryKeyValueStore(), clock, observer: observer);
       await tracker.recordAppOpen();
 
-      clock.value = DateTime(2026, 1, 3);
+      clock.value = DateTime(2026, 1, 9);
       await tracker.recordAppOpen();
 
       expect(observer.milestones, isEmpty);
+    });
+
+    test('a resume on a later day reports that day without a new open',
+        () async {
+      final store = MemoryKeyValueStore();
+      final observer = _RecordingObserver();
+      final clock = _FixedClock(DateTime(2026, 1, 1, 9));
+      final tracker = await _ready(store, clock, observer: observer);
+      await tracker.recordAppOpen();
+
+      for (var day = 2; day <= 8; day++) {
+        clock.value = DateTime(2026, 1, day, 9);
+        await tracker.recordSession();
+        clock.value = DateTime(2026, 1, day, 21);
+        await tracker.recordSession();
+      }
+
+      expect(observer.milestones, <RetentionMilestone>[
+        RetentionMilestone.day1,
+        RetentionMilestone.day2,
+        RetentionMilestone.day3,
+        RetentionMilestone.day4,
+        RetentionMilestone.day5,
+        RetentionMilestone.day6,
+        RetentionMilestone.day7,
+      ]);
+      expect(tracker.snapshot.activeDays, 8);
+      expect(store.values[EngagementKeys.totalOpens], 1);
+    });
+
+    test('a session before any open reports nothing', () async {
+      final observer = _RecordingObserver();
+      final tracker = await _ready(
+          MemoryKeyValueStore(), _FixedClock(DateTime(2026, 1, 2)),
+          observer: observer);
+
+      await tracker.recordSession();
+
+      expect(observer.milestones, isEmpty);
+      expect(tracker.snapshot.activeDays, 0);
     });
   });
 
