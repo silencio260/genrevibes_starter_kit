@@ -12,9 +12,17 @@ dependencies:
     sdk: flutter
   genrevibes_ads: ^0.1.0-dev.5
   genrevibes_core: ^0.1.0-dev.1
-  stack_appodeal_flutter: ">=4.2.0 <5.0.0"
+  stack_appodeal_flutter: ">=4.3.1 <5.0.0"
 
 dev_dependencies:
   flutter_lints: ^4.0.0
   flutter_test:
     sdk: flutter
+
+# Android: the plugin's Gradle module adds Appodeal's Firebase revenue adapter.
+flutter:
+  plugin:
+    platforms:
+      android:
+        package: com.genrevibes.ads_appodeal
+        pluginClass: GenRevibesAppodealPlugin

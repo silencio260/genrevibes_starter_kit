@@ -17,12 +17,17 @@ void main() {
   late _FakeAppodealClient client;
   late List<AdEvent> paid;
 
-  Future<AppodealAdProvider> start({bool testMode = false}) async {
+  Future<AppodealAdProvider> start({
+    bool testMode = false,
+    bool estimate = true,
+  }) async {
     final provider = AppodealAdProvider(
       configuration: GenRevibesAppodealConfiguration(
         appKey: 'key',
         placements: const [AppodealPlacement(placement: _interstitial)],
         revenueReportWait: _wait,
+        // ignore: deprecated_member_use
+        estimateMissingRevenue: estimate,
       ),
       client: client,
       testMode: testMode,
@@ -108,6 +113,30 @@ void main() {
     await provider.dispose();
   });
 
+  test('by default no revenue is made up when no report arrives', () async {
+    final provider = await start(estimate: false);
+    await showOnce(provider);
+    await pastTheWait();
+    hideApp();
+    await Future<void>.delayed(Duration.zero);
+
+    expect(paid, isEmpty);
+    expect(client.ecpmReads, 0, reason: 'predicted eCPM is not even read');
+    await provider.dispose();
+  });
+
+  test('by default a late report is counted as reported', () async {
+    final provider = await start(estimate: false);
+    await showOnce(provider);
+    await pastTheWait();
+    client.reportRevenue(report(0.0031));
+    await Future<void>.delayed(Duration.zero);
+
+    expect(paid, hasLength(1));
+    expect(paid.single.revenue!.precision, 'exact');
+    await provider.dispose();
+  });
+
   test('estimates revenue from predicted eCPM when no report arrives',
       () async {
     final provider = await start();
@@ -153,8 +182,7 @@ void main() {
     await provider.dispose();
   });
 
-  test('a report with no impression waiting or estimated is counted',
-      () async {
+  test('a report with no impression waiting or estimated is counted', () async {
     final provider = await start();
     client.reportRevenue(report(0.0031));
 

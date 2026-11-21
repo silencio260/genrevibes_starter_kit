@@ -25,7 +25,7 @@ final class FirebaseAnalyticsSink implements AnalyticsSink {
   /// Creates a Firebase Analytics sink.
   FirebaseAnalyticsSink({
     FirebaseAnalyticsClient? client,
-    Iterable<String> sdkManagedAdPlatforms = const <String>[],
+    Iterable<String> sdkManagedAdPlatforms = defaultSdkManagedAdPlatforms,
     KitClock clock = const SystemKitClock(),
     KitLogger logger = const NoopKitLogger(),
     Future<bool> Function() isGoogleTestDevice = GoogleTestDevice.check,
@@ -42,13 +42,22 @@ final class FirebaseAnalyticsSink implements AnalyticsSink {
           observedAt: clock.now(),
         );
 
+  /// Ad platforms whose own SDK sends revenue to Firebase in every portfolio
+  /// app that uses them.
+  static const Set<String> defaultSdkManagedAdPlatforms = {'appodeal'};
+
   final FirebaseAnalyticsClient _client;
 
-  /// Platforms whose native SDK already logs `ad_impression` to Firebase.
+  /// Platforms whose native SDK already logs `ad_impression` to Firebase, so
+  /// the app's own copy is skipped at this sink.
   ///
-  /// Opt in only after configuring that SDK's automatic Firebase forwarding.
-  /// Match the pipeline's `ad_platform` values exactly. This suppresses only
-  /// manual copies at this sink; other sinks and Firebase collection stay on.
+  /// Defaults to [defaultSdkManagedAdPlatforms] (`appodeal`):
+  /// `genrevibes_ads_appodeal` ships Appodeal's Firebase adapter, and the
+  /// app's copy of Appodeal revenue is **deprecated for Firebase: redundant
+  /// and less accurate** than the adapter's. Match the pipeline's
+  /// `ad_platform` values exactly. Only this sink skips; Mixpanel and other
+  /// sinks still get every ad event. Add `admob` only if the AdMob app is
+  /// linked to Firebase (Google's SDK then logs its own `ad_impression`).
   final Set<String> _sdkManagedAdPlatforms;
   final Future<bool> Function() _isGoogleTestDevice;
   bool _testDevice = false;
