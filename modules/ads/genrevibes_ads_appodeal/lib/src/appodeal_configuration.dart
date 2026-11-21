@@ -31,6 +31,11 @@ final class GenRevibesAppodealConfiguration {
     this.fullScreenShowTimeout = const Duration(minutes: 2),
     this.revenueReportWait = const Duration(seconds: 15),
     this.estimatedRevenueDedupeWindow = const Duration(minutes: 2),
+    @Deprecated(
+      'Predicted-eCPM revenue is inaccurate and redundant: the Firebase '
+      'adapter this package ships reports real revenue.',
+    )
+    this.estimateMissingRevenue = false,
     this.verboseLogging = false,
     this.childDirectedTreatment = false,
   }) : placements = _index(placements);
@@ -52,15 +57,29 @@ final class GenRevibesAppodealConfiguration {
   /// Maximum wait for a full-screen dismissal or failure callback.
   final Duration fullScreenShowTimeout;
 
-  /// How long after an impression the provider waits for Appodeal's revenue
-  /// report before reporting revenue estimated from the predicted eCPM.
+  /// **Deprecated, off by default.** Reports revenue estimated from the
+  /// predicted eCPM when Appodeal sends no revenue report for an impression.
+  ///
+  /// The estimate is a guess about the inventory, not what the impression
+  /// earned (it inflated GA4 revenue about 50x in one app). Appodeal holds its
+  /// report until an analytics service is ready; the Firebase adapter this
+  /// package now ships is one, so real reports arrive. Impressions without a
+  /// report are left without revenue rather than given a made-up value.
+  @Deprecated(
+    'Predicted-eCPM revenue is inaccurate and redundant: the Firebase '
+    'adapter this package ships reports real revenue.',
+  )
+  final bool estimateMissingRevenue;
+
+  /// With [estimateMissingRevenue] on: how long after an impression the
+  /// provider waits for Appodeal's revenue report before estimating it.
   ///
   /// The SDK holds its report until its analytics services are ready, then
   /// forwards it to them for up to 10 s before telling the app, so a report
   /// can arrive this late or never.
   final Duration revenueReportWait;
 
-  /// How long after an estimate a late Appodeal report for the same format is
+  /// With [estimateMissingRevenue] on: how long after an estimate a late Appodeal report for the same format is
   /// taken to be that impression's, and dropped rather than counted twice.
   final Duration estimatedRevenueDedupeWindow;
 

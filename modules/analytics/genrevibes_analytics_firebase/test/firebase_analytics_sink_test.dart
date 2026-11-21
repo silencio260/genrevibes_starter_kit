@@ -72,6 +72,30 @@ void main() {
     expect(client.collectionCalls, <bool>[true]);
   });
 
+  test("skips Appodeal's ad_impression by default, keeps AdMob's", () async {
+    final client = _FakeFirebaseAnalyticsClient();
+    final sink = FirebaseAnalyticsSink(
+      client: client,
+      isGoogleTestDevice: () async => false,
+    );
+    await sink.initialize();
+
+    await sink.track(const AnalyticsEvent(
+      name: 'ad_impression',
+      properties: {'ad_platform': 'appodeal', 'value': 0.01},
+    ));
+    await sink.track(const AnalyticsEvent(
+      name: 'ad_impression',
+      properties: {'ad_platform': 'admob', 'value': 0.02},
+    ));
+    await sink.track(const AnalyticsEvent(
+      name: 'custom_ad_click',
+      properties: {'ad_platform': 'appodeal'},
+    ));
+
+    expect(client.events, ['ad_impression', 'custom_ad_click']);
+  });
+
   test('normalizes Firebase event parameter values', () {
     final result = sanitizeFirebaseParameters(<String, Object?>{
       'name': 'starter kit',
