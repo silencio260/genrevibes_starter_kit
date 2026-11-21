@@ -126,6 +126,18 @@ Event Name** to `ad_impression` in Attribution Settings. **Firebase Config Keys*
 are optional Remote Config parameter names, not credentials, and can stay empty.
 No per-impression Firebase logging call is required for that native route.
 
+**The skip is checked, not assumed.** At `initialize` the sink asks this
+package's Android plugin whether each platform's adapter class is in the app
+(`NativeRevenueAdapters`; for Appodeal,
+`com.appodeal.ads.services.firebase.FirebaseService`, whose name Appodeal's
+own keep rules preserve in release builds). A platform is skipped only when
+its adapter is found. If it is missing, or the check can't tell (iOS, where
+the kit ships no Appodeal adapter, or a failed call), the sink logs a warning
+and keeps sending the app's copy, so revenue is never dropped with nothing
+sending it instead. Platforms the kit can't check
+(`NativeRevenueAdapters.checkable` lists the ones it can) are trusted as
+configured. `sink.skippedAdPlatforms` shows the result.
+
 The dashboard setting is the one per-app step: without it the adapter sends
 nothing and Appodeal revenue is missing from Firebase. A
 successful pipeline dispatch of a filtered event means it was intentionally
