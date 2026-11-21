@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- **Breaking:** `sdkManagedAdPlatforms` defaults to `{'appodeal'}`
+  (`defaultSdkManagedAdPlatforms`). `genrevibes_ads_appodeal` now ships
+  Appodeal's Firebase adapter, and the app's own Firebase copy of Appodeal
+  revenue is deprecated as redundant and less accurate. Other sinks still get
+  it. Pass `const {}` to restore manual delivery.
+
 - Add `LaunchJourney` (moved from Lunaris): measures the path from a cold
   start to the app's home screen. Every event routed through it gets
   `launch_number`; on launches 1 and 2 the pre-home events are also sent as
