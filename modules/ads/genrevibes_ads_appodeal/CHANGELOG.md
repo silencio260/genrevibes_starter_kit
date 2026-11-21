@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+- **Ships Appodeal's Firebase service adapter.** The package is now an Android
+  plugin whose Gradle module declares
+  `com.appodeal.ads.sdk.adapters:firebase:23.2.0.0`. Apps remove their own
+  line. Requires `stack_appodeal_flutter` `>=4.3.1`.
+- **Breaking:** revenue estimated from predicted eCPM is off by default and
+  deprecated as inaccurate and redundant. Impressions without an Appodeal
+  report get no revenue. `estimateMissingRevenue: true` (deprecated) restores
+  it for diagnostics.
+
 ## 0.1.0-dev.4
 
 - `AppodealAdProvider` implements `AdUserIdProvider`: `setUserId` passes the id

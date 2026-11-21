@@ -24,7 +24,13 @@ import 'appodeal_configuration.dart';
 /// new mode. A phone recognised as a developer device mid-session sees no ads
 /// rather than a live one.
 ///
-/// ## Revenue estimated from predicted eCPM
+/// ## Revenue estimated from predicted eCPM (deprecated, off by default)
+///
+/// Revenue is what Appodeal's report says, with its precision. The estimate
+/// below runs only with the deprecated
+/// [GenRevibesAppodealConfiguration.estimateMissingRevenue] on: it is
+/// inaccurate, and redundant now that this package ships Appodeal's Firebase
+/// adapter.
 ///
 /// Appodeal holds its impression-level revenue report until its analytics
 /// services are ready, and an app with none configured may never get one. So
@@ -91,6 +97,9 @@ final class AppodealAdProvider
   static const String estimatedRevenuePrecision = 'predicted_ecpm';
 
   final GenRevibesAppodealConfiguration _configuration;
+
+  // ignore: deprecated_member_use_from_same_package
+  bool get _estimates => _configuration.estimateMissingRevenue;
   final AppodealClient _client;
   final bool Function()? _canRequestAds;
   final KitClock _clock;
@@ -443,7 +452,7 @@ final class AppodealAdProvider
     _showing[format] = placement;
     _rewards.remove(format);
     _ready[format] = false;
-    _ecpmAtShow[format] = _predictedEcpm(format);
+    if (_estimates) _ecpmAtShow[format] = _predictedEcpm(format);
     try {
       if (!await _client.show(format, name)) {
         return const AdShowResult(status: AdShowStatus.notReady);
@@ -689,7 +698,7 @@ final class AppodealAdProvider
   /// shown. Registered synchronously, so a report that arrives while the eCPM
   /// is still being read already finds it.
   void _awaitRevenue(AdFormat format) {
-    if (format == AdFormat.native) return;
+    if (!_estimates || format == AdFormat.native) return;
     final placement = _showing[format] ??
         _configuration.placementReportedAs(format)?.placement;
     if (placement == null) return;
