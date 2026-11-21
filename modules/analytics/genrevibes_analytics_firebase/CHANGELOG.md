@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- The Appodeal skip is checked: at `initialize` the sink skips a platform's
+  `ad_impression` only when the plugin finds its native Firebase adapter in
+  the app (`NativeRevenueAdapters`, Android). Missing, or unknown (iOS, a
+  failed check), it warns and keeps sending the app's copy. New
+  `sink.skippedAdPlatforms` and injectable `nativeRevenueAdapters:` for tests.
+
 - **Breaking:** `sdkManagedAdPlatforms` defaults to `{'appodeal'}`
   (`defaultSdkManagedAdPlatforms`). `genrevibes_ads_appodeal` now ships
   Appodeal's Firebase adapter, and the app's own Firebase copy of Appodeal

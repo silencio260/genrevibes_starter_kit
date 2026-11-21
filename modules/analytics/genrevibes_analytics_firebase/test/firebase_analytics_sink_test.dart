@@ -9,6 +9,7 @@ void main() {
     createSink: () async => FirebaseAnalyticsSink(
       client: _FakeFirebaseAnalyticsClient(),
       isGoogleTestDevice: () async => false,
+      nativeRevenueAdapters: () async => const {'appodeal': true},
     ),
   );
 
@@ -77,6 +78,7 @@ void main() {
     final sink = FirebaseAnalyticsSink(
       client: client,
       isGoogleTestDevice: () async => false,
+      nativeRevenueAdapters: () async => const {'appodeal': true},
     );
     await sink.initialize();
 
@@ -94,6 +96,65 @@ void main() {
     ));
 
     expect(client.events, ['ad_impression', 'custom_ad_click']);
+  });
+
+  Future<List<String>> impressionsSent(
+    Future<Map<String, bool>> Function() adapters, {
+    Set<String>? managed,
+  }) async {
+    final client = _FakeFirebaseAnalyticsClient();
+    final sink = managed == null
+        ? FirebaseAnalyticsSink(
+            client: client,
+            isGoogleTestDevice: () async => false,
+            nativeRevenueAdapters: adapters,
+          )
+        : FirebaseAnalyticsSink(
+            client: client,
+            sdkManagedAdPlatforms: managed,
+            isGoogleTestDevice: () async => false,
+            nativeRevenueAdapters: adapters,
+          );
+    await sink.initialize();
+    for (final platform in ['appodeal', 'admob']) {
+      await sink.track(AnalyticsEvent(
+        name: 'ad_impression',
+        properties: {'ad_platform': platform},
+      ));
+    }
+    return [
+      for (final (i, name) in client.events.indexed)
+        '$name:${client.platforms[i]}',
+    ];
+  }
+
+  test("keeps Appodeal's copy when its adapter is missing", () async {
+    expect(
+      await impressionsSent(() async => const {'appodeal': false}),
+      ['ad_impression:appodeal', 'ad_impression:admob'],
+    );
+  });
+
+  test("keeps Appodeal's copy when the check can't tell (iOS, failure)",
+      () async {
+    expect(
+      await impressionsSent(() async => const {}),
+      ['ad_impression:appodeal', 'ad_impression:admob'],
+    );
+    expect(
+      await impressionsSent(() async => throw StateError('no channel')),
+      ['ad_impression:appodeal', 'ad_impression:admob'],
+    );
+  });
+
+  test('trusts a configured platform the kit cannot check', () async {
+    expect(
+      await impressionsSent(
+        () async => const {'appodeal': true},
+        managed: const {'appodeal', 'admob'},
+      ),
+      isEmpty,
+    );
   });
 
   test('normalizes Firebase event parameter values', () {
@@ -123,7 +184,10 @@ final class _FakeFirebaseAnalyticsClient implements FirebaseAnalyticsClient {
   @override
   Future<void> logEvent(String name, Map<String, Object>? parameters) async {
     events.add(name);
+    platforms.add(parameters?['ad_platform']);
   }
+
+  final List<Object?> platforms = <Object?>[];
 
   final List<String> events = <String>[];
   final List<String?> userIds = <String?>[];

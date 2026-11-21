@@ -6,6 +6,7 @@ import 'package:genrevibes_core/genrevibes_core.dart';
 
 import 'firebase_analytics_client.dart';
 import 'google_test_device.dart';
+import 'native_revenue_adapters.dart';
 
 /// Firebase implementation of the GenRevibes analytics sink contract.
 ///
@@ -29,7 +30,10 @@ final class FirebaseAnalyticsSink implements AnalyticsSink {
     KitClock clock = const SystemKitClock(),
     KitLogger logger = const NoopKitLogger(),
     Future<bool> Function() isGoogleTestDevice = GoogleTestDevice.check,
+    Future<Map<String, bool>> Function() nativeRevenueAdapters =
+        NativeRevenueAdapters.check,
   })  : _client = client ?? DefaultFirebaseAnalyticsClient(),
+        _nativeRevenueAdapters = nativeRevenueAdapters,
         _isGoogleTestDevice = isGoogleTestDevice,
         _sdkManagedAdPlatforms =
             Set<String>.unmodifiable(sdkManagedAdPlatforms),
@@ -59,6 +63,15 @@ final class FirebaseAnalyticsSink implements AnalyticsSink {
   /// sinks still get every ad event. Add `admob` only if the AdMob app is
   /// linked to Firebase (Google's SDK then logs its own `ad_impression`).
   final Set<String> _sdkManagedAdPlatforms;
+  final Future<Map<String, bool>> Function() _nativeRevenueAdapters;
+  Set<String> _skipped = const <String>{};
+
+  /// The platforms whose `ad_impression` this sink actually skips, decided at
+  /// [initialize]: a configured platform the kit can check
+  /// ([NativeRevenueAdapters.checkable]) is skipped only when its native
+  /// adapter is in the app. Otherwise the app's copy is kept, so revenue is
+  /// never dropped with nothing sending it instead.
+  Set<String> get skippedAdPlatforms => _skipped;
   final Future<bool> Function() _isGoogleTestDevice;
   bool _testDevice = false;
 
@@ -101,6 +114,7 @@ final class FirebaseAnalyticsSink implements AnalyticsSink {
     } on Object {
       _testDevice = false;
     }
+    _skipped = await _resolveSkipped();
     _initialized = true;
     _setHealth(ModuleState.ready);
     if (_testDevice) {
@@ -125,6 +139,32 @@ final class FirebaseAnalyticsSink implements AnalyticsSink {
   /// host changes consent. Firebase collection is not a per-user choice in
   /// this portfolio, so the request is answered by asserting collection is
   /// enabled rather than by honouring `false`.
+  Future<Set<String>> _resolveSkipped() async {
+    if (_sdkManagedAdPlatforms.isEmpty) return const <String>{};
+    Map<String, bool> found;
+    try {
+      found = await _nativeRevenueAdapters();
+    } on Object {
+      found = const <String, bool>{};
+    }
+    final skipped = <String>{};
+    for (final platform in _sdkManagedAdPlatforms) {
+      final checkable = NativeRevenueAdapters.checkable.contains(platform);
+      if (!checkable || found[platform] == true) {
+        skipped.add(platform);
+        continue;
+      }
+      _logger.log(
+        KitLogLevel.warning,
+        "$platform's Firebase revenue adapter is not in this app, so its "
+        'ad_impression is sent by the app instead of skipped. Without the '
+        'adapter nothing else would send it to Firebase.',
+        moduleId: moduleId,
+      );
+    }
+    return Set<String>.unmodifiable(skipped);
+  }
+
   @override
   Future<KitResult<void>> setCollectionEnabled(bool enabled) {
     if (_testDevice) return _guard(_client.disableCollectionOnTestDevice);
@@ -146,8 +186,7 @@ final class FirebaseAnalyticsSink implements AnalyticsSink {
         if (_testDevice) return;
         final name = event.name.trim();
         final platform = event.properties['ad_platform'];
-        if (name == 'ad_impression' &&
-            _sdkManagedAdPlatforms.contains(platform)) {
+        if (name == 'ad_impression' && _skipped.contains(platform)) {
           _logger.log(
             KitLogLevel.debug,
             'Skipped manual ad_impression for $platform: '
