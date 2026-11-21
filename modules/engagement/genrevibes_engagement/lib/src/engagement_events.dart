@@ -12,8 +12,20 @@ abstract final class EngagementEvents {
   /// Returned on the given day after install.
   static const day1Returned = 'retention_day_1_returned';
 
+  /// Returned two days after install.
+  static const day2Returned = 'retention_day_2_returned';
+
   /// Returned three days after install.
   static const day3Returned = 'retention_day_3_returned';
+
+  /// Returned four days after install.
+  static const day4Returned = 'retention_day_4_returned';
+
+  /// Returned five days after install.
+  static const day5Returned = 'retention_day_5_returned';
+
+  /// Returned six days after install.
+  static const day6Returned = 'retention_day_6_returned';
 
   /// Returned a week after install.
   static const day7Returned = 'retention_day_7_returned';

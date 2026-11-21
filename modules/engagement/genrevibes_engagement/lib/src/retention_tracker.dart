@@ -141,15 +141,29 @@ final class RetentionTracker implements StarterModule {
   }
 
   /// Records a session start, typically on app resume.
+  ///
+  /// The first session of a calendar day also marks the day active and
+  /// reports its milestone, so an app whose process stays alive across days
+  /// (a launcher, a music player) still reports day 1, day 3, and so on.
+  /// It is not counted as an app open.
   Future<KitResult<EngagementSnapshot>> recordSession() async {
     if (!_initialized || _disposed) return _notReady<EngagementSnapshot>();
+    final now = _clock.now();
+    final today = DateTime(now.year, now.month, now.day);
+    var firstToday = false;
     try {
-      await _appendSession(_clock.now());
+      await _appendSession(now);
+      if (_installedAt != null && !_activeDates.contains(today)) {
+        firstToday = true;
+        _activeDates = <DateTime>[..._activeDates, today];
+        await _writeDates(EngagementKeys.dailyOpenDates, _activeDates);
+      }
     } on _StorageFailure catch (failure) {
       return _degradeWith<EngagementSnapshot>(failure.error);
     }
     final current = snapshot;
     _observer.onSessionStarted(current);
+    if (firstToday) await _reportMilestone(current);
     return KitSuccess<EngagementSnapshot>(current);
   }
 

@@ -32,7 +32,11 @@ final class AnalyticsEngagementObserver implements EngagementObserver {
   void onMilestone(RetentionMilestone milestone, EngagementSnapshot snapshot) {
     final name = switch (milestone) {
       RetentionMilestone.day1 => EngagementEvents.day1Returned,
+      RetentionMilestone.day2 => EngagementEvents.day2Returned,
       RetentionMilestone.day3 => EngagementEvents.day3Returned,
+      RetentionMilestone.day4 => EngagementEvents.day4Returned,
+      RetentionMilestone.day5 => EngagementEvents.day5Returned,
+      RetentionMilestone.day6 => EngagementEvents.day6Returned,
       RetentionMilestone.day7 => EngagementEvents.day7Returned,
       RetentionMilestone.day30 => EngagementEvents.day30Returned,
     };
