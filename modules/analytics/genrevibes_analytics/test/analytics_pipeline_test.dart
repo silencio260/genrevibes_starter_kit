@@ -40,6 +40,23 @@ void main() {
     await pipeline.dispose();
   });
 
+  test('a durable retry targets only sinks that have not accepted the event',
+      () async {
+    final firebase = _FakeAnalyticsSink('firebase');
+    final mixpanel = _FakeAnalyticsSink('mixpanel');
+    final pipeline = AnalyticsPipeline(sinks: [firebase, mixpanel]);
+    await pipeline.initialize();
+    final report = _value(await pipeline.track(
+      const AnalyticsEvent(name: 'download_completed'),
+      sinkIds: {'mixpanel'},
+    ));
+    expect(firebase.events, isEmpty);
+    expect(mixpanel.events.single.name, 'download_completed');
+    expect(report.attemptedSinks, {'mixpanel'});
+    expect(report.successfulSinks, {'mixpanel'});
+    await pipeline.dispose();
+  });
+
   test('initialization turns provider collection back on', () async {
     // Regression: a provider that persists its collection flag across launches
     // — Firebase writes `measurement_enabled_from_api` to its own preferences —
