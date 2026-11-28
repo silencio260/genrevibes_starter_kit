@@ -81,13 +81,16 @@ final class AnalyticsPipeline implements StarterModule {
     return _initializeSinks();
   }
 
-  /// Sends [event] to every configured sink concurrently.
+  /// Sends [event] to active sinks, optionally restricted to [sinkIds].
+  /// Durable outboxes can retry only sinks that have not accepted an event.
   ///
   /// The event name is passed through [AnalyticsEventNames] first, so a
   /// remote or per-app rename applies to every sink and every kit emitter.
-  Future<KitResult<AnalyticsDeliveryReport>> track(AnalyticsEvent event) {
+  Future<KitResult<AnalyticsDeliveryReport>> track(AnalyticsEvent event,
+      {Set<String>? sinkIds}) {
     final outgoing = _resolveName(event);
-    return _dispatch(outgoing.name, (sink) => sink.track(outgoing))
+    return _dispatch(outgoing.name, (sink) => sink.track(outgoing),
+            onlySinkIds: sinkIds)
         .then((result) {
       result.fold(
         onSuccess: (report) => _notifyEvent(outgoing, report),
@@ -195,6 +198,7 @@ final class AnalyticsPipeline implements StarterModule {
     String operation,
     Future<KitResult<void>> Function(AnalyticsSink sink) action, {
     bool requireInitialized = true,
+    Set<String>? onlySinkIds,
   }) async {
     if (requireInitialized &&
         (!_initialized || !_health.isOperational || _disposed)) {
@@ -202,19 +206,28 @@ final class AnalyticsPipeline implements StarterModule {
     }
 
     final targets = requireInitialized
-        ? _sinks.where((sink) => _activeSinkIds.contains(sink.sinkId)).toList()
+        ? _sinks
+            .where((sink) =>
+                _activeSinkIds.contains(sink.sinkId) &&
+                (onlySinkIds == null || onlySinkIds.contains(sink.sinkId)))
+            .toList()
         : _sinks;
     final attempted = targets.map((sink) => sink.sinkId).toSet();
     final outcomes = await Future.wait(
       targets.map((sink) async {
         try {
-          return (sink: sink, result: await action(sink));
+          return (
+            sink: sink,
+            result: await action(sink).timeout(const Duration(seconds: 10))
+          );
         } on Object catch (error, stackTrace) {
           return (
             sink: sink,
             result: KitFailure<void>(
               KitError(
-                code: KitErrorCode.unknown,
+                code: error is TimeoutException
+                    ? KitErrorCode.timeout
+                    : KitErrorCode.unknown,
                 message: 'Analytics sink ${sink.sinkId} threw: $error',
                 cause: error,
                 stackTrace: stackTrace,

@@ -165,11 +165,14 @@ void main() {
       'disabled': false,
       'at': DateTime.utc(2026, 9, 5),
       'ignored': null,
+      r'$insert_id': 'mixpanel-only',
+      'event_id': 'durable-event',
     });
 
     expect(result, <String, Object>{
       'name': 'starter kit',
       'count': 2,
+      'event_id': 'durable-event',
       'enabled': 'true',
       'disabled': 'false',
       'at': '2026-09-05T00:00:00.000Z',

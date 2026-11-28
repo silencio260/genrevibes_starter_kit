@@ -323,7 +323,10 @@ Map<String, Object>? sanitizeFirebaseParameters(
   if (properties.isEmpty) return null;
   return <String, Object>{
     for (final entry in properties.entries)
-      if (entry.value != null) entry.key: _firebaseValue(entry.value!),
+      // Provider-specific properties (for example Mixpanel's $insert_id)
+      // cannot be sent as Firebase parameter names.
+      if (entry.value != null && !entry.key.startsWith(r'$'))
+        entry.key: _firebaseValue(entry.value!),
   };
 }
 
